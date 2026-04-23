@@ -1,5 +1,12 @@
 package com.example.EmployeeManagementSystem.Util;
 
+import com.example.EmployeeManagementSystem.Entity.Employee;
+import com.example.EmployeeManagementSystem.Entity.Vendor;
+import com.example.EmployeeManagementSystem.Enum.Role;
+import com.example.EmployeeManagementSystem.Exception.EmployeeNotFound;
+import com.example.EmployeeManagementSystem.Exception.VendorNotFoundException;
+import com.example.EmployeeManagementSystem.Repository.EmployeeRepo;
+import com.example.EmployeeManagementSystem.Repository.VendorRepo;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -10,9 +17,13 @@ import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
+import java.util.Optional;
 
 @Component
 public class JWTUtil {
+
+    private final EmployeeRepo employeeRepo;
+    private final VendorRepo vendorRepo;
 
     // FIX 1: Was 1000*60*60 (1 hour) — caused token expiry mid-session.
     // Extended to 24 hours to match the session timeout in application.yaml.
@@ -22,14 +33,31 @@ public class JWTUtil {
     private String secret;
     private SecretKey key;
 
+    public JWTUtil(EmployeeRepo employeeRepo, VendorRepo vendorRepo) {
+        this.employeeRepo = employeeRepo;
+        this.vendorRepo = vendorRepo;
+    }
+
     @PostConstruct
     public void init() {
         key = Keys.hmacShaKeyFor(secret.getBytes());
     }
 
     public String generateToken(String username) {
+        String  role;
+        Optional<Employee> empOpt = employeeRepo.findByEmail(username);
+        if (empOpt.isPresent()) {
+            role = empOpt.get().getRole().name(); // assuming enum
+        }
+        else {
+            // Try Vendor
+            Vendor vendor = vendorRepo.findByEmail(username)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+            role = vendor.getRole().name();
+        }
         return Jwts.builder()
                 .setSubject(username)
+                .claim("role",role)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + Expiration_time))
                 .signWith(key)

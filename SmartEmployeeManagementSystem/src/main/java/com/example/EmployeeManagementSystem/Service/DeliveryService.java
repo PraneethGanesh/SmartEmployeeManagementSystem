@@ -6,6 +6,7 @@ import com.example.EmployeeManagementSystem.Entity.Delivery;
 import com.example.EmployeeManagementSystem.Entity.Subscription;
 import com.example.EmployeeManagementSystem.Entity.Vendor;
 import com.example.EmployeeManagementSystem.Enum.DeliveryStatus;
+import com.example.EmployeeManagementSystem.Enum.Role;
 import com.example.EmployeeManagementSystem.Enum.SubscriptionStatus;
 import com.example.EmployeeManagementSystem.Exception.VendorNotFoundException;
 import com.example.EmployeeManagementSystem.Repository.DeliveryRepository;
@@ -108,6 +109,7 @@ public class DeliveryService {
             vendor.setName(request.getName());
             vendor.setEmail(request.getEmail());
             vendor.setPhone(request.getPhone());
+            vendor.setRole(Role.VENDOR);
             vendor.setPassword(passwordEncoder.encode(request.getPassword()));
             Vendor saved = vendorRepo.save(vendor);
             log.info("Vendor registered: {} (id={})", saved.getName(), saved.getId());
