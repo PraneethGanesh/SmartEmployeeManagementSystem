@@ -10,6 +10,7 @@ import com.example.EmployeeManagementSystem.Exception.UnauthorizedAccessExceptio
 import com.example.EmployeeManagementSystem.Exception.VendorNotFoundException;
 import com.example.EmployeeManagementSystem.Repository.RestaurantRepository;
 import com.example.EmployeeManagementSystem.Repository.VendorRepo;
+import com.example.EmployeeManagementSystem.Util.AuthUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
@@ -36,9 +37,10 @@ public class RestaurantService {
      * Only the owning vendor (matched by vendorId in the request) may do this.
      */
     public RestaurantDTO createRestaurant(RestaurantRequest request,Authentication authentication) {
-        Vendor vendor=vendorRepo.findByEmail(authentication.getName())
+        String email= AuthUtil.extractEmail(authentication);
+        Vendor vendor=vendorRepo.findByEmail(email)
                 .orElseThrow(() -> new VendorNotFoundException(
-                        "Vendor with email " + authentication.getName() + " not found"));
+                        "Vendor with email " + email + " not found"));
 
         Restaurant restaurant = new Restaurant();
         restaurant.setName(request.getName());
@@ -59,7 +61,8 @@ public class RestaurantService {
      */
     public RestaurantDTO updateRestaurant(Long restaurantId, RestaurantRequest request,Authentication authentication) {
         Restaurant restaurant = findOrThrow(restaurantId);
-        Vendor vendor=vendorRepo.findByEmail(authentication.getName()).orElseThrow(
+        String email= AuthUtil.extractEmail(authentication);
+        Vendor vendor=vendorRepo.findByEmail(email).orElseThrow(
                 ()->new VendorNotFoundException("Vendor Not found")
         );
         assertOwnership(restaurantId, vendor.getEmail());
@@ -81,7 +84,8 @@ public class RestaurantService {
      */
     public void deactivateRestaurant(Long restaurantId, Authentication authentication) {
         Restaurant restaurant = findOrThrow(restaurantId);
-        Vendor vendor=vendorRepo.findByEmail(authentication.getName()).orElseThrow(
+        String email= AuthUtil.extractEmail(authentication);
+        Vendor vendor=vendorRepo.findByEmail(email).orElseThrow(
                 ()->new VendorNotFoundException("Vendor Not found")
         );
         assertOwnership(restaurantId, vendor.getEmail());
@@ -95,9 +99,10 @@ public class RestaurantService {
      * VENDOR-only endpoint.
      */
     public List<RestaurantDTO> getRestaurantsByVendor(Authentication authentication) {
-        vendorRepo.findByEmail(authentication.getName())
-                .orElseThrow(() -> new VendorNotFoundException("Vendor " + authentication.getName() + " not found"));
-        return restaurantRepository.findByVendor_EmailAndActiveTrue(authentication.getName())
+        String email= AuthUtil.extractEmail(authentication);
+        vendorRepo.findByEmail(email)
+                .orElseThrow(() -> new VendorNotFoundException("Vendor " + email + " not found"));
+        return restaurantRepository.findByVendor_EmailAndActiveTrue(email)
                 .stream().map(this::toDTO).collect(Collectors.toList());
     }
 
