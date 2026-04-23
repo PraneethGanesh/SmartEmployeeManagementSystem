@@ -13,6 +13,7 @@ import com.example.EmployeeManagementSystem.Enum.Status;
 import com.example.EmployeeManagementSystem.Exception.*;
 import com.example.EmployeeManagementSystem.Repository.EmployeeRepo;
 import com.example.EmployeeManagementSystem.Repository.LeaveRequestRepo;
+import com.example.EmployeeManagementSystem.Util.AuthUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -50,10 +51,10 @@ public class LeaveRequestService {
 
     public ResponseEntity<?> createRequest(Authentication authentication, LeaveRequestDTO requestDTO){
         var leaveRequest=new LeaveRequest();
-
+        String email= AuthUtil.extractEmail(authentication);
         //Validate employee exists and is active
-        var employee=employeeRepo.findByEmail(authentication.getName()).orElseThrow(()->
-                new EmployeeNotFound("Employee with name: "+authentication.getName()+" is not found")
+        var employee=employeeRepo.findByEmail(email).orElseThrow(()->
+                new EmployeeNotFound("Employee with name: "+email+" is not found")
         );
         if (employee.getStatus() != Status.ACTIVE) {
             return ResponseEntity.badRequest()
@@ -135,8 +136,9 @@ public class LeaveRequestService {
     }
 
     public ResponseEntity<?> updateLeaveRequestStatus(ActionDTO actionDTO,Authentication authentication){
-        Employee manager=employeeRepo.findByEmail(authentication.getName()).orElseThrow(
-                ()->new EmployeeNotFound("Manager with name: "+authentication.getName()+" Not Found")
+        String email= AuthUtil.extractEmail(authentication);
+        Employee manager=employeeRepo.findByEmail(email).orElseThrow(
+                ()->new EmployeeNotFound("Manager with name: "+email+" Not Found")
         );
         if (actionDTO.getAction() == null) {
             return ResponseEntity.badRequest().body("Action is required");
@@ -170,8 +172,9 @@ public class LeaveRequestService {
     }
 
     public ResponseEntity<?> cancelLeaveRequest(Authentication authentication,long leaveId){
-        var employee=employeeRepo.findByEmail(authentication.getName()).orElseThrow(
-                ()->new EmployeeNotFound("Employee with email:"+authentication.getName()+" not found")
+        String email= AuthUtil.extractEmail(authentication);
+        var employee=employeeRepo.findByEmail(email).orElseThrow(
+                ()->new EmployeeNotFound("Employee with email:"+email+" not found")
         );
         var leaveRequest=leaveRequestRepo.findById(leaveId).orElseThrow(
                 ()->new LeaveRequestNotFoundException("Leave request with id:"+leaveId+" is not found")
@@ -205,10 +208,11 @@ public class LeaveRequestService {
     }
 
     public ResponseEntity<?> getLeaveRequestsByEmployee(Authentication authentication) {
-        log.info("Fetching leave requests for employee: {}", authentication.getName());
+        String email= AuthUtil.extractEmail(authentication);
+        log.info("Fetching leave requests for employee: {}", email);
 
-        Employee employee = employeeRepo.findByEmail(authentication.getName())
-                .orElseThrow(() -> new EmployeeNotFound("Employee not found: " +authentication.getName() ));
+        Employee employee = employeeRepo.findByEmail(email)
+                .orElseThrow(() -> new EmployeeNotFound("Employee not found: " +email ));
 
         List<LeaveRequest> requests = leaveRequestRepo.findByEmployeeOrderByStartDateDesc(employee);
         List<LeaveResponseDTO> response = requests.stream()
@@ -216,7 +220,7 @@ public class LeaveRequestService {
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(Map.of(
-                "employeeName", authentication.getName(),
+                "employeeName", email,
                 "totalRequests", response.size(),
                 "requests", response
         ));
