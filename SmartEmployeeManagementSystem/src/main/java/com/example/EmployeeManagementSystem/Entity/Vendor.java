@@ -2,6 +2,7 @@ package com.example.EmployeeManagementSystem.Entity;
 
 import com.example.EmployeeManagementSystem.Enum.Role;
 import jakarta.persistence.*;
+import jakarta.xml.bind.annotation.XmlAttribute;
 import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -39,6 +40,9 @@ public class Vendor implements UserDetails {
     @Column(nullable = false)
     private String password;
 
+    @Enumerated(EnumType.STRING)
+    private Role role;
+
     private LocalDate registeredAt;
 
     @PrePersist
@@ -65,7 +69,7 @@ public class Vendor implements UserDetails {
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         Set<SimpleGrantedAuthority> authorities=new HashSet<>();
-        authorities.add(new SimpleGrantedAuthority("ROLE_VENDOR"));
+        authorities.add(new SimpleGrantedAuthority("ROLE_"+role.name()));
         authorities.addAll(Role.VENDOR.getPermissions().stream()
                 .map(permissions -> new SimpleGrantedAuthority(permissions.name()))
                 .collect(Collectors.toSet()));
@@ -104,5 +108,13 @@ public class Vendor implements UserDetails {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public Role getRole() {
+        return role;
+    }
+
+    public void setRole(Role role) {
+        this.role = role;
     }
 }

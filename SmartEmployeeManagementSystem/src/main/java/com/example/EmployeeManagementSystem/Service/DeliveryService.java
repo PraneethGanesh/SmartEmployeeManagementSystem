@@ -6,11 +6,13 @@ import com.example.EmployeeManagementSystem.Entity.Delivery;
 import com.example.EmployeeManagementSystem.Entity.Subscription;
 import com.example.EmployeeManagementSystem.Entity.Vendor;
 import com.example.EmployeeManagementSystem.Enum.DeliveryStatus;
+import com.example.EmployeeManagementSystem.Enum.Role;
 import com.example.EmployeeManagementSystem.Enum.SubscriptionStatus;
 import com.example.EmployeeManagementSystem.Exception.VendorNotFoundException;
 import com.example.EmployeeManagementSystem.Repository.DeliveryRepository;
 import com.example.EmployeeManagementSystem.Repository.SubscriptionRepository;
 import com.example.EmployeeManagementSystem.Repository.VendorRepo;
+import com.example.EmployeeManagementSystem.Util.AuthUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -108,6 +110,7 @@ public class DeliveryService {
             vendor.setName(request.getName());
             vendor.setEmail(request.getEmail());
             vendor.setPhone(request.getPhone());
+            vendor.setRole(Role.VENDOR);
             vendor.setPassword(passwordEncoder.encode(request.getPassword()));
             Vendor saved = vendorRepo.save(vendor);
             log.info("Vendor registered: {} (id={})", saved.getName(), saved.getId());
@@ -115,7 +118,8 @@ public class DeliveryService {
         }
 
         public VendorDTO getVendor(Authentication authentication) {
-            return toDTO(vendorRepo.findByEmail(authentication.getName()).orElseThrow(
+            String email= AuthUtil.extractEmail(authentication);
+            return toDTO(vendorRepo.findByEmail(email).orElseThrow(
                     ()->new VendorNotFoundException("Cannot get others accoun")
             ));
         }
@@ -127,7 +131,8 @@ public class DeliveryService {
         }
 
         public VendorDTO updateVendor(VendorRequest request,Authentication authentication) {
-            Vendor vendor = vendorRepo.findByEmail(authentication.getName()).orElseThrow(
+            String email= AuthUtil.extractEmail(authentication);
+            Vendor vendor = vendorRepo.findByEmail(email).orElseThrow(
                     ()->new VendorNotFoundException("Cannot update others account")
             );
             if (request.getName() != null) vendor.setName(request.getName());
@@ -138,11 +143,12 @@ public class DeliveryService {
         }
 
         public void deleteVendor(Authentication authentication) {
-            Vendor vendor = vendorRepo.findByEmail(authentication.getName()).orElseThrow(
+            String email= AuthUtil.extractEmail(authentication);
+            Vendor vendor = vendorRepo.findByEmail(email).orElseThrow(
                     ()->new VendorNotFoundException("Cannot delete others account")
             );
             vendorRepo.delete(vendor);
-            log.info("Vendor deleted: email={}", authentication.getName());
+            log.info("Vendor deleted: email={}", email);
         }
 
         // ── helpers ──────────────────────────────────────────────────────────────
