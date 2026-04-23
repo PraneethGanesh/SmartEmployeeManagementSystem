@@ -28,6 +28,7 @@ public class Employee implements UserDetails {
     @Enumerated(EnumType.STRING)
     private Status status;
     private String password;
+    private String manager;
     private LocalDate joined_at;
     @Enumerated(EnumType.STRING)
     private Role role;
@@ -169,5 +170,13 @@ public class Employee implements UserDetails {
 
     public void setTotpEnabled(boolean totpEnabled) {
         this.totpEnabled = totpEnabled;
+    }
+
+    public String getManager() {
+        return manager;
+    }
+
+    public void setManager(String manager) {
+        this.manager = manager;
     }
 }
