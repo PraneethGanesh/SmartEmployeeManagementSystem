@@ -1,0 +1,65 @@
+spring:
+  application:
+    name: EmployeeManagementSystem
+
+  datasource :
+    url : jdbc:mysql://localhost:3306/employee_management_db
+    username : ${USER_NAME}
+    password : ${PASSWORD}
+
+  jpa:
+    hibernate :
+      ddl-auto: update
+    show-sql: true
+
+  springdoc:
+    api-docs:
+      path: /v3/api-docs
+      enabled: true
+    swagger-ui:
+      path: /swagger-ui.html
+      enabled: true
+      operations-sorter: method
+      tags-sorter: alpha
+      try-it-out-enabled: true
+      filter: true
+    show-actuator: true
+  mvc:
+    static-path-pattern: /**
+    session:
+      tracking-modes: COOKIE
+  web:
+    resources:
+      static-locations: classpath:/static/
+      add-mappings: true
+  session:
+    timeout: 86400s  # 24 hours in seconds (was 1440m which is incorrect format)
+    store-type: none  # Use default cookie-based session
+
+  servlet:
+    session:
+      cookie:
+        http-only: true
+        same-site: strict
+        secure: false     # set true in production with HTTPS
+
+  security:
+    debug: true
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${client_id}
+            client-secret: ${client_secret}
+
+logging:
+  level:
+    org.springframework.security: DEBUG
+    com.example.EmployeeManagementSystem: DEBUG
+jwt:
+  secret: ${JWT_SECRET}
+# Add this to your application.yaml
+api:
+  key:
+    enabled: true
+    header-name: X-API-Key
