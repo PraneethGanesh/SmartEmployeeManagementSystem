@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EMS - Complete Employee Management System</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg: #0d0f14; --bg2: #131720; --bg3: #1a2030;
+            --panel: #1e2436; --panel2: #252c40;
+            --border: rgba(255,255,255,0.07); --border2: rgba(255,255,255,0.12);
+            --text: #e0e0e0; --text2: #8b92a8; --text3: #5557fa;
+            --accent: #4f8cff; --accent-dim: rgba(79,140,255,0.12);
+            --green: #36d399; --green-dim: rgba(54,211,153,0.12);
+            --amber: #f9c74f; --amber-dim: rgba(249,199,79,0.12);
+            --red: #f87171; --red-dim: rgba(248,113,113,0.12);
+            --violet: #a78bfa; --violet-dim: rgba(167,139,250,0.12);
+            --font: 'DM Sans', sans-serif; --mono: 'DM Mono', monospace;
+        }
+        body { font-family: var(--font); background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; overflow: hidden; }
+        .app { display: flex; height: 100vh; }
+        .sidebar { width: 260px; background: var(--bg2); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow-y: auto; }
+        .logo { padding: 20px; border-bottom: 1px solid var(--border); }
+        .logo h2 { font-size: 20px; color: var(--text); }
+        .logo span { color: var(--accent); }
+        .logo p { font-size: 11px; color: var(--text3); margin-top: 4px; }
+        .nav-item { padding: 12px 20px; margin: 4px 12px; border-radius: 8px; cursor: pointer; transition: all 0.2s; color: var(--text2); display: flex; align-items: center; gap: 10px; }
+        .nav-item:hover, .nav-item.active { background: var(--accent-dim); color: var(--accent); }
+        .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .topbar { background: var(--bg2); padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
+        .page-title { font-size: 20px; font-weight: 600; }
+        .user-info { display: flex; align-items: center; gap: 16px; }
+        .logout-btn { padding: 8px 16px; background: var(--red-dim); border: 1px solid rgba(248,113,113,0.3); border-radius: 6px; color: var(--red); cursor: pointer; }
+        .content { flex: 1; overflow-y: auto; padding: 24px; }
+        .view { display: none; }
+        .view.active { display: block; }
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+        .stat-card { background: var(--panel); padding: 20px; border-radius: 12px; border: 1px solid var(--border); }
+        .stat-label { font-size: 11px; color: var(--text3); text-transform: uppercase; margin-bottom: 8px; }
+        .stat-value { font-size: 28px; font-weight: 600; }
+        .form-card { background: var(--panel); border-radius: 12px; border: 1px solid var(--border); padding: 24px; max-width: 600px; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group.full { grid-column: 1 / -1; }
+        label { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; }
+        input, select, textarea { padding: 10px 12px; background: var(--bg3); border: 1px solid var(--border2); border-radius: 8px; color: var(--text); font-family: var(--font); font-size: 13px; }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
+        .table-wrap { background: var(--panel); border-radius: 12px; border: 1px solid var(--border); overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 12px 16px; background: var(--bg3); color: var(--text3); font-size: 11px; font-weight: 600; text-transform: uppercase; }
+        td { padding: 12px 16px; border-top: 1px solid var(--border); }
+        .chip { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; display: inline-block; }
+        .chip.active, .chip.approved, .chip.delivered { background: var(--green-dim); color: var(--green); }
+        .chip.pending, .chip.scheduled { background: var(--amber-dim); color: var(--amber); }
+        .chip.inactive, .chip.rejected, .chip.cancelled, .chip.expired { background: var(--red-dim); color: var(--red); }
+        .chip.on_leave { background: var(--violet-dim); color: var(--violet); }
+        .chip.employee { background: var(--accent-dim); color: var(--accent); }
+        .chip.manager { background: var(--violet-dim); color: var(--violet); }
+        .chip.vendor { background: var(--red-dim); color: var(--red); }
+        .btn { padding: 8px 16px; border-radius: 6px; border: none; font-family: var(--font); font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+        .btn-primary { background: var(--accent); color: white; }
+        .btn-primary:hover { background: #6ba0ff; }
+        .btn-secondary { background: var(--bg3); color: var(--text2); border: 1px solid var(--border2); }
+        .btn-danger { background: var(--red-dim); color: var(--red); border: 1px solid rgba(248,113,113,0.3); }
+        .btn-sm { padding: 4px 10px; font-size: 11px; margin: 2px; }
+        .section-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .section-title { font-size: 16px; font-weight: 600; }
+        .empty-state { text-align: center; padding: 40px; color: var(--text3); }
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center; }
+        .modal-overlay.open { display: flex; }
+        .modal { background: var(--panel); border-radius: 12px; padding: 24px; width: 450px; max-width: 90%; }
+        .modal-title { font-size: 18px; font-weight: 600; margin-bottom: 16px; }
+        .modal-actions { display: flex; gap: 12px; margin-top: 20px; justify-content: flex-end; }
+        .alert { position: fixed; top: 20px; right: 20px; padding: 12px 20px; border-radius: 8px; z-index: 1100; animation: slideIn 0.3s ease; }
+        .alert-success { background: var(--green-dim); color: var(--green); border: 1px solid var(--green); }
+        .alert-error { background: var(--red-dim); color: var(--red); border: 1px solid var(--red); }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .action-row { display: flex; gap: 6px; flex-wrap: wrap; }
+    </style>
+</head>
+<body>
+<div class="app">
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="logo">
+            <h2>E<span>M</span>S</h2>
+            <p>Employee Management System</p>
+        </div>
+        <div style="flex: 1;">
+            <div class="nav-item active" onclick="showView('dashboard', event)">&#9632; Dashboard</div>
+            <div class="nav-item" onclick="showView('employees', event)">&#9632; Employees</div>
+            <div class="nav-item" onclick="showView('apply-leave', event)">&#9632; Apply Leave</div>
+            <div class="nav-item" onclick="showView('my-leaves', event)">&#9632; My Leaves</div>
+            <div class="nav-item" onclick="showView('pending-leaves', event)">&#9632; Pending Approvals</div>
+            <div class="nav-item" onclick="showView('restaurants', event)">&#9632; Restaurants</div>
+            <div class="nav-item" onclick="showView('subscriptions', event)">&#9632; My Subscriptions</div>
+            <div class="nav-item" onclick="showView('add-subscription', event)">&#9632; Add Subscription</div>
+            <div class="nav-item" onclick="showView('deliveries', event)">&#9632; Deliveries</div>
+            <div class="nav-item" onclick="showView('vendors', event)">&#9632; Vendors</div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="topbar">
+            <div class="page-title" id="pageTitle">Dashboard</div>
+            <div class="user-info">
+                <span id="username-display"></span>
+                <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
+        </div>
+        <div class="content" id="content">
+
+            <!-- DASHBOARD VIEW -->
+            <div id="dashboard-view" class="view active">
+                <div class="stats-grid">
+                    <div class="stat-card"><div class="stat-label">Total Employees</div><div class="stat-value" id="total-employees">--</div></div>
+                    <div class="stat-card"><div class="stat-label">Active</div><div class="stat-value" id="active-employees">--</div></div>
+                    <div class="stat-card"><div class="stat-label">On Leave</div><div class="stat-value" id="onleave-employees">--</div></div>
+                    <div class="stat-card"><div class="stat-label">Pending Leaves</div><div class="stat-value" id="pending-leaves">--</div></div>
+                </div>
+                <div class="section-head"><div class="section-title">Recent Leave Requests</div><button class="btn btn-secondary btn-sm" onclick="loadDashboard()">Refresh</button></div>
+                <div class="table-wrap"><table><thead><tr><th>Employee</th><th>Type</th><th>Start</th><th>End</th><th>Status</th></tr></thead><tbody id="recent-leaves"></tbody></table></div>
+            </div>
+
+            <!-- EMPLOYEES VIEW -->
+            <div id="employees-view" class="view">
+                <div class="section-head"><div class="section-title">All Employees</div><button class="btn btn-primary btn-sm" onclick="loadEmployees()">Refresh</button></div>
+                <div class="table-wrap"><table><thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Department</th><th>Role</th><th>Status</th><th>Timezone</th></tr></thead><tbody id="employees-list"></tbody></table></div>
+            </div>
+
+            <!-- APPLY LEAVE VIEW -->
+            <div id="apply-leave-view" class="view">
+                <div class="section-title" style="margin-bottom: 20px;">Apply for Leave</div>
+                <div class="form-card">
+                    <div class="form-grid">
+                        <div class="form-group full"><label>Employee Email (authenticated)</label><input type="email" id="leave-email" placeholder="your.email@company.com"></div>
+                        <div class="form-group"><label>Leave Type</label><select id="leave-type"><option value="SICK">Sick Leave</option><option value="CASUAL">Casual Leave</option><option value="EARNED">Earned Leave</option></select></div>
+                        <div class="form-group"><label>Start Date</label><input type="date" id="leave-start"></div>
+                        <div class="form-group"><label>End Date</label><input type="date" id="leave-end"></div>
+                        <div class="form-group full"><label>Reason</label><textarea id="leave-reason" rows="3" placeholder="Please provide reason for leave..."></textarea></div>
+                    </div>
+                    <div class="modal-actions" style="margin-top: 20px;"><button class="btn btn-primary" onclick="applyLeave()">Submit Leave Request</button><button class="btn btn-secondary" onclick="clearLeaveForm()">Clear</button></div>
+                </div>
+            </div>
+
+            <!-- MY LEAVES VIEW -->
+            <div id="my-leaves-view" class="view">
+                <div class="section-head"><div class="section-title">My Leave Requests</div><button class="btn btn-primary btn-sm" onclick="loadMyLeaves()">Refresh</button></div>
+                <div class="table-wrap"><table><thead><tr><th>ID</th><th>Type</th><th>Start Date</th><th>End Date</th><th>Status</th><th>Reason</th><th>Action</th></tr></thead><tbody id="my-leaves-list"></tbody></table></div>
+            </div>
+
+            <!-- PENDING LEAVES VIEW -->
+            <div id="pending-leaves-view" class="view">
+                <div class="section-head"><div class="section-title">Pending Leave Approvals</div><button class="btn btn-primary btn-sm" onclick="loadPendingLeaves()">Refresh</button></div>
+                <div class="table-wrap"><table><thead><tr><th>ID</th><th>Employee</th><th>Type</th><th>Start</th><th>End</th><th>Reason</th><th>Actions</th></tr></thead><tbody id="pending-leaves-list"></tbody></table></div>
+            </div>
+
+            <!-- RESTAURANTS VIEW -->
+            <div id="restaurants-view" class="view">
+                <div class="section-head"><div class="section-title">Restaurants</div><div><select id="slot-filter" onchange="loadRestaurants()"><option value="">All Slots</option><option value="BREAKFAST">Breakfast</option><option value="LUNCH">Lunch</option><option value="DINNER">Dinner</option></select></div></div>
+                <div class="table-wrap"><table><thead><tr><th>Name</th><th>Address</th><th>Meal Slots</th><th>Status</th><th>Vendor</th></tr></thead><tbody id="restaurants-list"></tbody></table></div>
+            </div>
+
+            <!-- MY SUBSCRIPTIONS VIEW -->
+            <div id="subscriptions-view" class="view">
+                <div class="section-head"><div class="section-title">My Meal Subscriptions</div><button class="btn btn-primary btn-sm" onclick="loadSubscriptions()">Refresh</button></div>
+                <div class="table-wrap"><table><thead><tr><th>ID</th><th>Restaurant</th><th>Meal Slot</th><th>Schedule</th><th>Status</th><th>Next Delivery</th><th>Actions</th></tr></thead><tbody id="subscriptions-list"></tbody></table></div>
+            </div>
+
+            <!-- ADD SUBSCRIPTION VIEW -->
+            <div id="add-subscription-view" class="view">
+                <div class="section-title" style="margin-bottom: 20px;">Create Meal Subscription</div>
+                <div class="form-card">
+                    <div class="form-grid">
+                        <div class="form-group full"><label>Employee Email</label><input type="email" id="sub-email" placeholder="employee@company.com"></div>
+                        <div class="form-group"><label>Restaurant ID</label><input type="number" id="sub-restaurant-id" placeholder="Restaurant ID"></div>
+                        <div class="form-group"><label>Meal Slot</label><select id="sub-slot"><option value="BREAKFAST">Breakfast</option><option value="LUNCH">Lunch</option><option value="DINNER">Dinner</option></select></div>
+                        <div class="form-group"><label>Schedule Type</label><select id="sub-schedule"><option value="DAILY">Daily</option><option value="WEEKLY">Weekly</option></select></div>
+                        <div class="form-group" id="day-of-week-group" style="display:none;"><label>Day of Week</label><select id="sub-day"><option value="MONDAY">Monday</option><option value="TUESDAY">Tuesday</option><option value="WEDNESDAY">Wednesday</option><option value="THURSDAY">Thursday</option><option value="FRIDAY">Friday</option><option value="SATURDAY">Saturday</option><option value="SUNDAY">Sunday</option></select></div>
+                    </div>
+                    <div class="modal-actions" style="margin-top: 20px;"><button class="btn btn-primary" onclick="addSubscription()">Create Subscription</button><button class="btn btn-secondary" onclick="clearSubscriptionForm()">Clear</button></div>
+                </div>
+            </div>
+
+            <!-- DELIVERIES VIEW -->
+            <div id="deliveries-view" class="view">
+                <div class="section-head"><div class="section-title">My Deliveries</div><button class="btn btn-primary btn-sm" onclick="loadDeliveries()">Refresh</button></div>
+                <div class="table-wrap"><table><thead><tr><th>ID</th><th>Subscription ID</th><th>Meal Slot</th><th>Scheduled Time</th><th>Status</th></tr></thead><tbody id="deliveries-list"></tbody></table></div>
+            </div>
+
+            <!-- VENDORS VIEW -->
+            <div id="vendors-view" class="view">
+                <div class="section-head"><div class="section-title">Vendors</div><button class="btn btn-primary btn-sm" onclick="loadVendors()">Refresh</button></div>
+                <div class="table-wrap"><table><thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Phone</th><th>Registered</th></tr></thead><tbody id="vendors-list"></tbody></table></div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Approve/Reject Modal -->
+<div id="action-modal" class="modal-overlay">
+    <div class="modal">
+        <div class="modal-title" id="modal-title">Approve Leave Request</div>
+        <input type="hidden" id="action-leave-id">
+        <input type="hidden" id="action-type">
+        <div class="form-group"><label>Manager Email</label><input type="email" id="manager-email" placeholder="manager@company.com"></div>
+        <div class="form-group"><label>Remarks</label><textarea id="action-remarks" rows="3" placeholder="Add remarks..."></textarea></div>
+        <div class="modal-actions"><button class="btn btn-primary" id="action-btn" onclick="submitApproval()">Approve</button><button class="btn btn-secondary" onclick="closeModal()">Cancel</button></div>
+    </div>
+</div>
+
+<!-- Cancel Leave Modal -->
+<div id="cancel-modal" class="modal-overlay">
+    <div class="modal">
+        <div class="modal-title">Cancel Leave Request</div>
+        <input type="hidden" id="cancel-leave-id">
+        <div class="form-group"><label>Employee Email</label><input type="email" id="cancel-email" placeholder="employee@company.com"></div>
+        <div class="modal-actions"><button class="btn btn-danger" onclick="confirmCancelLeave()">Cancel Leave</button><button class="btn btn-secondary" onclick="closeCancelModal()">Close</button></div>
+    </div>
+</div>
+
+<script>
+    const API = 'http://localhost:8080';
+    let currentUser = null;
+
+    // ============ FIX 2: AUTH GUARD — redirect to login if not authenticated ============
+    // Previously the page had no guard: it called loadDashboard() immediately,
+    // which triggered a 401 on every API call for unauthenticated users.
+    (function checkAuth() {
+    const token = localStorage.getItem('jwt_token');
+    const authType = localStorage.getItem('auth_type');
+
+    // TEMP DEBUG - remove later
+    console.log('=== AUTH DEBUG ===');
+    console.log('jwt_token:', token);
+    console.log('auth_type:', authType);
+    console.log('token length:', token?.length);
+    console.log('token starts with eyJ:', token?.startsWith('eyJ'));
+
+    if (!token && authType !== 'session') {
+        window.location.href = '/login.html';
+    }
+})();
+
+    // ============ FIX 3: AUTH HEADER — session users send no JWT, rely on cookie ============
+    // Previously getAuthHeader() always tried to send JWT. Session-logged-in users
+    // had no jwt_token, so every API call went out without auth and got 401.
+    function getAuthHeader() {
+        const token = localStorage.getItem('jwt_token');
+        return token ? { 'Authorization': `Bearer ${token}` } : {};
+        // Session users rely on credentials:'include' (JSESSIONID cookie) — no header needed.
+    }
+
+    async function apiFetch(path, opts = {}) {
+        try {
+            const response = await fetch(`${API}${path}`, {
+                ...opts,
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...getAuthHeader(),
+                    ...opts.headers
+                },
+                credentials: 'include'
+            });
+
+            if (response.status === 401) {
+                // FIX: Clear ALL auth state, not just jwt_token
+                localStorage.removeItem('jwt_token');
+                localStorage.removeItem('auth_type');
+                showAlert('Session expired. Please login again.', 'error');
+                setTimeout(() => window.location.href = '/login.html', 1500);
+                throw new Error('Unauthorized');
+            }
+
+            if (!response.ok) {
+                const error = await response.text();
+                throw new Error(error || 'Request failed');
+            }
+
+            const text = await response.text();
+            return text ? JSON.parse(text) : null;
+        } catch (e) {
+            if (!e.message.includes('Unauthorized')) {
+                showAlert(e.message, 'error');
+            }
+            throw e;
+        }
+    }
+
+    function showAlert(message, type) {
+        const alert = document.createElement('div');
+        alert.className = `alert alert-${type}`;
+        alert.textContent = message;
+        document.body.appendChild(alert);
+        setTimeout(() => alert.remove(), 3000);
+    }
+
+    function showView(viewName, event) {
+        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+        document.getElementById(`${viewName}-view`).classList.add('active');
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        if (event && event.target) event.target.classList.add('active');
+        document.getElementById('pageTitle').textContent = viewName.split('-').map(w =>
+            w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+        const loaders = {
+            'dashboard': loadDashboard,
+            'employees': loadEmployees,
+            'my-leaves': loadMyLeaves,
+            'pending-leaves': loadPendingLeaves,
+            'restaurants': loadRestaurants,
+            'subscriptions': loadSubscriptions,
+            'deliveries': loadDeliveries,
+            'vendors': loadVendors
+        };
+        if (loaders[viewName]) loaders[viewName]();
+    }
+
+    // ============ DASHBOARD ============
+    async function loadDashboard() {
+        try {
+            const [employees, leaves] = await Promise.all([
+                apiFetch('/employee'),
+                apiFetch('/leave_requests')
+            ]);
+            document.getElementById('total-employees').textContent = employees.length;
+            document.getElementById('active-employees').textContent = employees.filter(e => e.status === 'ACTIVE').length;
+            document.getElementById('onleave-employees').textContent = employees.filter(e => e.status === 'ON_LEAVE').length;
+            document.getElementById('pending-leaves').textContent = leaves.filter(l => l.status === 'PENDING').length;
+            const recent = leaves.slice(-5).reverse();
+            const tbody = document.getElementById('recent-leaves');
+            if (!recent.length) {
+                tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No leave requests</td></tr>';
+            } else {
+                tbody.innerHTML = recent.map(l => `<tr>
+                    <td>${l.employeeId || 'N/A'}</td>
+                    <td><span class="chip">${l.leaveType || 'N/A'}</span></td>
+                    <td>${l.startDate || 'N/A'}</td>
+                    <td>${l.endDate || 'N/A'}</td>
+                    <td><span class="chip ${l.status?.toLowerCase()}">${l.status || 'N/A'}</span></td>
+                </tr>`).join('');
+            }
+        } catch (e) { console.error(e); }
+    }
+
+    // ============ EMPLOYEES ============
+    async function loadEmployees() {
+        try {
+            const employees = await apiFetch('/employee');
+            const tbody = document.getElementById('employees-list');
+            if (!employees.length) {
+                tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No employees found</td></tr>';
+            } else {
+                tbody.innerHTML = employees.map(e => `<tr>
+                    <td>${e.employeeId}</td>
+                    <td>${e.name || 'N/A'}</td>
+                    <td>${e.email || 'N/A'}</td>
+                    <td>${e.dept || 'N/A'}</td>
+                    <td><span class="chip ${e.role?.toLowerCase()}">${e.role || 'N/A'}</span></td>
+                    <td><span class="chip ${e.status?.toLowerCase()}">${e.status || 'N/A'}</span></td>
+                    <td>${e.timezone || 'N/A'}</td>
+                </tr>`).join('');
+            }
+        } catch (e) { console.error(e); }
+    }
+
+    // ============ LEAVE REQUESTS ============
+    async function applyLeave() {
+        const email = document.getElementById('leave-email').value.trim();
+        const leaveType = document.getElementById('leave-type').value;
+        const startDate = document.getElementById('leave-start').value;
+        const endDate = document.getElementById('leave-end').value;
+        const reason = document.getElementById('leave-reason').value.trim();
+        if (!email || !startDate || !endDate) {
+            showAlert('Please fill all required fields', 'error');
+            return;
+        }
+        try {
+            await apiFetch('/leave_requests', {
+                method: 'POST',
+                body: JSON.stringify({ leaveType, startDate, endDate, reason })
+            });
+            showAlert('Leave request submitted successfully!', 'success');
+            clearLeaveForm();
+            loadMyLeaves();
+        } catch (e) { showAlert('Failed to submit: ' + e.message, 'error'); }
+    }
+
+    async function loadMyLeaves() {
+    try {
+        const data = await apiFetch('/leave_requests/employee');
+        const leaves = data.requests || []; // ← extract the array from wrapper
+        const tbody = document.getElementById('my-leaves-list');
+        if (!leaves.length) {
+            tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No leave requests found</td></tr>';
+        } else {
+            tbody.innerHTML = leaves.map(l => `<tr>
+                <td>${l.leaveRequestId}</td>
+                <td><span class="chip">${l.leaveType}</span></td>
+                <td>${l.startDate}</td>
+                <td>${l.endDate}</td>
+                <td><span class="chip ${l.status?.toLowerCase()}">${l.status}</span></td>
+                <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;">${l.reason || '-'}</td>
+                <td>${l.status === 'PENDING' ? `<button class="btn btn-danger btn-sm" onclick="openCancelModal(${l.leaveRequestId})">Cancel</button>` : '-'}</td>
+            </tr>`).join('');
+        }
+    } catch (e) { console.error(e); }
+}
+
+    async function loadPendingLeaves() {
+        try {
+            const leaves = await apiFetch('/leave_requests/pending');
+            const tbody = document.getElementById('pending-leaves-list');
+            if (!leaves.length) {
+                tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No pending leave requests</td></tr>';
+            } else {
+                tbody.innerHTML = leaves.map(l => `<tr>
+                    <td>${l.leaveRequestId}</td>
+                    <td>${l.employeeId}</td>
+                    <td><span class="chip">${l.leaveType}</span></td>
+                    <td>${l.startDate}</td>
+                    <td>${l.endDate}</td>
+                    <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;">${l.reason || '-'}</td>
+                    <td class="action-row">
+                        <button class="btn btn-primary btn-sm" onclick="openActionModal(${l.leaveRequestId}, 'APPROVED')">Approve</button>
+                        <button class="btn btn-danger btn-sm" onclick="openActionModal(${l.leaveRequestId}, 'REJECTED')">Reject</button>
+                    </td>
+                </tr>`).join('');
+            }
+        } catch (e) { console.error(e); }
+    }
+
+    function openActionModal(leaveId, action) {
+        document.getElementById('action-leave-id').value = leaveId;
+        document.getElementById('action-type').value = action;
+        document.getElementById('modal-title').textContent = `${action} Leave Request #${leaveId}`;
+        document.getElementById('action-btn').textContent = action;
+        document.getElementById('action-btn').className = action === 'APPROVED' ? 'btn btn-primary' : 'btn btn-danger';
+        document.getElementById('action-modal').classList.add('open');
+    }
+
+    async function submitApproval() {
+        const leaveRequestId = parseInt(document.getElementById('action-leave-id').value);
+        const action = document.getElementById('action-type').value;
+        const remarks = document.getElementById('action-remarks').value;
+        const managerEmail = document.getElementById('manager-email').value.trim();
+        if (!managerEmail) { showAlert('Please enter manager email', 'error'); return; }
+        try {
+            await apiFetch('/leave_requests/approval', {
+                method: 'PUT',
+                body: JSON.stringify({ leaveRequestId, action, remarks })
+            });
+            showAlert(`Leave request ${action.toLowerCase()} successfully!`, 'success');
+            closeModal();
+            loadPendingLeaves();
+        } catch (e) { showAlert('Failed: ' + e.message, 'error'); }
+    }
+
+    function openCancelModal(leaveId) {
+        document.getElementById('cancel-leave-id').value = leaveId;
+        document.getElementById('cancel-modal').classList.add('open');
+    }
+
+    async function confirmCancelLeave() {
+        const leaveId = document.getElementById('cancel-leave-id').value;
+        const email = document.getElementById('cancel-email').value.trim();
+        if (!email) { showAlert('Please enter employee email', 'error'); return; }
+        try {
+            await apiFetch(`/leave_requests/cancel/${leaveId}?email=${encodeURIComponent(email)}`, { method: 'PUT' });
+            showAlert('Leave cancelled successfully!', 'success');
+            closeCancelModal();
+            loadMyLeaves();
+        } catch (e) { showAlert('Failed: ' + e.message, 'error'); }
+    }
+
+    function clearLeaveForm() {
+        document.getElementById('leave-email').value = '';
+        document.getElementById('leave-start').value = '';
+        document.getElementById('leave-end').value = '';
+        document.getElementById('leave-reason').value = '';
+    }
+
+    // ============ RESTAURANTS ============
+    async function loadRestaurants() {
+        try {
+            const slot = document.getElementById('slot-filter').value;
+            const path = slot ? `/restaurants/by-slot?slot=${slot}` : '/restaurants';
+            const restaurants = await apiFetch(path);
+            const tbody = document.getElementById('restaurants-list');
+            if (!restaurants.length) {
+                tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No restaurants found</td></tr>';
+            } else {
+                tbody.innerHTML = restaurants.map(r => `<tr>
+                    <td><strong>${r.name}</strong></td>
+                    <td>${r.address || 'N/A'}</td>
+                    <td>${r.supportedMealSlots ? r.supportedMealSlots.map(s => `<span class="chip">${s}</span>`).join(' ') : 'N/A'}</td>
+                    <td><span class="chip ${r.active ? 'active' : 'inactive'}">${r.active ? 'ACTIVE' : 'INACTIVE'}</span></td>
+                    <td>${r.vendorName || r.vendorId || 'N/A'}</td>
+                </tr>`).join('');
+            }
+        } catch (e) { console.error(e); }
+    }
+
+    // ============ SUBSCRIPTIONS ============
+    async function loadSubscriptions() {
+        try {
+            const subscriptions = await apiFetch('/subscription/user');
+            const tbody = document.getElementById('subscriptions-list');
+            if (!subscriptions.length) {
+                tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No subscriptions found</td></tr>';
+            } else {
+                tbody.innerHTML = subscriptions.map(s => `<tr>
+                    <td>${s.subscriptionId}</td>
+                    <td>${s.restaurantName || 'N/A'}</td>
+                    <td><span class="chip">${s.mealSlot}</span></td>
+                    <td>${s.scheduleType}</td>
+                    <td><span class="chip ${s.status?.toLowerCase()}">${s.status}</span></td>
+                    <td>${s.nextDeliveryTime ? new Date(s.nextDeliveryTime).toLocaleDateString() : 'Not scheduled'}</td>
+                    <td class="action-row">
+                        ${s.status === 'ACTIVE' ? `<button class="btn btn-secondary btn-sm" onclick="pauseSubscription(${s.subscriptionId})">Pause</button>` : ''}
+                        ${s.status === 'PAUSED' ? `<button class="btn btn-primary btn-sm" onclick="resumeSubscription(${s.subscriptionId})">Resume</button>` : ''}
+                        <button class="btn btn-danger btn-sm" onclick="expireSubscription(${s.subscriptionId})">Expire</button>
+                    </td>
+                </tr>`).join('');
+            }
+        } catch (e) { console.error(e); }
+    }
+
+    async function addSubscription() {
+        const email = document.getElementById('sub-email').value.trim();
+        const restaurantId = parseInt(document.getElementById('sub-restaurant-id').value);
+        const mealSlot = document.getElementById('sub-slot').value;
+        const scheduleType = document.getElementById('sub-schedule').value;
+        const dayOfWeek = document.getElementById('sub-day').value;
+        if (!email || !restaurantId) { showAlert('Please fill email and restaurant ID', 'error'); return; }
+        const body = { restaurantId, mealSlot, scheduleType };
+        if (scheduleType === 'WEEKLY') body.dayOfWeek = dayOfWeek;
+        try {
+            await apiFetch('/subscription', { method: 'POST', body: JSON.stringify(body) });
+            showAlert('Subscription created successfully!', 'success');
+            clearSubscriptionForm();
+            loadSubscriptions();
+        } catch (e) { showAlert('Failed: ' + e.message, 'error'); }
+    }
+
+    async function pauseSubscription(id) {
+        try { await apiFetch(`/subscription/${id}/pause`, { method: 'PUT' }); showAlert('Subscription paused', 'success'); loadSubscriptions(); }
+        catch (e) { showAlert('Failed: ' + e.message, 'error'); }
+    }
+
+    async function resumeSubscription(id) {
+        try { await apiFetch(`/subscription/${id}/resume`, { method: 'PUT' }); showAlert('Subscription resumed', 'success'); loadSubscriptions(); }
+        catch (e) { showAlert('Failed: ' + e.message, 'error'); }
+    }
+
+    async function expireSubscription(id) {
+        try { await apiFetch(`/subscription/${id}/expire`, { method: 'PUT' }); showAlert('Subscription expired', 'success'); loadSubscriptions(); }
+        catch (e) { showAlert('Failed: ' + e.message, 'error'); }
+    }
+
+    function clearSubscriptionForm() {
+        document.getElementById('sub-email').value = '';
+        document.getElementById('sub-restaurant-id').value = '';
+        document.getElementById('sub-slot').value = 'BREAKFAST';
+        document.getElementById('sub-schedule').value = 'DAILY';
+    }
+
+    document.getElementById('sub-schedule')?.addEventListener('change', function () {
+        document.getElementById('day-of-week-group').style.display = this.value === 'WEEKLY' ? 'block' : 'none';
+    });
+
+    // ============ DELIVERIES ============
+    async function loadDeliveries() {
+        try {
+            const subscriptions = await apiFetch('/subscription/user');
+            let allDeliveries = [];
+            for (const sub of subscriptions) {
+                try {
+                    const deliveries = await apiFetch(`/delivery/subscription/${sub.subscriptionId}`);
+                    allDeliveries.push(...deliveries);
+                } catch (e) {}
+            }
+            const tbody = document.getElementById('deliveries-list');
+            if (!allDeliveries.length) {
+                tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No deliveries found</td></tr>';
+            } else {
+                tbody.innerHTML = allDeliveries.map(d => `<tr>
+                    <td>${d.id}</td>
+                    <td>${d.subscription?.id || 'N/A'}</td>
+                    <td><span class="chip">${d.mealSlot || 'N/A'}</span></td>
+                    <td>${d.scheduledDeliveryTime ? new Date(d.scheduledDeliveryTime).toLocaleString() : 'N/A'}</td>
+                    <td><span class="chip ${d.status?.toLowerCase()}">${d.status || 'SCHEDULED'}</span></td>
+                </tr>`).join('');
+            }
+        } catch (e) { console.error(e); }
+    }
+
+    // ============ VENDORS ============
+    async function loadVendors() {
+        try {
+            const vendors = await apiFetch('/vendors');
+            const tbody = document.getElementById('vendors-list');
+            if (!vendors.length) {
+                tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No vendors found</td></tr>';
+            } else {
+                tbody.innerHTML = vendors.map(v => `<tr>
+                    <td>${v.id}</td>
+                    <td><strong>${v.name}</strong></td>
+                    <td>${v.email}</td>
+                    <td>${v.phone || 'N/A'}</td>
+                    <td>${v.registeredAt || 'N/A'}</td>
+                </tr>`).join('');
+            }
+        } catch (e) { console.error(e); }
+    }
+
+    // ============ MODAL HELPERS ============
+    function closeModal() {
+        document.getElementById('action-modal').classList.remove('open');
+        document.getElementById('action-remarks').value = '';
+        document.getElementById('manager-email').value = '';
+    }
+
+    function closeCancelModal() {
+        document.getElementById('cancel-modal').classList.remove('open');
+        document.getElementById('cancel-email').value = '';
+    }
+
+    // ============ FIX 5: LOGOUT — also invalidates server-side session for session users ============
+    // Previously logout() only cleared localStorage, leaving the JSESSIONID cookie active.
+    async function logout() {
+        const authType = localStorage.getItem('auth_type');
+        if (authType === 'session') {
+            try {
+                await fetch(`${API}/session/logout`, { method: 'POST', credentials: 'include' });
+            } catch (e) { /* ignore network errors during logout */ }
+        }
+        localStorage.removeItem('jwt_token');
+        localStorage.removeItem('username');
+        localStorage.removeItem('auth_type');
+        showAlert('Logged out successfully', 'success');
+        setTimeout(() => window.location.href = '/google.html', 500);
+    }
+
+    // Set today's date as default for leave form
+    document.getElementById('leave-start').valueAsDate = new Date();
+    document.getElementById('leave-end').valueAsDate = new Date();
+
+    // Display username
+    const username = localStorage.getItem('username');
+    if (username) document.getElementById('username-display').textContent = ` ${username}`;
+
+    // Initial load
+    loadDashboard();
+</script>
+</body>
+</html>
