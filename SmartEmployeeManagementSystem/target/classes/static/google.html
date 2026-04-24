@@ -389,7 +389,8 @@
     const DASHBOARDS = {
         EMPLOYEE: '/employee-dashboard.html',
         MANAGER:  '/manager-dashboard.html',
-        ADMIN:    '/dashboard.html'
+        ADMIN:    '/dashboard.html',
+        USER:     '/pending.html'
     };
 
     let currentRole = 'EMPLOYEE';
@@ -559,23 +560,40 @@
             `&timezone=${encodeURIComponent(timezone)}`;
     }
 
+    function getRoleFromJWT(token) {
+    try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        console.log('JWT payload:', payload);
+        return payload.role || 'USER'; // "role" matches your JWTUtil claim name exactly
+    } catch (e) {
+        console.error('Failed to parse JWT:', e);
+        return 'USER';
+    }
+}
+
     // ---- Spring redirects back here with tokens as query params ----
     async function handleOAuthCallback() {
-        const params       = new URLSearchParams(window.location.search);
-        const accessToken  = params.get('accessToken');
-        const refreshToken = params.get('refreshToken');
+    const params       = new URLSearchParams(window.location.search);
+    const accessToken  = params.get('accessToken');
+    const refreshToken = params.get('refreshToken');
 
-        if (!accessToken) return; // Normal page load, not a callback
+    if (!accessToken) return;
 
-        window.history.replaceState({}, document.title, window.location.pathname);
+    window.history.replaceState({}, document.title, window.location.pathname);
 
-        localStorage.setItem('jwt_token',     accessToken);
-        localStorage.setItem('refresh_token', refreshToken || '');
-        localStorage.setItem('auth_type',     'jwt');
+    localStorage.setItem('jwt_token',     accessToken);
+    localStorage.setItem('refresh_token', refreshToken || '');
+    localStorage.setItem('auth_type',     'jwt');
 
-        showStatus('success', 'Signed in! Redirecting...');
-        setTimeout(() => redirectByRole(accessToken), 800);
-    }
+    const role = getRoleFromJWT(accessToken);
+    console.log('Authenticated role:', role);
+    localStorage.setItem('last_role', role);
+
+    showStatus('success', 'Signed in! Redirecting...');
+    setTimeout(() => {
+        window.location.href = DASHBOARDS[role] || '/google.html';
+    }, 800);
+}
 
     // ---- Timezone ----
     function updateTz() {
