@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EMS — Vendor Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        :root{
+            --bg:#070910;
+            --panel:#0e1118;
+            --panel2:#131821;
+            --border:rgba(255,255,255,0.07);
+            --border-lit:rgba(255,255,255,0.14);
+            --text:#dde4f0;--text2:#6b7591;--text3:#3d4560;
+            --red:#f87171;--red-dim:rgba(248,113,113,0.12);
+            --blue:#4f8cff;--blue-dim:rgba(79,140,255,0.12);
+            --green:#34d399;--green-dim:rgba(52,211,153,0.12);
+            --amber:#f9c74f;--amber-dim:rgba(249,199,79,0.12);
+            --font:'Outfit',sans-serif;--mono:'JetBrains Mono',monospace;
+        }
+        body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;display:flex;overflow:hidden;}
+
+        .bg-layer{position:fixed;inset:0;z-index:0;
+            background:
+                    radial-gradient(ellipse 60% 50% at 20% 50%, rgba(248,113,113,0.06) 0%,transparent 70%),
+                    radial-gradient(ellipse 40% 60% at 80% 20%, rgba(249,199,79,0.05) 0%,transparent 60%),
+                    radial-gradient(ellipse 50% 40% at 70% 80%, rgba(248,113,113,0.04) 0%,transparent 60%);
+        }
+        .grid-overlay{position:fixed;inset:0;z-index:0;background-image:linear-gradient(rgba(255,255,255,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.02) 1px,transparent 1px);background-size:40px 40px;mask-image:radial-gradient(ellipse 80% 80% at center,black 20%,transparent 80%);}
+
+        /* LEFT */
+        .left-panel{flex:1;display:flex;flex-direction:column;justify-content:center;padding:60px;position:relative;z-index:1;animation:fadeLeft 0.8s ease both;}
+        @keyframes fadeLeft{from{opacity:0;transform:translateX(-24px)}to{opacity:1;transform:translateX(0)}}
+        .brand-logo{display:flex;align-items:center;gap:12px;margin-bottom:32px}
+        .brand-icon{width:44px;height:44px;background:linear-gradient(135deg,#f87171,#fb923c);border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;color:#fff;box-shadow:0 0 30px rgba(248,113,113,0.35);flex-shrink:0;}
+        .brand-name{font-size:22px;font-weight:700;color:var(--text);letter-spacing:-0.3px}
+        .brand-tagline{font-size:13px;color:var(--text2)}
+        .hero-text h1{font-size:clamp(36px,4vw,50px);font-weight:700;line-height:1.1;letter-spacing:-1px;color:var(--text);margin-bottom:16px;}
+        .hl-red{color:var(--red)}
+        .hero-text p{font-size:15px;color:var(--text2);line-height:1.6;max-width:360px}
+
+        .info-cards{display:flex;flex-direction:column;gap:12px;margin-top:40px;max-width:360px;}
+        .info-card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px 18px;display:flex;align-items:flex-start;gap:12px;}
+        .info-card-icon{font-size:18px;flex-shrink:0;margin-top:1px}
+        .info-card-text strong{font-size:13px;color:var(--text);display:block;margin-bottom:2px}
+        .info-card-text span{font-size:12px;color:var(--text2)}
+
+        .back-link{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--text3);text-decoration:none;margin-top:36px;transition:color 0.2s;}
+        .back-link:hover{color:var(--text2)}
+
+        /* RIGHT */
+        .right-panel{width:460px;flex-shrink:0;display:flex;align-items:center;justify-content:center;padding:32px 40px;position:relative;z-index:1;border-left:1px solid var(--border);background:rgba(14,17,24,0.8);backdrop-filter:blur(20px);animation:fadeRight 0.8s ease both;}
+        @keyframes fadeRight{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:translateX(0)}}
+        .form-box{width:100%}
+
+        .vendor-badge{display:inline-flex;align-items:center;gap:8px;background:var(--red-dim);border:1px solid rgba(248,113,113,0.25);border-radius:20px;padding:6px 14px;font-size:12px;font-weight:600;color:var(--red);letter-spacing:0.3px;margin-bottom:24px;}
+        .vendor-badge .dot{width:7px;height:7px;border-radius:50%;background:var(--red);animation:pulse 1.4s infinite;}
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+
+        .form-title{font-size:22px;font-weight:700;color:var(--text);margin-bottom:6px;}
+        .form-subtitle{font-size:13px;color:var(--text2);margin-bottom:28px;}
+
+        /* AUTH TABS */
+        .auth-tabs{display:flex;background:var(--bg);border-radius:10px;padding:4px;gap:4px;margin-bottom:24px;border:1px solid var(--border)}
+        .auth-tab{flex:1;padding:9px;border:none;background:transparent;color:var(--text2);font-family:var(--font);font-weight:600;font-size:13px;cursor:pointer;border-radius:7px;transition:all 0.2s;}
+        .auth-tab.active{background:var(--panel2);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,0.3)}
+
+        /* FORM ELEMENTS */
+        .form-group{margin-bottom:16px}
+        .form-label{display:block;font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.8px;font-family:var(--mono);margin-bottom:7px}
+        .form-input{width:100%;padding:11px 14px;background:var(--bg);border:1px solid var(--border);border-radius:9px;color:var(--text);font-family:var(--font);font-size:14px;transition:all 0.2s;}
+        .form-input:focus{outline:none;border-color:var(--red);box-shadow:0 0 0 3px rgba(248,113,113,0.08)}
+        .form-input::placeholder{color:var(--text3)}
+
+        /* BUTTONS */
+        .btn-login{width:100%;padding:12px;border:none;border-radius:9px;font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;transition:all 0.2s;margin-top:4px;background:var(--red);color:#fff;}
+        .btn-login:hover{background:#f98a8a;box-shadow:0 6px 20px rgba(248,113,113,0.35);transform:translateY(-1px)}
+        .btn-login:active{transform:translateY(0)}
+        .btn-login.loading{opacity:0.7;pointer-events:none}
+
+        /* STATUS */
+        .status-box{border-radius:9px;padding:10px 14px;margin-top:14px;font-size:13px;font-weight:500;display:none;animation:fadeIn 0.3s ease;}
+        @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+        .status-box.error{background:var(--red-dim);color:var(--red);border:1px solid rgba(248,113,113,0.2)}
+        .status-box.success{background:var(--green-dim);color:var(--green);border:1px solid rgba(52,211,153,0.2)}
+        .status-box.loading{background:var(--blue-dim);color:var(--blue);border:1px solid rgba(79,140,255,0.2)}
+
+        .notice{background:rgba(249,199,79,0.06);border:1px solid rgba(249,199,79,0.15);border-radius:9px;padding:12px 14px;margin-top:20px;font-size:12px;color:var(--text2);line-height:1.5;}
+        .notice strong{color:var(--amber)}
+
+        /* FOOTER */
+        .form-footer{margin-top:20px;padding-top:18px;border-top:1px solid var(--border)}
+        .tz-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+        .tz-label{font-size:10px;color:var(--text3);font-family:var(--mono);flex-shrink:0}
+        .tz-select{flex:1;padding:6px 8px;background:var(--bg);border:1px solid var(--border);border-radius:7px;color:var(--text2);font-family:var(--mono);font-size:11px;cursor:pointer;}
+        .tz-select:focus{outline:none;border-color:var(--border-lit)}
+        .tz-time{font-size:10px;color:var(--red);font-family:var(--mono)}
+
+        @media(max-width:900px){
+            .left-panel{display:none}
+            .right-panel{width:100%;border-left:none;background:var(--bg)}
+        }
+    </style>
+</head>
+<body>
+<div class="bg-layer"></div>
+<div class="grid-overlay"></div>
+
+<!-- LEFT -->
+<div class="left-panel">
+    <div class="brand-logo">
+        <div class="brand-icon">V</div>
+        <div>
+            <div class="brand-name">Vendor Hub</div>
+            <div class="brand-tagline">Employee Management System</div>
+        </div>
+    </div>
+    <div class="hero-text">
+        <h1>Manage your<br><span class="hl-red">vendor account</span><br>securely.</h1>
+        <p>Access your deliveries, restaurants, and subscriptions. Your account is created and managed by the system admin.</p>
+    </div>
+    <div class="info-cards">
+        <div class="info-card">
+            <span class="info-card-icon">📦</span>
+            <div class="info-card-text">
+                <strong>Delivery Tracking</strong>
+                <span>Monitor your active and scheduled meal deliveries in real-time.</span>
+            </div>
+        </div>
+        <div class="info-card">
+            <span class="info-card-icon">🍽</span>
+            <div class="info-card-text">
+                <strong>Restaurant Management</strong>
+                <span>View and update restaurant details and meal offerings.</span>
+            </div>
+        </div>
+        <div class="info-card">
+            <span class="info-card-icon">🔑</span>
+            <div class="info-card-text">
+                <strong>Account by Admin Only</strong>
+                <span>Vendor accounts are created by the system admin. Contact your admin if you don't have credentials.</span>
+            </div>
+        </div>
+    </div>
+    <a class="back-link" href="/google.html">← Back to main login</a>
+</div>
+
+<!-- RIGHT FORM -->
+<div class="right-panel">
+    <div class="form-box">
+
+        <div class="vendor-badge"><span class="dot"></span>Vendor Portal</div>
+        <div class="form-title">Vendor Sign In</div>
+        <div class="form-subtitle">Enter the credentials provided by your system admin.</div>
+
+        <!-- AUTH TABS -->
+        <div class="auth-tabs">
+            <button class="auth-tab active" id="tab-jwt" onclick="switchTab('jwt')">JWT Login</button>
+            <button class="auth-tab" id="tab-session" onclick="switchTab('session')">Session Login</button>
+        </div>
+
+        <!-- JWT FORM -->
+        <div id="jwt-form">
+            <div class="form-group">
+                <label class="form-label">Email / Username</label>
+                <input class="form-input" id="jwt-username" type="text" placeholder="vendor@company.com" autocomplete="off">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Password</label>
+                <input class="form-input" id="jwt-password" type="password" placeholder="••••••••" autocomplete="current-password">
+            </div>
+            <button class="btn-login" id="jwt-btn" onclick="jwtLogin()">Sign In as Vendor</button>
+        </div>
+
+        <!-- SESSION FORM -->
+        <div id="session-form" style="display:none">
+            <div class="form-group">
+                <label class="form-label">Email / Username</label>
+                <input class="form-input" id="session-username" type="text" placeholder="vendor@company.com">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Password</label>
+                <input class="form-input" id="session-password" type="password" placeholder="••••••••">
+            </div>
+            <button class="btn-login" id="session-btn" onclick="sessionLogin()">Sign In with Session</button>
+        </div>
+
+        <div class="status-box" id="status-box"></div>
+
+        <div class="notice">
+            <strong>Don't have an account?</strong> Vendor accounts are created exclusively by the system admin. Please contact your administrator to set up access.
+        </div>
+
+        <!-- FOOTER -->
+        <div class="form-footer">
+            <div class="tz-row">
+                <span class="tz-label">TZ</span>
+                <select class="tz-select" id="tz-select" onchange="updateTz()">
+                    <option value="Asia/Kolkata">India — IST UTC+5:30</option>
+                    <option value="UTC">UTC</option>
+                    <option value="America/New_York">New York — EST UTC-5</option>
+                    <option value="America/Los_Angeles">Los Angeles — PST UTC-8</option>
+                    <option value="Europe/London">London — GMT UTC+0</option>
+                    <option value="Europe/Paris">Paris — CET UTC+1</option>
+                    <option value="Asia/Tokyo">Tokyo — JST UTC+9</option>
+                    <option value="Asia/Dubai">Dubai — GST UTC+4</option>
+                    <option value="Australia/Sydney">Sydney — AEDT UTC+11</option>
+                    <option value="Asia/Singapore">Singapore — SGT UTC+8</option>
+                </select>
+                <span class="tz-time" id="tz-time">--:--:--</span>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    const API = 'http://localhost:8080';
+    const VENDOR_DASHBOARD = '/vendor-dashboard.html';
+
+    // Auth guard: already logged in as vendor?
+    (function(){
+        const token    = localStorage.getItem('jwt_token');
+        const authType = localStorage.getItem('auth_type');
+        const lastRole = localStorage.getItem('last_role');
+        if ((token || authType === 'session') && lastRole === 'VENDOR') {
+            window.location.href = VENDOR_DASHBOARD;
+        }
+    })();
+
+    // Status helpers
+    function showStatus(type, msg) {
+        const box = document.getElementById('status-box');
+        box.className     = `status-box ${type}`;
+        box.textContent   = msg;
+        box.style.display = 'block';
+    }
+    function hideStatus() {
+        document.getElementById('status-box').style.display = 'none';
+    }
+
+    // Auth tab switching
+    function switchTab(type) {
+        document.getElementById('jwt-form').style.display     = type === 'jwt'     ? 'block' : 'none';
+        document.getElementById('session-form').style.display = type === 'session' ? 'block' : 'none';
+        document.getElementById('tab-jwt').classList.toggle('active',     type === 'jwt');
+        document.getElementById('tab-session').classList.toggle('active', type === 'session');
+        hideStatus();
+    }
+
+    // Validate token contains VENDOR role
+    function isVendorToken(token) {
+        try {
+            const payload     = JSON.parse(atob(token.split('.')[1]));
+            const authorities = payload.roles || payload.authorities || payload.scope || payload.role || '';
+            const authText    = Array.isArray(authorities) ? authorities.join(',') : String(authorities);
+            return authText.includes('VENDOR') || authText.includes('ROLE_VENDOR');
+        } catch {
+            return false;
+        }
+    }
+
+    // JWT Login
+    async function jwtLogin() {
+        const username = document.getElementById('jwt-username').value.trim();
+        const password = document.getElementById('jwt-password').value;
+        if (!username || !password) { showStatus('error', 'Please enter your email and password'); return; }
+
+        const btn = document.getElementById('jwt-btn');
+        btn.classList.add('loading'); btn.textContent = 'Signing in...';
+        showStatus('loading', 'Authenticating...');
+
+        try {
+            const res = await fetch(`${API}/Authenticate`, {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body:    JSON.stringify({ username, password })
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+
+                // Enforce vendor-only access on this page
+                if (!isVendorToken(data.accessToken)) {
+                    showStatus('error', 'This login page is for vendors only. Please use the main login page.');
+                    btn.classList.remove('loading'); btn.textContent = 'Sign In as Vendor';
+                    return;
+                }
+
+                localStorage.setItem('jwt_token',     data.accessToken);
+                localStorage.setItem('refresh_token', data.refreshToken || '');
+                localStorage.setItem('auth_type',     'jwt');
+                localStorage.setItem('last_role',     'VENDOR');
+                localStorage.setItem('user_timezone', document.getElementById('tz-select').value);
+                showStatus('success', 'Login successful! Redirecting to vendor dashboard...');
+                setTimeout(() => window.location.href = VENDOR_DASHBOARD, 600);
+            } else {
+                const err = await res.text();
+                showStatus('error', 'Login failed: ' + (err || 'Invalid credentials'));
+                btn.classList.remove('loading'); btn.textContent = 'Sign In as Vendor';
+            }
+        } catch(e) {
+            showStatus('error', 'Connection error: ' + e.message);
+            btn.classList.remove('loading'); btn.textContent = 'Sign In as Vendor';
+        }
+    }
+
+    // Session Login
+    async function sessionLogin() {
+        const username = document.getElementById('session-username').value.trim();
+        const password = document.getElementById('session-password').value;
+        if (!username || !password) { showStatus('error', 'Please enter your email and password'); return; }
+
+        const btn = document.getElementById('session-btn');
+        btn.classList.add('loading'); btn.textContent = 'Signing in...';
+        showStatus('loading', 'Authenticating...');
+
+        try {
+            const res = await fetch(`${API}/session/login`, {
+                method:      'POST',
+                headers:     { 'Content-Type': 'application/json' },
+                body:        JSON.stringify({ username, password }),
+                credentials: 'include'
+            });
+            if (res.ok) {
+                localStorage.setItem('auth_type',     'session');
+                localStorage.setItem('last_role',     'VENDOR');
+                localStorage.setItem('user_timezone', document.getElementById('tz-select').value);
+                showStatus('success', 'Login successful! Redirecting...');
+                setTimeout(() => window.location.href = VENDOR_DASHBOARD, 600);
+            } else {
+                const err = await res.json().catch(() => ({}));
+                showStatus('error', 'Login failed: ' + (err.error || 'Invalid credentials'));
+                btn.classList.remove('loading'); btn.textContent = 'Sign In with Session';
+            }
+        } catch(e) {
+            showStatus('error', 'Connection error: ' + e.message);
+            btn.classList.remove('loading'); btn.textContent = 'Sign In with Session';
+        }
+    }
+
+    // Timezone
+    function updateTz() {
+        localStorage.setItem('user_timezone', document.getElementById('tz-select').value);
+        refreshTzClock();
+    }
+    function refreshTzClock() {
+        const tz = document.getElementById('tz-select').value;
+        document.getElementById('tz-time').textContent =
+            new Date().toLocaleTimeString('en-GB', { timeZone: tz, hour12: false });
+    }
+
+    // Enter key
+    document.addEventListener('keydown', e => {
+        if (e.key !== 'Enter') return;
+        if (document.getElementById('jwt-form').style.display !== 'none') jwtLogin();
+        else sessionLogin();
+    });
+
+    // Init
+    window.onload = () => {
+        const savedTz = localStorage.getItem('user_timezone') || 'Asia/Kolkata';
+        document.getElementById('tz-select').value = savedTz;
+        refreshTzClock();
+        setInterval(refreshTzClock, 1000);
+    };
+</script>
+</body>
+</html>

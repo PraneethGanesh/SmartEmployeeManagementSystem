@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
+@RequestMapping("/manager")
 public class ManagerController {
    private final ManangerService manangerService;
 
@@ -20,7 +21,7 @@ public class ManagerController {
         this.manangerService = manangerService;
     }
 
-    @PostMapping
+    @PostMapping("/employees")
     @PreAuthorize("hasRole('MANAGER')")
     public Employee createEmployee(@RequestBody EmployeeDetails employeeDetails, Authentication authentication){
        return manangerService.createEmp(employeeDetails,authentication);

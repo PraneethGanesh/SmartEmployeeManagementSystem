@@ -17,6 +17,7 @@
             --blue:#4f8cff;--blue-dim:rgba(79,140,255,0.12);
             --violet:#a78bfa;--violet-dim:rgba(167,139,250,0.12);
             --red:#f87171;--red-dim:rgba(248,113,113,0.12);
+            --orange:#f59e0b;--orange-dim:rgba(245,158,11,0.12);
             --green:#34d399;--green-dim:rgba(52,211,153,0.12);
             --font:'Outfit',sans-serif;--mono:'JetBrains Mono',monospace;
         }
@@ -47,13 +48,33 @@
             mask-image:radial-gradient(ellipse 80% 80% at center, black 20%, transparent 80%);
         }
 
+        #oauth-loading {
+            display: none;
+            position: fixed; inset: 0;
+            background: linear-gradient(135deg, #0d0f14 0%, #131720 100%);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            gap: 20px;
+        }
+        #oauth-loading.visible { display: flex; }
+        .spinner {
+            width: 48px; height: 48px;
+            border: 3px solid #2a2f3f;
+            border-top-color: #4f8cff;
+            border-radius: 50%;
+            animation: spin 0.9s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
         /* ---- SPLIT LAYOUT ---- */
         .left-panel{
             flex:1;display:flex;flex-direction:column;justify-content:center;
             padding:60px;position:relative;z-index:1;
             animation:fadeLeft 0.8s ease both;
         }
-        @keyframes fadeLeft{from{opacity:0;transform:translateX(-24px)}to{opacity:1;transform:translateX(0)}}
+        @keyframes fadeLeft{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:translateX(0)}}
         .brand{margin-bottom:48px}
         .brand-logo{display:flex;align-items:center;gap:12px;margin-bottom:20px}
         .brand-icon{
@@ -71,7 +92,7 @@
         }
         .hero-text h1 .hl-blue{color:var(--blue)}
         .hero-text h1 .hl-violet{color:var(--violet)}
-        .hero-text h1 .hl-green{color:var(--green)}
+        .hero-text h1 .hl-orange{color:var(--orange)}
         .hero-text p{font-size:15px;color:var(--text2);line-height:1.6;max-width:380px}
         .feature-pills{display:flex;flex-wrap:wrap;gap:8px;margin-top:32px}
         .pill{
@@ -82,27 +103,7 @@
         .pill .dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
         .pill.blue .dot{background:var(--blue)} .pill.blue{border-color:rgba(79,140,255,0.2);color:rgba(79,140,255,0.8)}
         .pill.violet .dot{background:var(--violet)} .pill.violet{border-color:rgba(167,139,250,0.2);color:rgba(167,139,250,0.8)}
-        .pill.green .dot{background:var(--green)} .pill.green{border-color:rgba(52,211,153,0.2);color:rgba(52,211,153,0.8)}
-
-        #oauth-loading {
-      display: none;
-      position: fixed; inset: 0;
-      background: linear-gradient(135deg, #0d0f14 0%, #131720 100%);
-      z-index: 9999;
-      justify-content: center;
-      align-items: center;
-      flex-direction: column;
-      gap: 20px;
-  }
-  #oauth-loading.visible { display: flex; }
-  .spinner {
-      width: 48px; height: 48px;
-      border: 3px solid #2a2f3f;
-      border-top-color: #4f8cff;
-      border-radius: 50%;
-      animation: spin 0.9s linear infinite;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
+        .pill.orange .dot{background:var(--orange)} .pill.orange{border-color:rgba(245,158,11,0.2);color:rgba(245,158,11,0.8)}
 
         /* ---- RIGHT PANEL (FORM) ---- */
         .right-panel{
@@ -117,9 +118,9 @@
         @keyframes fadeRight{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:translateX(0)}}
         .form-box{width:100%}
 
-        /* ---- ROLE SELECTOR ---- */
+        /* ---- ROLE SELECTOR — 3 roles only: Employee | Manager | Admin ---- */
         .role-label{font-size:10px;font-weight:600;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;font-family:var(--mono);margin-bottom:10px}
-        .role-tabs{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:28px}
+        .role-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:28px}
         .role-tab{
             padding:10px 8px;border-radius:10px;border:1.5px solid var(--border);
             background:var(--bg);color:var(--text2);font-family:var(--font);
@@ -130,7 +131,7 @@
         .role-tab:hover{border-color:var(--border-lit);color:var(--text)}
         .role-tab.active-emp{border-color:var(--blue);background:var(--blue-dim);color:var(--blue)}
         .role-tab.active-mgr{border-color:var(--violet);background:var(--violet-dim);color:var(--violet)}
-        .role-tab.active-vnd{border-color:var(--red);background:var(--red-dim);color:var(--red)}
+        .role-tab.active-adm{border-color:var(--orange);background:var(--orange-dim);color:var(--orange)}
 
         /* ---- AUTH TABS ---- */
         .auth-tabs{display:flex;background:var(--bg);border-radius:10px;padding:4px;gap:4px;margin-bottom:24px;border:1px solid var(--border)}
@@ -154,7 +155,7 @@
         .form-input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(79,140,255,0.08)}
         .form-input::placeholder{color:var(--text3)}
         .form-input.focus-violet:focus{border-color:var(--violet);box-shadow:0 0 0 3px rgba(167,139,250,0.08)}
-        .form-input.focus-red:focus{border-color:var(--red);box-shadow:0 0 0 3px rgba(248,113,113,0.08)}
+        .form-input.focus-orange:focus{border-color:var(--orange);box-shadow:0 0 0 3px rgba(245,158,11,0.08)}
 
         /* ---- BUTTONS ---- */
         .btn-login{
@@ -167,8 +168,8 @@
         .btn-login.blue:hover{background:#6ba0ff;box-shadow:0 6px 20px rgba(79,140,255,0.35);transform:translateY(-1px)}
         .btn-login.violet{background:var(--violet);color:#fff}
         .btn-login.violet:hover{background:#b8a0fc;box-shadow:0 6px 20px rgba(167,139,250,0.35);transform:translateY(-1px)}
-        .btn-login.red{background:var(--red);color:#fff}
-        .btn-login.red:hover{background:#f98a8a;box-shadow:0 6px 20px rgba(248,113,113,0.35);transform:translateY(-1px)}
+        .btn-login.orange{background:var(--orange);color:#fff}
+        .btn-login.orange:hover{background:#f7b23b;box-shadow:0 6px 20px rgba(245,158,11,0.35);transform:translateY(-1px)}
         .btn-login:active{transform:translateY(0)}
         .btn-login.loading{opacity:0.7;pointer-events:none}
 
@@ -195,6 +196,23 @@
         .google-role-select:focus{outline:none;border-color:var(--border-lit)}
         .google-role-select option{background:var(--panel)}
 
+        /* ---- VENDOR LINK ---- */
+        .vendor-link-row{
+            margin-top:18px;padding-top:16px;
+            border-top:1px solid var(--border);
+            display:flex;align-items:center;justify-content:space-between;
+        }
+        .vendor-link-row p{font-size:12px;color:var(--text3);}
+        .btn-vendor-link{
+            padding:7px 16px;border-radius:8px;
+            border:1px solid rgba(248,113,113,0.3);
+            background:var(--red-dim);color:var(--red);
+            font-family:var(--font);font-size:12px;font-weight:600;
+            cursor:pointer;text-decoration:none;transition:all 0.2s;
+            white-space:nowrap;
+        }
+        .btn-vendor-link:hover{background:rgba(248,113,113,0.2);border-color:var(--red);}
+
         /* ---- ERROR / STATUS ---- */
         .status-box{
             border-radius:9px;padding:10px 14px;margin-top:14px;
@@ -217,10 +235,6 @@
         .tz-select:focus{outline:none;border-color:var(--border-lit)}
         .tz-select option{background:var(--panel)}
         .tz-time{font-size:10px;color:var(--blue);font-family:var(--mono)}
-        .demo-box{background:rgba(79,140,255,0.05);border:1px solid rgba(79,140,255,0.1);border-radius:8px;padding:10px 12px;margin-top:8px}
-        .demo-title{font-size:9px;font-weight:700;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;font-family:var(--mono);margin-bottom:6px}
-        .demo-row{font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:3px;display:flex;justify-content:space-between}
-        .demo-row code{color:var(--blue)}
 
         /* ---- RESPONSIVE ---- */
         @media(max-width:900px){
@@ -233,8 +247,8 @@
 <div id="oauth-loading">
     <div class="spinner"></div>
     <div style="text-align: center;">
-        <p style="color: #e0e0e0; font-size: 16px; font-weight: 600; margin: 0 0 6px; font-family: 'DM Sans', sans-serif;">Signing you in...</p>
-        <p style="color: #8b92a8; font-size: 13px; margin: 0; font-family: 'DM Sans', sans-serif;">Verifying your Google account</p>
+        <p style="color: #e0e0e0; font-size: 16px; font-weight: 600; margin: 0 0 6px; font-family: 'Outfit', sans-serif;">Signing you in...</p>
+        <p style="color: #8b92a8; font-size: 13px; margin: 0; font-family: 'Outfit', sans-serif;">Verifying your Google account</p>
     </div>
 </div>
 <div class="bg-layer"></div>
@@ -253,15 +267,15 @@
     </div>
     <div class="hero-text">
         <h1>Your workspace,<br><span class="hl-blue">one login</span><br>away.</h1>
-        <p>Employees, Managers, and Vendors each get their own tailored experience. Sign in to access your personalized dashboard.</p>
+        <p>Employees, Managers, and Admins each get their own tailored experience. Sign in to access your personalized dashboard.</p>
     </div>
     <div class="feature-pills">
         <div class="pill blue"><span class="dot"></span>Employee Portal</div>
         <div class="pill violet"><span class="dot"></span>Manager Console</div>
-        <div class="pill green"><span class="dot"></span>Vendor Hub</div>
+        <div class="pill orange"><span class="dot"></span>Admin Control Center</div>
         <div class="pill blue"><span class="dot"></span>Leave Management</div>
         <div class="pill violet"><span class="dot"></span>Meal Subscriptions</div>
-        <div class="pill green"><span class="dot"></span>Delivery Tracking</div>
+        <div class="pill orange"><span class="dot"></span>Delivery Tracking</div>
     </div>
 </div>
 
@@ -269,7 +283,7 @@
 <div class="right-panel">
     <div class="form-box">
 
-        <!-- ROLE SELECTOR -->
+        <!-- ROLE SELECTOR: 3 roles only — Vendor removed -->
         <div class="role-label">Sign in as</div>
         <div class="role-tabs">
             <button class="role-tab active-emp" id="role-emp" onclick="selectRole('EMPLOYEE')">
@@ -278,8 +292,8 @@
             <button class="role-tab" id="role-mgr" onclick="selectRole('MANAGER')">
                 <span class="role-icon">🗂</span>Manager
             </button>
-            <button class="role-tab" id="role-vnd" onclick="selectRole('VENDOR')">
-                <span class="role-icon">🏪</span>Vendor
+            <button class="role-tab" id="role-adm" onclick="selectRole('ADMIN')">
+                <span class="role-icon">🛡</span>Admin
             </button>
         </div>
 
@@ -315,14 +329,14 @@
             <button class="btn-login blue" id="session-btn" onclick="sessionLogin()">Sign In with Session</button>
         </div>
 
-        <!-- OAUTH -->
+        <!-- OAUTH — Vendor removed from Google role select -->
         <div class="divider">or continue with</div>
         <div class="google-role-row">
             <span class="google-role-label">Sign in as</span>
             <select class="google-role-select" id="oauth-role">
                 <option value="EMPLOYEE">Employee</option>
                 <option value="MANAGER">Manager</option>
-                <option value="VENDOR">Vendor</option>
+                <option value="ADMIN">Admin</option>
             </select>
         </div>
         <button class="btn-google" onclick="googleLogin()">
@@ -336,6 +350,12 @@
         </button>
 
         <div class="status-box" id="status-box"></div>
+
+        <!-- Vendor Login Link -->
+        <div class="vendor-link-row">
+            <p>Are you a vendor?</p>
+            <a class="btn-vendor-link" href="/vendor-login.html">Vendor Login →</a>
+        </div>
 
         <!-- FOOTER -->
         <div class="form-footer">
@@ -365,21 +385,18 @@
     const GOOGLE_CLIENT_ID = '525324511556-s9eugd1o761n6cjje2nr60cv8ho6joq2.apps.googleusercontent.com';
     const REDIRECT_URI = 'http://localhost:8080/google.html';
 
-    // Role → dashboard mapping
+    // Role dashboard mapping — VENDOR removed from this page
     const DASHBOARDS = {
         EMPLOYEE: '/employee-dashboard.html',
         MANAGER:  '/manager-dashboard.html',
-        VENDOR:   '/vendor-dashboard.html'
+        ADMIN:    '/dashboard.html'
     };
 
     let currentRole = 'EMPLOYEE';
 
     function buildAuthOptions(token, authType) {
         const headers = {};
-        if (token) {
-            headers.Authorization = `Bearer ${token}`;
-        }
-
+        if (token) headers.Authorization = `Bearer ${token}`;
         return {
             headers,
             credentials: authType === 'session' ? 'include' : 'same-origin'
@@ -389,11 +406,7 @@
     async function resolveRoleFromServer(token, authType) {
         const authOptions = buildAuthOptions(token, authType);
 
-        const vendorResponse = await fetch(`${API}/vendors/me`, authOptions);
-        if (vendorResponse.ok) {
-            return 'VENDOR';
-        }
-
+        // Check employee/manager/admin endpoint — vendors are not expected here
         const employeeResponse = await fetch(`${API}/employee/me`, authOptions);
         if (employeeResponse.ok) {
             const employee = await employeeResponse.json();
@@ -413,39 +426,43 @@
             console.warn('Role lookup failed, using saved role', e);
         }
 
+        // If somehow a vendor token ends up here, send them to the right place
+        if (role === 'VENDOR') {
+            window.location.href = '/vendor-login.html';
+            return;
+        }
+
         window.location.href = DASHBOARDS[role] || DASHBOARDS.EMPLOYEE;
     }
 
-
-    // ---- Role selector ----
+    // ---- Role selector (3 tabs: Employee | Manager | Admin) ----
     function selectRole(role) {
         currentRole = role;
-        // Reset all tabs
         document.getElementById('role-emp').className = 'role-tab';
         document.getElementById('role-mgr').className = 'role-tab';
-        document.getElementById('role-vnd').className = 'role-tab';
-        // Activate selected
-        const classMap = { EMPLOYEE: 'active-emp', MANAGER: 'active-mgr', VENDOR: 'active-vnd' };
-        const idMap = { EMPLOYEE: 'role-emp', MANAGER: 'role-mgr', VENDOR: 'role-vnd' };
+        document.getElementById('role-adm').className = 'role-tab';
+
+        const classMap = { EMPLOYEE: 'active-emp', MANAGER: 'active-mgr', ADMIN: 'active-adm' };
+        const idMap    = { EMPLOYEE: 'role-emp',   MANAGER: 'role-mgr',   ADMIN: 'role-adm'   };
         document.getElementById(idMap[role]).classList.add(classMap[role]);
-        // Sync google role select
+
         document.getElementById('oauth-role').value = role;
-        // Update button accent color
-        const colorMap = { EMPLOYEE: 'blue', MANAGER: 'violet', VENDOR: 'red' };
+
+        const colorMap = { EMPLOYEE: 'blue', MANAGER: 'violet', ADMIN: 'orange' };
         const col = colorMap[role];
-        document.getElementById('jwt-btn').className = `btn-login ${col}`;
+        document.getElementById('jwt-btn').className     = `btn-login ${col}`;
         document.getElementById('session-btn').className = `btn-login ${col}`;
-        // Update input focus color
+
         document.querySelectorAll('.form-input').forEach(inp => {
-            inp.className = `form-input focus-${col === 'blue' ? '' : col}`.trim();
+            inp.className = (`form-input focus-${col === 'blue' ? '' : col}`).trim();
         });
     }
 
     // ---- Auth tab switching ----
     function switchTab(type) {
-        document.getElementById('jwt-form').style.display = type === 'jwt' ? 'block' : 'none';
+        document.getElementById('jwt-form').style.display     = type === 'jwt'     ? 'block' : 'none';
         document.getElementById('session-form').style.display = type === 'session' ? 'block' : 'none';
-        document.getElementById('tab-jwt').classList.toggle('active', type === 'jwt');
+        document.getElementById('tab-jwt').classList.toggle('active',     type === 'jwt');
         document.getElementById('tab-session').classList.toggle('active', type === 'session');
         hideStatus();
     }
@@ -453,8 +470,8 @@
     // ---- Status display ----
     function showStatus(type, msg) {
         const box = document.getElementById('status-box');
-        box.className = `status-box ${type}`;
-        box.textContent = msg;
+        box.className     = `status-box ${type}`;
+        box.textContent   = msg;
         box.style.display = 'block';
     }
     function hideStatus() {
@@ -466,21 +483,23 @@
         const username = document.getElementById('jwt-username').value.trim();
         const password = document.getElementById('jwt-password').value;
         if (!username || !password) { showStatus('error', 'Please enter your username and password'); return; }
+
         const btn = document.getElementById('jwt-btn');
         btn.classList.add('loading'); btn.textContent = 'Signing in...';
         showStatus('loading', 'Authenticating...');
+
         try {
             const res = await fetch(`${API}/Authenticate`, {
-                method: 'POST',
+                method:  'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password })
+                body:    JSON.stringify({ username, password })
             });
             if (res.ok) {
                 const data = await res.json();
-                localStorage.setItem('jwt_token', data.accessToken);
+                localStorage.setItem('jwt_token',     data.accessToken);
                 localStorage.setItem('refresh_token', data.refreshToken || '');
-                localStorage.setItem('auth_type', 'jwt');
-                localStorage.setItem('last_role', currentRole);
+                localStorage.setItem('auth_type',     'jwt');
+                localStorage.setItem('last_role',     currentRole);
                 localStorage.setItem('user_timezone', document.getElementById('tz-select').value);
                 showStatus('success', 'Login successful! Redirecting...');
                 setTimeout(() => redirectByRole(data.accessToken, 'jwt'), 600);
@@ -501,19 +520,21 @@
         const username = document.getElementById('session-username').value.trim();
         const password = document.getElementById('session-password').value;
         if (!username || !password) { showStatus('error', 'Please enter your username and password'); return; }
+
         const btn = document.getElementById('session-btn');
         btn.classList.add('loading'); btn.textContent = 'Signing in...';
         showStatus('loading', 'Authenticating...');
+
         try {
             const res = await fetch(`${API}/session/login`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password }),
+                method:      'POST',
+                headers:     { 'Content-Type': 'application/json' },
+                body:        JSON.stringify({ username, password }),
                 credentials: 'include'
             });
             if (res.ok) {
-                localStorage.setItem('auth_type', 'session');
-                localStorage.setItem('last_role', currentRole);
+                localStorage.setItem('auth_type',     'session');
+                localStorage.setItem('last_role',     currentRole);
                 localStorage.setItem('user_timezone', document.getElementById('tz-select').value);
                 showStatus('success', 'Login successful! Redirecting...');
                 setTimeout(() => redirectByRole(null, 'session'), 600);
@@ -528,12 +549,10 @@
         }
     }
 
-    // ---- Google OAuth ----
+    // ---- Google OAuth — goes through backend /auth/google/init ----
     function googleLogin() {
         const role     = document.getElementById('oauth-role').value;
         const timezone = document.getElementById('tz-select').value;
-
-        // Go to YOUR backend init endpoint — NOT directly to Google
         window.location.href =
             `/auth/google/init` +
             `?role=${encodeURIComponent(role)}` +
@@ -542,13 +561,12 @@
 
     // ---- Spring redirects back here with tokens as query params ----
     async function handleOAuthCallback() {
-        const params = new URLSearchParams(window.location.search);
+        const params       = new URLSearchParams(window.location.search);
         const accessToken  = params.get('accessToken');
         const refreshToken = params.get('refreshToken');
 
-        if (!accessToken) return; // Not an OAuth callback, normal page load
+        if (!accessToken) return; // Normal page load, not a callback
 
-        // Clean tokens from the URL immediately
         window.history.replaceState({}, document.title, window.location.pathname);
 
         localStorage.setItem('jwt_token',     accessToken);
@@ -561,14 +579,13 @@
 
     // ---- Timezone ----
     function updateTz() {
-        const tz = document.getElementById('tz-select').value;
-        localStorage.setItem('user_timezone', tz);
+        localStorage.setItem('user_timezone', document.getElementById('tz-select').value);
         refreshTzClock();
     }
     function refreshTzClock() {
         const tz = document.getElementById('tz-select').value;
-        const t = new Date().toLocaleTimeString('en-GB', { timeZone: tz, hour12: false });
-        document.getElementById('tz-time').textContent = t;
+        document.getElementById('tz-time').textContent =
+            new Date().toLocaleTimeString('en-GB', { timeZone: tz, hour12: false });
     }
 
     // ---- Enter key support ----
@@ -585,14 +602,12 @@
         refreshTzClock();
         setInterval(refreshTzClock, 1000);
 
-        const params = new URLSearchParams(window.location.search);
-        const accessToken = params.get('accessToken');  // ← was 'code', now 'accessToken'
-
+        const params      = new URLSearchParams(window.location.search);
+        const accessToken = params.get('accessToken');
         if (accessToken) {
-            // Coming back from Spring OAuth success handler
             document.getElementById('oauth-loading').classList.add('visible');
             document.querySelector('.right-panel').style.display = 'none';
-            document.querySelector('.left-panel').style.display = 'none';
+            document.querySelector('.left-panel').style.display  = 'none';
             handleOAuthCallback();
         }
     };
