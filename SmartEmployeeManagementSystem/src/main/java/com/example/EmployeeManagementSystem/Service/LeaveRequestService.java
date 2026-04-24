@@ -225,4 +225,48 @@ public class LeaveRequestService {
                 "requests", response
         ));
     }
+    public List<LeaveResponseDTO> getPendingLeaves() {
+        List<LeaveRequest> pendingRequests = leaveRequestRepo.findByStatus(LeaveStatus.PENDING);
+        return pendingRequests.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Approve a leave request by ID (simplified version for AdminController).
+     * Returns LeaveResponseDTO directly.
+     */
+    public LeaveResponseDTO approveLeave(Long id) {
+        LeaveRequest leaveRequest = leaveRequestRepo.findById(id)
+                .orElseThrow(() -> new LeaveRequestNotFoundException("Leave request with id: " + id + " not found"));
+
+        if (leaveRequest.getStatus() != LeaveStatus.PENDING) {
+            throw new IllegalStateException("Only PENDING requests can be approved. Current status: " + leaveRequest.getStatus());
+        }
+
+        leaveRequest.setStatus(LeaveStatus.APPROVED);
+        leaveRequest.setManager("ADMIN"); // Or get from security context if needed
+
+        LeaveRequest saved = leaveRequestRepo.save(leaveRequest);
+        return convertToDTO(saved);
+    }
+
+    /**
+     * Reject a leave request by ID (simplified version for AdminController).
+     * Returns LeaveResponseDTO directly.
+     */
+    public LeaveResponseDTO rejectLeave(Long id) {
+        LeaveRequest leaveRequest = leaveRequestRepo.findById(id)
+                .orElseThrow(() -> new LeaveRequestNotFoundException("Leave request with id: " + id + " not found"));
+
+        if (leaveRequest.getStatus() != LeaveStatus.PENDING) {
+            throw new IllegalStateException("Only PENDING requests can be rejected. Current status: " + leaveRequest.getStatus());
+        }
+
+        leaveRequest.setStatus(LeaveStatus.REJECTED);
+        leaveRequest.setManager("ADMIN");
+
+        LeaveRequest saved = leaveRequestRepo.save(leaveRequest);
+        return convertToDTO(saved);
+    }
 }

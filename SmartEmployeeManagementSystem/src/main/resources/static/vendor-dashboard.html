@@ -346,9 +346,10 @@
             try{
                 const p=JSON.parse(atob(token.split('.')[1]));
                 const roles=p.roles||p.authorities||'';
-                if(roles.includes('ROLE_VENDOR')) { window.location.href = '/vendor-dashboard.html'; return; }
+                if(roles.includes('ROLE_VENDOR')) { initUser(); return; }
                 if(roles.includes('ROLE_EMPLOYEE')){window.location.href='/employee-dashboard.html';return;}
                 if(roles.includes('ROLE_MANAGER')){window.location.href='/manager-dashboard.html';return;}
+                if(roles.includes('ROLE_ADMIN')){window.location.href='/dashboard.html';return;}
             }catch(e){}
         }
         initUser();

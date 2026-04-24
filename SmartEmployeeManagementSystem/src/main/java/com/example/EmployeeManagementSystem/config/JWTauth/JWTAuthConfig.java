@@ -18,6 +18,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -35,9 +36,9 @@ import java.util.List;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 public class JWTAuthConfig {
 
-    // ✅ Inject everything you need
     private final JwtAuthFilter jwtAuthFilter;
     private final ApiKeyAuthenticationProvider apiKeyAuthProvider;
     private final EmployeeRepo employeeRepo;
@@ -46,7 +47,13 @@ public class JWTAuthConfig {
     private final RefreshTokenRepository refreshTokenRepository;
     private final JWTUtil jwtUtil;
 
-    public JWTAuthConfig(JwtAuthFilter jwtAuthFilter, ApiKeyAuthenticationProvider apiKeyAuthProvider, EmployeeRepo employeeRepo, VendorRepo vendorRepo, RefreshTokenService refreshTokenService, RefreshTokenRepository refreshTokenRepository, JWTUtil jwtUtil) {
+    public JWTAuthConfig(JwtAuthFilter jwtAuthFilter,
+                         ApiKeyAuthenticationProvider apiKeyAuthProvider,
+                         EmployeeRepo employeeRepo,
+                         VendorRepo vendorRepo,
+                         RefreshTokenService refreshTokenService,
+                         RefreshTokenRepository refreshTokenRepository,
+                         JWTUtil jwtUtil) {
         this.jwtAuthFilter = jwtAuthFilter;
         this.apiKeyAuthProvider = apiKeyAuthProvider;
         this.employeeRepo = employeeRepo;
@@ -55,7 +62,6 @@ public class JWTAuthConfig {
         this.refreshTokenRepository = refreshTokenRepository;
         this.jwtUtil = jwtUtil;
     }
-
 
     @Bean
     public RestTemplate getRestTemplate() {
@@ -81,13 +87,11 @@ public class JWTAuthConfig {
         return new ProviderManager(provider);
     }
 
-    // ✅ Now has all required dependencies
     @Bean
     public CustomOAuth2UserService customOAuth2UserService() {
         return new CustomOAuth2UserService(employeeRepo, vendorRepo, passwordEncoder());
     }
 
-    // ✅ Now has all required dependencies
     @Bean
     public OAuth2SuccessHandler oAuth2SuccessHandler() {
         return new OAuth2SuccessHandler(jwtUtil, employeeRepo, vendorRepo,
@@ -110,28 +114,44 @@ public class JWTAuthConfig {
                         .maxSessionsPreventsLogin(false)
                 )
                 .authorizeHttpRequests(auth -> auth
+                        // Auth endpoints
                         .requestMatchers("/Authenticate", "/Authenticate/refresh").permitAll()
                         .requestMatchers("/session/login", "/session/logout").permitAll()
+
+                        // OAuth2 endpoints
                         .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
-                        .requestMatchers("/auth/google/init").permitAll()          // ✅ init endpoint
-                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                        .requestMatchers("/google.html", "/login.html", "/dashboard.html").permitAll()
-                        .requestMatchers("/employee-dashboard.html", "/vendor-dashboard.html").permitAll()
                         .requestMatchers("/auth/google/init").permitAll()
+
+                        // API docs
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+
+                        // Static pages — Employee/Manager/Admin login (Vendor removed from here)
+                        .requestMatchers("/login.html", "/google.html").permitAll()
+
+                        // Dashboards — served as static HTML, actual data is protected by JWT
+                        .requestMatchers("/dashboard.html").permitAll()
+                        .requestMatchers("/employee-dashboard.html").permitAll()
+                        .requestMatchers("/manager-dashboard.html").permitAll()
+
+                        // Vendor gets its own dedicated login page
+                        .requestMatchers("/vendor-login.html").permitAll()
+                        // Vendor dashboard still accessible (content protected by JWT)
+                        .requestMatchers("/vendor-dashboard.html").permitAll()
+
+                        // API key generation requires authentication
                         .requestMatchers("/api-keys/generate").authenticated()
+
+                        // Everything else requires a valid token
                         .anyRequest().authenticated()
                 )
-
-                // ✅ THIS WAS MISSING — the entire oauth2Login block
                 .oauth2Login(oauth -> oauth
                         .userInfoEndpoint(userInfo -> userInfo
                                 .userService(customOAuth2UserService())
                         )
                         .successHandler(oAuth2SuccessHandler())
                 )
-
-                .addFilterBefore(apiKeyFilter(), UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(apiKeyFilter(), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

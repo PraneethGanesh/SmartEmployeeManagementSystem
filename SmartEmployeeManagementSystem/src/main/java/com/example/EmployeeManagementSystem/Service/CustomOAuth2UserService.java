@@ -61,6 +61,8 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 Vendor v = new Vendor();
                 v.setEmail(email);
                 v.setName(name);
+                v.setRole(Role.VENDOR);
+                v.setPhone("UNAVAILABLE");
                 v.setPassword(passwordEncoder.encode(UUID.randomUUID().toString()));
                 vendorRepo.save(v);
 

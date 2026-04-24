@@ -11,6 +11,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Restaurant management endpoints.
@@ -94,7 +95,7 @@ public class RestaurantController {
      * Employees use this to discover available restaurants before subscribing.
      */
     @GetMapping
-    @PreAuthorize("hasAuthority('RESTAURANTS_READ')")
+    @PreAuthorize("hasAnyRole('ADMIN') or hasAuthority('RESTAURANTS_READ')")
     public ResponseEntity<List<RestaurantDTO>> getAllActiveRestaurants() {
         return ResponseEntity.ok(restaurantService.getAllActiveRestaurants());
     }
@@ -103,7 +104,7 @@ public class RestaurantController {
      * Get a specific restaurant by id.
      */
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('RESTAURANTS_READ')")
+    @PreAuthorize("hasAnyRole('ADMIN') or hasAuthority('RESTAURANTS_READ')")
     public ResponseEntity<RestaurantDTO> getRestaurant(@PathVariable Long id) {
         return ResponseEntity.ok(restaurantService.getRestaurant(id));
     }
@@ -114,8 +115,9 @@ public class RestaurantController {
      * Employees call this when building their subscription to see valid options for each slot.
      */
     @GetMapping("/by-slot")
-    @PreAuthorize("hasAnyRole('VENDOR','EMPLOYEE','MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN','VENDOR','EMPLOYEE','MANAGER')")
     public ResponseEntity<List<RestaurantDTO>> getRestaurantsByMealSlot(@RequestParam MealSlot slot) {
         return ResponseEntity.ok(restaurantService.getRestaurantsByMealSlot(slot));
     }
+
 }

@@ -2,6 +2,7 @@ package com.example.EmployeeManagementSystem.Service;
 
 import com.example.EmployeeManagementSystem.DTO.EmployeeDetails;
 import com.example.EmployeeManagementSystem.Entity.Employee;
+import com.example.EmployeeManagementSystem.Enum.Role;
 import com.example.EmployeeManagementSystem.Exception.EmployeeNotFound;
 import com.example.EmployeeManagementSystem.Repository.EmployeeRepo;
 import com.example.EmployeeManagementSystem.Util.AuthUtil;
@@ -29,7 +30,12 @@ public class ManangerService {
         employee.setPassword(passwordEncoder.encode(employeeDetails.getPassword()));
         employee.setDept(manager.getDept());
         employee.setManager(manager.getEmail());
-        employee.setTimezone(employeeDetails.getTimezone());
+        employee.setRole(Role.EMPLOYEE);
+        employee.setTimezone(
+                employeeDetails.getTimezone() != null && !employeeDetails.getTimezone().isBlank()
+                        ? employeeDetails.getTimezone()
+                        : "UTC"
+        );
         return employeeRepo.save(employee);
     }
 }
