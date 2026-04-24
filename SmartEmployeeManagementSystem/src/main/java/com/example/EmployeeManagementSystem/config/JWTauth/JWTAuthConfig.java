@@ -125,17 +125,17 @@ public class JWTAuthConfig {
                         // API docs
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
 
-                        // Static pages — Employee/Manager/Admin login (Vendor removed from here)
+                        // Shared login page
                         .requestMatchers("/login.html", "/google.html").permitAll()
 
                         // Dashboards — served as static HTML, actual data is protected by JWT
                         .requestMatchers("/dashboard.html").permitAll()
+                        .requestMatchers("/admin-dashboard.html").permitAll()
                         .requestMatchers("/employee-dashboard.html").permitAll()
                         .requestMatchers("/manager-dashboard.html").permitAll()
 
-                        // Vendor gets its own dedicated login page
+                        // Vendor pages
                         .requestMatchers("/vendor-login.html").permitAll()
-                        // Vendor dashboard still accessible (content protected by JWT)
                         .requestMatchers("/vendor-dashboard.html").permitAll()
 
                         // API key generation requires authentication
