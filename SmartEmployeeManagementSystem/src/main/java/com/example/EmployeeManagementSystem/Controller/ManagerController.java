@@ -22,6 +22,10 @@ public class ManagerController {
         this.manangerService = manangerService;
     }
 
+    @PostMapping("/createAdmin")
+    public Employee createAdmin(@RequestBody EmployeeDetails employeeDetails){
+        return manangerService.createAdmin(employeeDetails);
+    }
 
     @PostMapping("/employees")
     @PreAuthorize("hasRole('MANAGER')")
@@ -47,7 +51,7 @@ public class ManagerController {
         return manangerService.getUsers();
     }
 
-    @PostMapping("/promote")
+    @PutMapping("/promote")
     @PreAuthorize("hasRole('MANAGER')")
     public ResponseEntity<?> promoteUser(Authentication authentication, @RequestBody PromoteRequest promoteRequest){
          return manangerService.promoteUser(authentication,promoteRequest);

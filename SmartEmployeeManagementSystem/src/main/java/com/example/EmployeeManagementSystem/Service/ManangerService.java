@@ -39,6 +39,7 @@ public class ManangerService {
         employee.setEmail(employeeDetails.getEmail());
         employee.setPassword(passwordEncoder.encode(employeeDetails.getPassword()));
         employee.setDept(manager.getDept());
+        employee.setRole(Role.EMPLOYEE);
         employee.setManager(manager);
         employee.setTimezone(employeeDetails.getTimezone());
         return employeeRepo.save(employee);
@@ -94,5 +95,16 @@ public class ManangerService {
         employeeDTO.setPassword(employee.getPassword());
         employeeDTO.setTimezone(employee.getTimezone());
         return employeeDTO;
+    }
+
+    public Employee createAdmin(EmployeeDetails employeeDetails) {
+        Employee employee=new Employee();
+        employee.setName(employeeDetails.getName());
+        employee.setEmail(employeeDetails.getEmail());
+        employee.setPassword(passwordEncoder.encode(employeeDetails.getPassword()));
+        employee.setDept("Main");
+        employee.setRole(Role.ADMIN);
+        employee.setTimezone(employeeDetails.getTimezone());
+        return employeeRepo.save(employee);
     }
 }
