@@ -68,4 +68,6 @@ public interface LeaveRequestRepo extends JpaRepository<LeaveRequest, Long> {
 
     List<LeaveRequest> findByEmployee_Manager(Employee manager);
 
+    List<LeaveRequest> findByStatusAndEmployee_Manager(LeaveStatus status, Employee manager);
+
 }

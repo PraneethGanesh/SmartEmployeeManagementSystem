@@ -15,4 +15,6 @@ public interface EmployeeRepo extends JpaRepository<Employee,Long> {
     long countByRole(Role role);
 
     List<Employee> findByManager(Employee manager);
+
+    List<Employee> findByRole(Role role);
 }

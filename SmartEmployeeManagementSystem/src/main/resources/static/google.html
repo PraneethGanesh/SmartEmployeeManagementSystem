@@ -418,23 +418,38 @@
     }
 
     async function redirectByRole(token, authType = localStorage.getItem('auth_type')) {
-        let role = localStorage.getItem('last_role') || 'EMPLOYEE';
+    let role;
 
+    if (token) {
+        role = getRoleFromJWT(token);
+    } else {
         try {
-            role = await resolveRoleFromServer(token, authType);
-            localStorage.setItem('last_role', role);
-        } catch (e) {
-            console.warn('Role lookup failed, using saved role', e);
+            const res = await fetch(`${API}/employee/me`, {
+                credentials: 'include'
+            });
+            if (res.ok) {
+                const emp = await res.json();
+                role = emp.role || 'USER';
+            } else {
+                role = 'USER';
+            }
+        } catch(e) {
+            role = localStorage.getItem('last_role') || 'USER';
         }
-
-        // If somehow a vendor token ends up here, send them to the right place
-        if (role === 'VENDOR') {
-            window.location.href = '/vendor-login.html';
-            return;
-        }
-
-        window.location.href = DASHBOARDS[role] || DASHBOARDS.EMPLOYEE;
     }
+
+    console.log('Final role for redirect:', role);
+    localStorage.setItem('last_role', role);
+
+    if (role === 'VENDOR') {
+        window.location.href = '/vendor-login.html';
+        return;
+    }
+
+    const destination = DASHBOARDS[role] || '/pending.html';
+    console.log('Redirecting to:', destination);
+    window.location.href = destination;
+}
 
     // ---- Role selector (3 tabs: Employee | Manager | Admin) ----
     function selectRole(role) {
@@ -560,16 +575,18 @@
             `&timezone=${encodeURIComponent(timezone)}`;
     }
 
-    function getRoleFromJWT(token) {
+   function getRoleFromJWT(token) {
     try {
         const payload = JSON.parse(atob(token.split('.')[1]));
         console.log('JWT payload:', payload);
-        return payload.role || 'USER'; // "role" matches your JWTUtil claim name exactly
+        const role = payload.role || 'USER';
+        // Strip ROLE_ prefix if accidentally present
+        return typeof role === 'string' ? role.replace(/^ROLE_/, '') : 'USER';
     } catch (e) {
         console.error('Failed to parse JWT:', e);
         return 'USER';
     }
-   }
+  }
 
     // ---- Spring redirects back here with tokens as query params ----
     async function handleOAuthCallback() {
