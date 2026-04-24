@@ -47,7 +47,12 @@ public class Vendor implements UserDetails {
 
     @PrePersist
     public void init() {
-        this.registeredAt = LocalDate.now();
+        if (this.registeredAt == null) {
+            this.registeredAt = LocalDate.now();
+        }
+        if (this.role == null) {
+            this.role = Role.VENDOR;
+        }
     }
 
     public Long getId() { return id; }
@@ -68,9 +73,10 @@ public class Vendor implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
+        Role effectiveRole = role != null ? role : Role.VENDOR;
         Set<SimpleGrantedAuthority> authorities=new HashSet<>();
-        authorities.add(new SimpleGrantedAuthority("ROLE_"+role.name()));
-        authorities.addAll(Role.VENDOR.getPermissions().stream()
+        authorities.add(new SimpleGrantedAuthority("ROLE_"+effectiveRole.name()));
+        authorities.addAll(effectiveRole.getPermissions().stream()
                 .map(permissions -> new SimpleGrantedAuthority(permissions.name()))
                 .collect(Collectors.toSet()));
         return authorities;

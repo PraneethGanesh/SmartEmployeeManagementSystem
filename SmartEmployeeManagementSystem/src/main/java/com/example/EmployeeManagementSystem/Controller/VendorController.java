@@ -3,26 +3,24 @@ package com.example.EmployeeManagementSystem.Controller;
 import com.example.EmployeeManagementSystem.DTO.VendorDTO;
 import com.example.EmployeeManagementSystem.DTO.VendorRequest;
 import com.example.EmployeeManagementSystem.Service.DeliveryService;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 /**
- * Vendor management endpoints.
+ * Vendor self-service API — used exclusively by authenticated VENDOR accounts.
  *
- * POST   /vendors              — Register a new vendor (public / admin)
- * GET    /vendors              — List all vendors (admin)
- * GET    /vendors/{id}         — Get a specific vendor
- * PUT    /vendors/{id}         — Update vendor details (vendor-only)
- * DELETE /vendors/{id}         — Remove vendor (admin)
+ * Vendors are created by the Admin via POST /admin/vendors (see AdminController).
+ * Vendors log in through the dedicated /vendor-login.html page.
  *
- * NOTE: Until Spring Security is wired in, role checks are done manually in the
- *       service layer. Employees and managers have NO access to /vendors/** write operations
- *       — the service will throw UnauthorizedAccessException if called with wrong role context.
+ * Endpoints:
+ *   GET  /vendors/me        — get own vendor profile
+ *   PUT  /vendors/update    — update own profile
+ *   DELETE /vendors         — delete own account
+ *
+ * Registration and listing endpoints have been moved to AdminController.
+ * All endpoints here require ROLE_VENDOR only.
  */
 @RestController
 @RequestMapping("/vendors")
@@ -53,16 +51,28 @@ public class VendorController {
         return ResponseEntity.ok(vendorService.getVendor(authentication));
     }
 
+    /**
+     * Vendor updates their own profile details (name, contact, etc.).
+     * Credentials (email/password) changes should go through a separate
+     * secure flow; this endpoint handles non-sensitive fields.
+     */
     @PutMapping("/update")
     @PreAuthorize("hasRole('VENDOR')")
-    public ResponseEntity<VendorDTO> updateVendor(@RequestBody VendorRequest request,Authentication authentication) {
-        return ResponseEntity.ok(vendorService.updateVendor(request,authentication));
+    public ResponseEntity<VendorDTO> updateVendor(
+            @RequestBody VendorRequest request,
+            Authentication authentication) {
+        return ResponseEntity.ok(vendorService.updateVendor(request, authentication));
     }
 
+    /**
+     * Vendor deletes (closes) their own account.
+     * Admin can remove a vendor via DELETE /admin/vendors/{id}.
+     */
     @DeleteMapping
     @PreAuthorize("hasRole('VENDOR')")
     public ResponseEntity<String> deleteVendor(Authentication authentication) {
         vendorService.deleteVendor(authentication);
-        return ResponseEntity.ok("Vendor with email " + authentication.getName() + " has been removed.");
+        return ResponseEntity.ok(
+                "Vendor account for " + authentication.getName() + " has been closed.");
     }
 }

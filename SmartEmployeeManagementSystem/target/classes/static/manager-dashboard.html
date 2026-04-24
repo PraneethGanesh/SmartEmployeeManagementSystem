@@ -467,10 +467,10 @@
         const password=document.getElementById('emp-pass').value;
         const dept=document.getElementById('emp-dept').value.trim();
         const role=document.getElementById('emp-role').value;
-        const managerId=document.getElementById('emp-manager').value;
         if(!name||!email||!password||!dept){showAlert('Please fill all required fields','error');return;}
+        if(role!=='EMPLOYEE'){showAlert('Managers can only add employees from this screen','error');return;}
         try{
-            await apiFetch('/employee/register',{method:'POST',body:JSON.stringify({name,email,password,dept,role,managerId:managerId?parseInt(managerId):null})});
+            await apiFetch('/manager/employees',{method:'POST',body:JSON.stringify({name,email,password,timezone:'UTC'})});
             showAlert('Employee added successfully!','success');clearEmpForm();
         }catch(e){showAlert('Failed: '+e.message,'error');}
     }

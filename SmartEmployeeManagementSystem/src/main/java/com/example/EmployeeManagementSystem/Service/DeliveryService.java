@@ -151,6 +151,12 @@ public class DeliveryService {
             log.info("Vendor deleted: email={}", email);
         }
 
+        public void deleteVendorById(Long vendorId) {
+            Vendor vendor = findOrThrow(vendorId);
+            vendorRepo.delete(vendor);
+            log.info("Vendor deleted by admin: id={}, email={}", vendor.getId(), vendor.getEmail());
+        }
+
         // ── helpers ──────────────────────────────────────────────────────────────
 
         private Vendor findOrThrow(Long id) {

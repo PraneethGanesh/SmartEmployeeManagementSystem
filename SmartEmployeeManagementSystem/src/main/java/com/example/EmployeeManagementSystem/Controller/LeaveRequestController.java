@@ -21,25 +21,25 @@ public class LeaveRequestController {
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
     public ResponseEntity<List<LeaveResponseDTO>> getAllLeaveRequest() {
         return ResponseEntity.ok(leaveRequestService.getAllTheLeaveRequest());
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('MANAGER','EMPLOYEE')")
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER','EMPLOYEE')")
     public ResponseEntity<?> addLeaveRequest(Authentication authentication,@RequestBody LeaveRequestDTO dto){
         return leaveRequestService.createRequest(authentication,dto);
     }
 
     @GetMapping("/pending")
-    @PreAuthorize("hasRole('MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
     public ResponseEntity<List<LeaveResponseDTO>> getAllTheLeaveRequests() {
         return ResponseEntity.ok(leaveRequestService.getAllThePendingLeaveRequests());
     }
 
     @PutMapping("/approval")
-    @PreAuthorize("hasRole('MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
     public ResponseEntity<?> updateLeaveRequestStatus(@RequestBody ActionDTO actionDTO,Authentication authentication){
       return leaveRequestService.updateLeaveRequestStatus(actionDTO,authentication);
     }
@@ -51,7 +51,7 @@ public class LeaveRequestController {
     }
 
     @GetMapping("/employee")
-    @PreAuthorize("hasAnyRole('MANAGER','EMPLOYEE')")
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER','EMPLOYEE')")
     public ResponseEntity<?> getEmployeeLeaves(Authentication authentication) {
         return leaveRequestService.getLeaveRequestsByEmployee(authentication);
     }

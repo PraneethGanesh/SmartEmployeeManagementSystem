@@ -18,22 +18,25 @@ public class EmployeeController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('MANAGER','ADMIN')")
     public ResponseEntity<?> getAllEmployees(){
         return ResponseEntity.ok(employeeService.getAllEmployees());
     }
 
     @GetMapping("/me")
-    @PreAuthorize("hasAnyRole('MANAGER','EMPLOYEE')")
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER','EMPLOYEE')")
     public ResponseEntity<Employee> myAccount(Authentication authentication){
         return ResponseEntity.ok(employeeService.getAccount(authentication));
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Employee> updateEmployee(@PathVariable long id,@RequestBody EmployeeDTO employeeDTO){
         return ResponseEntity.ok(employeeService.updateEmployee(id,employeeDTO));
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> deleteEmployee(@PathVariable long id){
         employeeService.deleteEmployee(id);
         return ResponseEntity.ok("Employee with id: "+id+" is deleted");
@@ -41,7 +44,7 @@ public class EmployeeController {
 
     //should be done by manager
     @PutMapping("/inactive")
-    @PreAuthorize("hasRole('MANAGER')")
+    @PreAuthorize("hasAnyRole('MANAGER','ADMIN')")
     public ResponseEntity<String> inactivateEmployee(@RequestParam long employeeId) {
         return employeeService.inactivateUser(employeeId);
     }

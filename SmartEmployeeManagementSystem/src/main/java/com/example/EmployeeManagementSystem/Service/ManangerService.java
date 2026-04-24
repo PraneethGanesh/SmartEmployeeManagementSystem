@@ -2,6 +2,7 @@ package com.example.EmployeeManagementSystem.Service;
 
 import com.example.EmployeeManagementSystem.DTO.EmployeeDetails;
 import com.example.EmployeeManagementSystem.Entity.Employee;
+import com.example.EmployeeManagementSystem.Enum.Role;
 import com.example.EmployeeManagementSystem.Exception.EmployeeNotFound;
 import com.example.EmployeeManagementSystem.Repository.EmployeeRepo;
 import com.example.EmployeeManagementSystem.Util.AuthUtil;
