@@ -31,16 +31,11 @@ public class ManagerController {
         return manangerService.getAllEmployeeByManager(authentication);
     }
 
-
     @GetMapping("/requests")
     @PreAuthorize("hasRole('MANAGER')")
     public List<LeaveRequest> getAllLeaveRequestByManager(Authentication authentication){
         return manangerService.getAllLeaveRequestByManager(authentication);
     }
-
-
-
-
 
 
 }

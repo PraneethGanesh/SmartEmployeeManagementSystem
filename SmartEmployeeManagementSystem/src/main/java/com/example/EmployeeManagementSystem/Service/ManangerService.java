@@ -55,6 +55,6 @@ public class ManangerService {
        Employee manager=employeeRepo.findByEmail(email).orElseThrow(
                ()->new EmployeeNotFound("Manager with "+email+" not found")
        );
-       return null;
+       return leaveRequestRepo.findByEmployee_Manager(manager);
     }
 }

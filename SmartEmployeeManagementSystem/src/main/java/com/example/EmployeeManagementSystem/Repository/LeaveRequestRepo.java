@@ -65,4 +65,7 @@ public interface LeaveRequestRepo extends JpaRepository<LeaveRequest, Long> {
     @Query("SELECT lr FROM LeaveRequest lr JOIN FETCH lr.employee WHERE lr.status = :status")
     List<LeaveRequest> findApprovedLeavesWithEmployee(LeaveStatus status);
 
+
+    List<LeaveRequest> findByEmployee_Manager(Employee manager);
+
 }
