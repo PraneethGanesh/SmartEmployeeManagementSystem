@@ -1,5 +1,6 @@
 package com.example.EmployeeManagementSystem.Controller;
 
+import com.example.EmployeeManagementSystem.DTO.EmployeeAttendanceResponseDTO;
 import com.example.EmployeeManagementSystem.DTO.EmployeeDTO;
 import com.example.EmployeeManagementSystem.Entity.Employee;
 import com.example.EmployeeManagementSystem.Service.EmployeeService;
@@ -24,9 +25,15 @@ public class EmployeeController {
     }
 
     @GetMapping("/me")
-    @PreAuthorize("hasAuthority('PROFILE_READ')")
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER','EMPLOYEE')")
     public ResponseEntity<Employee> myAccount(Authentication authentication){
         return ResponseEntity.ok(employeeService.getAccount(authentication));
+    }
+
+    @GetMapping("/attendance")
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER','EMPLOYEE','VENDOR')")
+    public ResponseEntity<EmployeeAttendanceResponseDTO> getAttendanceOverview() {
+        return ResponseEntity.ok(employeeService.getEmployeeAttendanceOverview());
     }
 
     @PutMapping("/{id}")

@@ -16,35 +16,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-/**
- * Admin Control Center — provides top-level admin access to ALL sub-domains:
- *
- * Employee branch:
- *   GET    /admin/employees                — list all employees
- *   POST   /admin/employees                — create employee
- *   POST   /admin/employees/manager        — create manager
- *   PUT    /admin/employees/{id}           — update employee
- *   DELETE /admin/employees/{id}           — delete employee
- *   PUT    /admin/employees/{id}/inactive  — deactivate employee
- *
- * Vendor branch (admin is the only one who can add vendors):
- *   GET    /admin/vendors                  — list all vendors
- *   POST   /admin/vendors                  — register a new vendor
- *   DELETE /admin/vendors/{vendorId}       — remove a vendor
- *
- * Leave management:
- *   GET    /admin/leaves/pending           — all pending leave requests
- *   PUT    /admin/leaves/{id}/approve      — approve leave
- *   PUT    /admin/leaves/{id}/reject       — reject leave
- *
- * Restaurant management:
- *   GET    /admin/restaurants              — list all restaurants
- *
- * Subscription management:
- *   GET    /admin/subscriptions            — list all subscriptions
- *
- * All endpoints require ROLE_ADMIN.
- */
 @RestController
 @RequestMapping("/admin")
 @PreAuthorize("hasRole('ADMIN')")
@@ -124,11 +95,6 @@ public class AdminController {
         return ResponseEntity.ok(vendorService.getAllVendors());
     }
 
-    /**
-     * Register a brand-new vendor account.
-     * The vendor can later log in via /vendor-login.html using the
-     * credentials provided in this request body.
-     */
     @PostMapping("/vendors")
     public ResponseEntity<VendorDTO> registerVendor(@RequestBody VendorRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
