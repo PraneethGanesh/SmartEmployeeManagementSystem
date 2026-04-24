@@ -35,6 +35,7 @@ public class VendorController {
     }
 
     @PostMapping("/register")
+    @PreAuthorize("hasRole('Admin')")
     public ResponseEntity<VendorDTO> registerVendor(@RequestBody VendorRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(vendorService.registerVendor(request));

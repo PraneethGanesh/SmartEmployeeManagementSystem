@@ -9,6 +9,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class ManangerService {
     private final EmployeeRepo employeeRepo;
@@ -28,8 +30,17 @@ public class ManangerService {
         employee.setEmail(employeeDetails.getEmail());
         employee.setPassword(passwordEncoder.encode(employeeDetails.getPassword()));
         employee.setDept(manager.getDept());
-        employee.setManager(manager.getEmail());
+        employee.setManager(manager);
         employee.setTimezone(employeeDetails.getTimezone());
         return employeeRepo.save(employee);
+    }
+
+
+    public List<Employee> getAllEmployeeByManager(Authentication authentication) {
+        String email=AuthUtil.extractEmail(authentication);
+        Employee manager=employeeRepo.findByEmail(email).orElseThrow(
+                ()->new EmployeeNotFound("Manger:"+email+" not found")
+        );
+        return employeeRepo.findByManager(manager);
     }
 }

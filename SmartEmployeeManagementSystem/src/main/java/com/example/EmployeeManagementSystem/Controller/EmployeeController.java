@@ -28,22 +28,6 @@ public class EmployeeController {
         return ResponseEntity.ok(employeeService.getAccount(authentication));
     }
 
-    @PostMapping("/register")
-    public ResponseEntity<Employee> addEmployee(@RequestBody EmployeeDTO employee){
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(employeeService.createEmployee(employee));
-
-    }
-
-    @PostMapping("/register/manager")
-    public ResponseEntity<Employee> addManager(@RequestBody EmployeeDTO employee){
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(employeeService.createManager(employee));
-
-    }
-
-
-
     @PutMapping("/{id}")
     public ResponseEntity<Employee> updateEmployee(@PathVariable long id,@RequestBody EmployeeDTO employeeDTO){
         return ResponseEntity.ok(employeeService.updateEmployee(id,employeeDTO));
