@@ -58,6 +58,7 @@ public class AuthController {
                     .map(authority -> authority.getAuthority())
                     .filter(authority -> authority.startsWith("ROLE_"))
                     .findFirst()
+                    .map(authority -> authority.substring("ROLE_".length()))
                     .orElseThrow(() -> new RuntimeException("Role not found"));
 
             String accessToken = jwtUtil.generateToken(user.getUsername(),role);

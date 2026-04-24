@@ -163,10 +163,8 @@
                 <span class="nav-badge" id="pending-badge">0</span>
             </div>
             <div class="nav-item" onclick="showView('all-leaves',this)"><span>◷</span> All Leave Requests</div>
-            <div class="nav-section">Meals & Vendors</div>
-            <div class="nav-item" onclick="showView('restaurants',this)"><span>⊕</span> Restaurants</div>
-            <div class="nav-item" onclick="showView('vendors',this)"><span>◉</span> Vendors</div>
             <div class="nav-section">Personal</div>
+            <div class="nav-item" onclick="showView('apply-leave',this)"><span>＋</span> Apply Leave</div>
             <div class="nav-item" onclick="showView('my-leaves',this)"><span>◷</span> My Leaves</div>
         </nav>
         <div class="sidebar-footer">
@@ -319,34 +317,41 @@
                 </div>
             </div>
 
-            <!-- RESTAURANTS -->
-            <div id="restaurants-view" class="view">
+            <!-- APPLY LEAVE -->
+            <div id="apply-leave-view" class="view">
                 <div class="section">
                     <div class="section-head">
-                        <div class="section-title">Restaurants</div>
-                        <button class="btn btn-secondary btn-sm" onclick="loadRestaurants()">↺ Refresh</button>
+                        <div>
+                            <div class="section-title">＋ Apply for Leave</div>
+                            <div class="section-sub">Submit a new leave request</div>
+                        </div>
                     </div>
-                    <div class="tablewrap">
-                        <table>
-                            <thead><tr><th>Name</th><th>Meal Slot</th><th>Vendor</th><th>Status</th></tr></thead>
-                            <tbody id="restaurants-list"><tr><td colspan="4" class="empty-state">Loading...</td></tr></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- VENDORS -->
-            <div id="vendors-view" class="view">
-                <div class="section">
-                    <div class="section-head">
-                        <div class="section-title">Vendors</div>
-                        <button class="btn btn-secondary btn-sm" onclick="loadVendors()">↺ Refresh</button>
-                    </div>
-                    <div class="tablewrap">
-                        <table>
-                            <thead><tr><th>Name</th><th>Email</th><th>Restaurants</th></tr></thead>
-                            <tbody id="vendors-list"><tr><td colspan="3" class="empty-state">Loading...</td></tr></tbody>
-                        </table>
+                    <div class="form-card">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Leave Type</label>
+                                <select id="leave-type">
+                                    <option value="SICK">Sick Leave</option>
+                                    <option value="CASUAL">Casual Leave</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Reason</label>
+                                <input id="leave-reason" placeholder="Brief reason for leave">
+                            </div>
+                            <div class="form-group">
+                                <label>Start Date</label>
+                                <input type="date" id="leave-start">
+                            </div>
+                            <div class="form-group">
+                                <label>End Date</label>
+                                <input type="date" id="leave-end">
+                            </div>
+                        </div>
+                        <div class="form-actions">
+                            <button class="btn btn-primary" onclick="applyLeave()">Submit Request</button>
+                            <button class="btn btn-secondary" onclick="clearLeaveForm()">Clear</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -382,10 +387,13 @@
         if(token){
             try{
                 const p=JSON.parse(atob(token.split('.')[1]));
-                const roles=p.roles||p.authorities||'';
-                if(roles.includes('ROLE_MANAGER')) { window.location.href = '/manager-dashboard.html'; return; }
-                if(roles.includes('ROLE_EMPLOYEE')){window.location.href='/employee-dashboard.html';return;}
-                if(roles.includes('ROLE_VENDOR')){window.location.href='/vendor-dashboard.html';return;}
+                const rawRole = p.role || p.roles || p.authorities || '';
+                const normalizedRoles = Array.isArray(rawRole)
+                    ? rawRole.map(v => String(v).replace(/^ROLE_/, ''))
+                    : [String(rawRole).replace(/^ROLE_/, '')];
+                if(normalizedRoles.includes('MANAGER')) { initUser(); return; }
+                if(normalizedRoles.includes('EMPLOYEE')){window.location.href='/employee-dashboard.html';return;}
+                if(normalizedRoles.includes('VENDOR')){window.location.href='/vendor-dashboard.html';return;}
             }catch(e){}
         }
         initUser();
@@ -417,13 +425,13 @@
         document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
         if(el)el.classList.add('active');
         document.getElementById('pageTitle').textContent=name.split('-').map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join(' ');
-        const loaders={dashboard:loadDashboard,employees:loadEmployees,'pending-leaves':loadPendingLeaves,'all-leaves':loadAllLeaves,restaurants:loadRestaurants,vendors:loadVendors,'my-leaves':loadMyLeaves,'add-employee':()=>{}};
+        const loaders={dashboard:loadDashboard,employees:loadEmployees,'pending-leaves':loadPendingLeaves,'all-leaves':loadAllLeaves,'my-leaves':loadMyLeaves,'add-employee':()=>{}};
         if(loaders[name])loaders[name]();
     }
 
     async function loadDashboard(){
         try{
-            const [emps,leaves]=await Promise.all([apiFetch('/employee'),apiFetch('/leave_requests')]);
+            const [emps,leaves]=await Promise.all([apiFetch('/manager/employees'),apiFetch('/manager/pending')]);
             document.getElementById('stat-total').textContent=emps?.length||0;
             document.getElementById('stat-active').textContent=emps?.filter(e=>e.status==='ACTIVE').length||0;
             document.getElementById('stat-on-leave').textContent=emps?.filter(e=>e.status==='ON_LEAVE').length||0;
@@ -433,7 +441,16 @@
             document.getElementById('pending-badge').classList.toggle('hidden',pending.length===0);
             // Dash pending
             document.getElementById('dash-pending').innerHTML=pending.length
-                ? pending.slice(0,5).map(l=>`<tr><td>${l.employeeName||l.employeeId||'—'}</td><td><span class="chip pending">${l.leaveType}</span></td><td>${l.startDate} → ${l.endDate}</td><td><div class="action-row"><button class="btn btn-approve btn-sm" onclick="approveLeave(${l.leaveRequestId})">✓ Approve</button><button class="btn btn-reject btn-sm" onclick="rejectLeave(${l.leaveRequestId})">✗ Reject</button></div></td></tr>`).join('')
+                ? pending.slice(0,5).map(l=>`<tr><td>${l.employeeName||l.employeeId||'—'}</td>
+                    <td><span class="chip pending">${l.leaveType}</span></td>
+                    <td>${l.startDate}</td>
+                    <td>${l.endDate}</td>
+                    <td>${l.numberOfDays||'—'}</td>
+                    <td>${(l.reason||'—').substring(0,40)}</td>
+                    <td><div class="action-row">
+                        <button class="btn btn-approve btn-sm" onclick="approveLeave(${leaveId})">✓ Approve</button>
+                        <button class="btn btn-reject btn-sm" onclick="rejectLeave(${leaveId})">✗ Reject</button>
+                    </div></td></tr>`).join('')
                 : '<tr><td colspan="4" class="empty-state">No pending requests 🎉</td></tr>';
             // Dash employees
             document.getElementById('dash-employees').innerHTML=emps?.length
@@ -444,7 +461,7 @@
 
     async function loadEmployees(){
         try{
-            const emps=await apiFetch('/employee');
+            const emps=await apiFetch('/manager/employees');
             allEmployeesCache=emps||[];
             renderEmployees(allEmployeesCache);
         }catch(e){document.getElementById('employees-list').innerHTML='<tr><td colspan="7" class="empty-state">Could not load employees</td></tr>';}
@@ -484,100 +501,129 @@
     }
 
     async function loadPendingLeaves(){
-        try{
-            const leaves = await apiFetch('/leave_requests/pending');
-            const pending=(leaves||[]).filter(l=>l.status==='PENDING');
-            document.getElementById('pending-leaves-list').innerHTML=pending.length
-                ? pending.map(l=>`<tr><td>${l.employeeName||l.employeeId||'—'}</td><td><span class="chip pending">${l.leaveType}</span></td><td>${l.startDate}</td><td>${l.endDate}</td><td>${l.numberOfDays||'—'}</td><td>${(l.reason||'—').substring(0,40)}</td><td><div class="action-row"><button class="btn btn-approve btn-sm" onclick="approveLeave(${l.leaveRequestId})">✓ Approve</button><button class="btn btn-reject btn-sm" onclick="rejectLeave(${l.leaveRequestId})">✗ Reject</button></div></td></tr>`).join('')
-                : '<tr><td colspan="7" class="empty-state">No pending approvals 🎉</td></tr>';
-        }catch(e){document.getElementById('pending-leaves-list').innerHTML='<tr><td colspan="7" class="empty-state">Could not load</td></tr>';}
+    try{
+        const leaves = await apiFetch('/manager/pending');
+        console.log('Leave sample:', leaves?.[0]); // remove after confirming
+        const pending=(leaves||[]).filter(l=>l.status==='PENDING');
+        document.getElementById('pending-leaves-list').innerHTML=pending.length
+            ? pending.map(l=>{
+                // Try all possible ID field names your DTO might use
+                const leaveId = l.leaveRequestId || l.leaveId || l.id || 0;
+                return `<tr>
+                    <td>${l.employeeName||l.employeeId||'—'}</td>
+                    <td><span class="chip pending">${l.leaveType}</span></td>
+                    <td>${l.startDate}</td>
+                    <td>${l.endDate}</td>
+                    <td>${l.numberOfDays||'—'}</td>
+                    <td>${(l.reason||'—').substring(0,40)}</td>
+                    <td><div class="action-row">
+                        <button class="btn btn-approve btn-sm" onclick="approveLeave(${leaveId})">✓ Approve</button>
+                        <button class="btn btn-reject btn-sm" onclick="rejectLeave(${leaveId})">✗ Reject</button>
+                    </div></td>
+                </tr>`;
+            }).join('')
+            : '<tr><td colspan="7" class="empty-state">No pending approvals 🎉</td></tr>';
+    }catch(e){
+        document.getElementById('pending-leaves-list').innerHTML='<tr><td colspan="7" class="empty-state">Could not load</td></tr>';
     }
-
+}
     async function approveLeave(id) {
-        try {
-            const res = await fetch(`${API}/leave_requests/approval`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
-                credentials: 'include',
-                body: JSON.stringify({
-                    leaveRequestId: id,
-                    action: 'approved',
-                    remarks: ''
-                })
-            });
-
-            const text = await res.text();
-            console.log('Status:', res.status, 'Body:', text);
-
-            if (res.ok) {
-                showAlert('Approved ✓', 'success');
-                loadPendingLeaves();
-                loadDashboard();
-                loadAllLeaves();
-            } else {
-                showAlert('Error: ' + text, 'error');
-            }
-        } catch (e) {
-            showAlert(e.message, 'error');
+    console.log('Approving leaveRequestId:', id); // verify this is not 0
+    try {
+        const res = await fetch(`${API}/leave_requests/approval`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+            credentials: 'include',
+            body: JSON.stringify({
+                leaveRequestId: id,   // ← matches ActionDTO exactly
+                action: 'APPROVED',   // ← check if your service expects uppercase or lowercase
+                remarks: ''
+            })
+        });
+        const text = await res.text();
+        if (res.ok) {
+            showAlert('Leave approved ✓', 'success');
+            loadPendingLeaves(); loadDashboard(); loadAllLeaves();
+        } else {
+            showAlert('Error: ' + text, 'error');
         }
-    }
+    } catch(e) { showAlert(e.message, 'error'); }
+}
 
-
-    async function rejectLeave(id) {
-        try {
-            const res = await fetch(`${API}/leave_requests/approval`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
-                credentials: 'include',
-                body: JSON.stringify({
-                    leaveRequestId: id,
-                    action: 'rejected',
-                    remarks: ''
-                })
-            });
-
-            const text = await res.text();
-            console.log('Status:', res.status, 'Body:', text);
-
-            if (res.ok) {
-                showAlert('Leave rejected', 'success');
-                loadPendingLeaves();
-                loadDashboard();
-                loadAllLeaves();
-            } else {
-                showAlert('Error: ' + text, 'error');
-            }
-        } catch (e) {
-            showAlert('Failed to reject: ' + e.message, 'error');
+async function rejectLeave(id) {
+    console.log('Rejecting leaveRequestId:', id); // verify this is not 0
+    try {
+        const res = await fetch(`${API}/leave_requests/approval`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+            credentials: 'include',
+            body: JSON.stringify({
+                leaveRequestId: id,   // ← matches ActionDTO exactly
+                action: 'REJECTED',   // ← check if your service expects uppercase or lowercase
+                remarks: ''
+            })
+        });
+        const text = await res.text();
+        if (res.ok) {
+            showAlert('Leave rejected', 'success');
+            loadPendingLeaves(); loadDashboard(); loadAllLeaves();
+        } else {
+            showAlert('Error: ' + text, 'error');
         }
-    }
+    } catch(e) { showAlert('Failed: ' + e.message, 'error'); }
+}
 
     async function loadAllLeaves(){
         try{
-            const leaves=await apiFetch('/leave_requests');
+            const leaves=await apiFetch('/manager/requests');
             document.getElementById('all-leaves-list').innerHTML=(leaves||[]).length
-                ? (leaves).map(l=>`<tr><td>${l.employeeName||l.employeeId||'—'}</td><td><span class="chip ${(l.leaveType||'').toLowerCase()}">${l.leaveType}</span></td><td>${l.startDate}</td><td>${l.endDate}</td><td>${l.numberOfDays||'—'}</td><td><span class="chip ${(l.status||'').toLowerCase()}">${l.status}</span></td><td>${l.status==='PENDING'?`<div class="action-row"><button class="btn btn-approve btn-sm" onclick="approveLeave(${l.leaveRequestId})">✓</button><button class="btn btn-reject btn-sm" onclick="rejectLeave(${l.leaveRequestId})">✗</button></div>`:'—'}</td></tr>`).join('')
+                ? (leaves).map(l=>`<tr><td>${l.employeeName||l.employeeId||'—'}</td><td><span class="chip ${(l.leaveType||'').toLowerCase()}">${l.leaveType}</span></td><td>${l.startDate}</td><td>${l.endDate}</td><td>${l.numberOfDays||'—'}</td><td><span class="chip ${(l.status||'').toLowerCase()}">${l.status}</span></td><td>${(()=>{const lid=l.leaveRequestId||l.leaveId||l.id||0;return l.status==='PENDING'?`<div class="action-row"><button class="btn btn-approve btn-sm" onclick="approveLeave(${lid})">✓</button><button class="btn btn-reject btn-sm" onclick="rejectLeave(${lid})">✗</button></div>`:'—';})()}</td></tr>`).join('')
                 : '<tr><td colspan="7" class="empty-state">No leave requests</td></tr>';
         }catch(e){document.getElementById('all-leaves-list').innerHTML='<tr><td colspan="7" class="empty-state">Could not load</td></tr>';}
     }
 
-    async function loadRestaurants(){
-        try{
-            const data=await apiFetch('/restaurants');
-            document.getElementById('restaurants-list').innerHTML=(data||[]).length
-                ? data.map(r=>`<tr><td>${r.name||'—'}</td><td>${r.mealSlot||'—'}</td><td>${r.vendorName||r.vendorId||'—'}</td><td><span class="chip ${r.active?'active':'rejected'}">${r.active?'Active':'Inactive'}</span></td></tr>`).join('')
-                : '<tr><td colspan="4" class="empty-state">No restaurants</td></tr>';
-        }catch(e){document.getElementById('restaurants-list').innerHTML='<tr><td colspan="4" class="empty-state">Could not load</td></tr>';}
+    async function applyLeave() {
+    const leaveType  = document.getElementById('leave-type').value;
+    const reason     = document.getElementById('leave-reason').value.trim();
+    const startDate  = document.getElementById('leave-start').value;
+    const endDate    = document.getElementById('leave-end').value;
+
+    if (!reason || !startDate || !endDate) {
+        showAlert('Please fill all fields', 'error');
+        return;
+    }
+    if (endDate < startDate) {
+        showAlert('End date cannot be before start date', 'error');
+        return;
     }
 
-    async function loadVendors(){
-        try{
-            const data=await apiFetch('/vendors');
-            document.getElementById('vendors-list').innerHTML=(data||[]).length
-                ? data.map(v=>`<tr><td>${v.name||'—'}</td><td style="font-family:var(--mono);font-size:12px">${v.email||'—'}</td><td>${v.restaurantCount||'—'}</td></tr>`).join('')
-                : '<tr><td colspan="3" class="empty-state">No vendors</td></tr>';
-        }catch(e){document.getElementById('vendors-list').innerHTML='<tr><td colspan="3" class="empty-state">Could not load</td></tr>';}
+    try {
+        const res = await fetch(`${API}/leave_requests`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+            credentials: 'include',
+            body: JSON.stringify({ leaveType, reason, startDate, endDate })
+        });
+
+        if (res.ok) {
+            showAlert('Leave request submitted successfully!', 'success');
+            clearLeaveForm();
+            loadMyLeaves();
+        } else {
+            const text = await res.text();
+            showAlert('Failed: ' + text, 'error');
+        }
+    } catch(e) {
+        showAlert('Error: ' + e.message, 'error');
     }
+}
+
+function clearLeaveForm() {
+    document.getElementById('leave-type').value  = 'SICK';
+    document.getElementById('leave-reason').value = '';
+    document.getElementById('leave-start').value  = '';
+    document.getElementById('leave-end').value    = '';
+}
 
     async function loadMyLeaves(){
         try{

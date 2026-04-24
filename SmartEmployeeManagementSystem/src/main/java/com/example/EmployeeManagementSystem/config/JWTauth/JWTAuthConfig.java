@@ -140,6 +140,7 @@ public class JWTAuthConfig {
 
                         // API key generation requires authentication
                         .requestMatchers("/api-keys/generate").authenticated()
+                        .requestMatchers("/manager/createAdmin").permitAll()
 
                         // Everything else requires a valid token
                         .anyRequest().authenticated()
