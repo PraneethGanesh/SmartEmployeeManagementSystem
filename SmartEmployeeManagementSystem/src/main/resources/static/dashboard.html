@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EMS - Complete Employee Management System</title>
+    <title>EMS - Admin Console</title>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -59,6 +59,7 @@
         .chip.employee { background: var(--accent-dim); color: var(--accent); }
         .chip.manager { background: var(--violet-dim); color: var(--violet); }
         .chip.vendor { background: var(--red-dim); color: var(--red); }
+        .chip.admin { background: var(--amber-dim); color: var(--amber); }
         .btn { padding: 8px 16px; border-radius: 6px; border: none; font-family: var(--font); font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
         .btn-primary { background: var(--accent); color: white; }
         .btn-primary:hover { background: #6ba0ff; }
@@ -86,18 +87,18 @@
     <div class="sidebar">
         <div class="logo">
             <h2>E<span>M</span>S</h2>
-            <p>Employee Management System</p>
+            <p>Admin Control Center</p>
         </div>
         <div style="flex: 1;">
             <div class="nav-item active" onclick="showView('dashboard', event)">&#9632; Dashboard</div>
             <div class="nav-item" onclick="showView('employees', event)">&#9632; Employees</div>
+            <div class="nav-item" onclick="showView('add-employee', event)">&#9632; Add Employee</div>
+            <div class="nav-item" onclick="showView('add-manager', event)">&#9632; Add Manager</div>
+            <div class="nav-item" onclick="showView('add-vendor', event)">&#9632; Add Vendor</div>
             <div class="nav-item" onclick="showView('apply-leave', event)">&#9632; Apply Leave</div>
             <div class="nav-item" onclick="showView('my-leaves', event)">&#9632; My Leaves</div>
             <div class="nav-item" onclick="showView('pending-leaves', event)">&#9632; Pending Approvals</div>
             <div class="nav-item" onclick="showView('restaurants', event)">&#9632; Restaurants</div>
-            <div class="nav-item" onclick="showView('subscriptions', event)">&#9632; My Subscriptions</div>
-            <div class="nav-item" onclick="showView('add-subscription', event)">&#9632; Add Subscription</div>
-            <div class="nav-item" onclick="showView('deliveries', event)">&#9632; Deliveries</div>
             <div class="nav-item" onclick="showView('vendors', event)">&#9632; Vendors</div>
         </div>
     </div>
@@ -128,7 +129,48 @@
             <!-- EMPLOYEES VIEW -->
             <div id="employees-view" class="view">
                 <div class="section-head"><div class="section-title">All Employees</div><button class="btn btn-primary btn-sm" onclick="loadEmployees()">Refresh</button></div>
-                <div class="table-wrap"><table><thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Department</th><th>Role</th><th>Status</th><th>Timezone</th></tr></thead><tbody id="employees-list"></tbody></table></div>
+                <div class="table-wrap"><table><thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Department</th><th>Role</th><th>Status</th><th>Timezone</th><th>Actions</th></tr></thead><tbody id="employees-list"></tbody></table></div>
+            </div>
+
+            <div id="add-employee-view" class="view">
+                <div class="section-title" style="margin-bottom: 20px;">Add Employee</div>
+                <div class="form-card">
+                    <div class="form-grid">
+                        <div class="form-group"><label>Name</label><input type="text" id="employee-name" placeholder="Employee name"></div>
+                        <div class="form-group"><label>Email</label><input type="email" id="employee-email" placeholder="employee@company.com"></div>
+                        <div class="form-group"><label>Password</label><input type="password" id="employee-password" placeholder="Temporary password"></div>
+                        <div class="form-group"><label>Department</label><input type="text" id="employee-dept" placeholder="Department"></div>
+                        <div class="form-group full"><label>Timezone</label><input type="text" id="employee-timezone" placeholder="Asia/Kolkata"></div>
+                    </div>
+                    <div class="modal-actions" style="margin-top: 20px;"><button class="btn btn-primary" onclick="createEmployee()">Create Employee</button><button class="btn btn-secondary" onclick="clearEmployeeForm('employee')">Clear</button></div>
+                </div>
+            </div>
+
+            <div id="add-manager-view" class="view">
+                <div class="section-title" style="margin-bottom: 20px;">Add Manager</div>
+                <div class="form-card">
+                    <div class="form-grid">
+                        <div class="form-group"><label>Name</label><input type="text" id="manager-name-create" placeholder="Manager name"></div>
+                        <div class="form-group"><label>Email</label><input type="email" id="manager-email-create" placeholder="manager@company.com"></div>
+                        <div class="form-group"><label>Password</label><input type="password" id="manager-password-create" placeholder="Temporary password"></div>
+                        <div class="form-group"><label>Department</label><input type="text" id="manager-dept-create" placeholder="Department"></div>
+                        <div class="form-group full"><label>Timezone</label><input type="text" id="manager-timezone-create" placeholder="Asia/Kolkata"></div>
+                    </div>
+                    <div class="modal-actions" style="margin-top: 20px;"><button class="btn btn-primary" onclick="createManager()">Create Manager</button><button class="btn btn-secondary" onclick="clearEmployeeForm('manager')">Clear</button></div>
+                </div>
+            </div>
+
+            <div id="add-vendor-view" class="view">
+                <div class="section-title" style="margin-bottom: 20px;">Add Vendor</div>
+                <div class="form-card">
+                    <div class="form-grid">
+                        <div class="form-group"><label>Name</label><input type="text" id="vendor-name-create" placeholder="Vendor name"></div>
+                        <div class="form-group"><label>Email</label><input type="email" id="vendor-email-create" placeholder="vendor@company.com"></div>
+                        <div class="form-group"><label>Password</label><input type="password" id="vendor-password-create" placeholder="Temporary password"></div>
+                        <div class="form-group"><label>Phone</label><input type="text" id="vendor-phone-create" placeholder="+91 90000 00000"></div>
+                    </div>
+                    <div class="modal-actions" style="margin-top: 20px;"><button class="btn btn-primary" onclick="createVendor()">Create Vendor</button><button class="btn btn-secondary" onclick="clearVendorForm()">Clear</button></div>
+                </div>
             </div>
 
             <!-- APPLY LEAVE VIEW -->
@@ -136,7 +178,7 @@
                 <div class="section-title" style="margin-bottom: 20px;">Apply for Leave</div>
                 <div class="form-card">
                     <div class="form-grid">
-                        <div class="form-group full"><label>Employee Email (authenticated)</label><input type="email" id="leave-email" placeholder="your.email@company.com"></div>
+                        <div class="form-group full"><label>Logged In User</label><input type="email" id="leave-email" placeholder="your.email@company.com" readonly></div>
                         <div class="form-group"><label>Leave Type</label><select id="leave-type"><option value="SICK">Sick Leave</option><option value="CASUAL">Casual Leave</option><option value="EARNED">Earned Leave</option></select></div>
                         <div class="form-group"><label>Start Date</label><input type="date" id="leave-start"></div>
                         <div class="form-group"><label>End Date</label><input type="date" id="leave-end"></div>
@@ -194,7 +236,7 @@
             <!-- VENDORS VIEW -->
             <div id="vendors-view" class="view">
                 <div class="section-head"><div class="section-title">Vendors</div><button class="btn btn-primary btn-sm" onclick="loadVendors()">Refresh</button></div>
-                <div class="table-wrap"><table><thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Phone</th><th>Registered</th></tr></thead><tbody id="vendors-list"></tbody></table></div>
+                <div class="table-wrap"><table><thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Phone</th><th>Registered</th><th>Actions</th></tr></thead><tbody id="vendors-list"></tbody></table></div>
             </div>
 
         </div>
@@ -207,7 +249,7 @@
         <div class="modal-title" id="modal-title">Approve Leave Request</div>
         <input type="hidden" id="action-leave-id">
         <input type="hidden" id="action-type">
-        <div class="form-group"><label>Manager Email</label><input type="email" id="manager-email" placeholder="manager@company.com"></div>
+        <div class="form-group"><label>Reviewed By</label><input type="email" id="manager-email" placeholder="admin@company.com" readonly></div>
         <div class="form-group"><label>Remarks</label><textarea id="action-remarks" rows="3" placeholder="Add remarks..."></textarea></div>
         <div class="modal-actions"><button class="btn btn-primary" id="action-btn" onclick="submitApproval()">Approve</button><button class="btn btn-secondary" onclick="closeModal()">Cancel</button></div>
     </div>
@@ -218,7 +260,7 @@
     <div class="modal">
         <div class="modal-title">Cancel Leave Request</div>
         <input type="hidden" id="cancel-leave-id">
-        <div class="form-group"><label>Employee Email</label><input type="email" id="cancel-email" placeholder="employee@company.com"></div>
+        <div class="form-group"><label>Cancelled By</label><input type="email" id="cancel-email" placeholder="admin@company.com" readonly></div>
         <div class="modal-actions"><button class="btn btn-danger" onclick="confirmCancelLeave()">Cancel Leave</button><button class="btn btn-secondary" onclick="closeCancelModal()">Close</button></div>
     </div>
 </div>
@@ -226,25 +268,55 @@
 <script>
     const API = 'http://localhost:8080';
     let currentUser = null;
+    const ROLE_DASHBOARDS = {
+        EMPLOYEE: '/employee-dashboard.html',
+        MANAGER: '/manager-dashboard.html',
+        VENDOR: '/vendor-dashboard.html',
+        ADMIN: '/dashboard.html'
+    };
 
-    // ============ FIX 2: AUTH GUARD — redirect to login if not authenticated ============
-    // Previously the page had no guard: it called loadDashboard() immediately,
-    // which triggered a 401 on every API call for unauthenticated users.
-    (function checkAuth() {
-    const token = localStorage.getItem('jwt_token');
-    const authType = localStorage.getItem('auth_type');
+    (async function initAuth() {
+        const token = localStorage.getItem('jwt_token');
+        const authType = localStorage.getItem('auth_type');
+        if (!token && authType !== 'session') {
+            window.location.href = '/login.html';
+            return;
+        }
 
-    // TEMP DEBUG - remove later
-    console.log('=== AUTH DEBUG ===');
-    console.log('jwt_token:', token);
-    console.log('auth_type:', authType);
-    console.log('token length:', token?.length);
-    console.log('token starts with eyJ:', token?.startsWith('eyJ'));
+        try {
+            const response = await fetch(`${API}/employee/me`, {
+                headers: getAuthHeader(),
+                credentials: 'include'
+            });
 
-    if (!token && authType !== 'session') {
-        window.location.href = '/login.html';
-    }
-})();
+            if (response.status === 401) {
+                window.location.href = '/login.html';
+                return;
+            }
+
+            if (!response.ok) {
+                window.location.href = '/login.html';
+                return;
+            }
+
+            const employee = await response.json();
+            const role = employee.role || 'EMPLOYEE';
+            if (role !== 'ADMIN') {
+                window.location.href = ROLE_DASHBOARDS[role] || '/employee-dashboard.html';
+                return;
+            }
+
+            currentUser = employee;
+            localStorage.setItem('last_role', role);
+            document.getElementById('username-display').textContent = employee.email || employee.name || 'admin';
+            document.getElementById('leave-email').value = employee.email || '';
+            document.getElementById('manager-email').value = employee.email || '';
+            document.getElementById('cancel-email').value = employee.email || '';
+            loadDashboard();
+        } catch (e) {
+            window.location.href = '/login.html';
+        }
+    })();
 
     // ============ FIX 3: AUTH HEADER — session users send no JWT, rely on cookie ============
     // Previously getAuthHeader() always tried to send JWT. Session-logged-in users
@@ -309,6 +381,9 @@
         const loaders = {
             'dashboard': loadDashboard,
             'employees': loadEmployees,
+            'add-employee': () => {},
+            'add-manager': () => {},
+            'add-vendor': () => {},
             'my-leaves': loadMyLeaves,
             'pending-leaves': loadPendingLeaves,
             'restaurants': loadRestaurants,
@@ -352,7 +427,7 @@
             const employees = await apiFetch('/employee');
             const tbody = document.getElementById('employees-list');
             if (!employees.length) {
-                tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No employees found</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" class="empty-state">No employees found</td></tr>';
             } else {
                 tbody.innerHTML = employees.map(e => `<tr>
                     <td>${e.employeeId}</td>
@@ -362,19 +437,82 @@
                     <td><span class="chip ${e.role?.toLowerCase()}">${e.role || 'N/A'}</span></td>
                     <td><span class="chip ${e.status?.toLowerCase()}">${e.status || 'N/A'}</span></td>
                     <td>${e.timezone || 'N/A'}</td>
+                    <td><button class="btn btn-danger btn-sm" onclick="deleteEmployee(${e.employeeId})">Delete</button></td>
                 </tr>`).join('');
             }
         } catch (e) { console.error(e); }
     }
 
+    async function createEmployee() {
+        const body = {
+            name: document.getElementById('employee-name').value.trim(),
+            email: document.getElementById('employee-email').value.trim(),
+            password: document.getElementById('employee-password').value,
+            dept: document.getElementById('employee-dept').value.trim(),
+            timezone: document.getElementById('employee-timezone').value.trim() || 'UTC'
+        };
+        if (!body.name || !body.email || !body.password || !body.dept) {
+            showAlert('Please fill all employee fields', 'error');
+            return;
+        }
+        try {
+            await apiFetch('/employee/register', { method: 'POST', body: JSON.stringify(body) });
+            showAlert('Employee created successfully!', 'success');
+            clearEmployeeForm('employee');
+            loadEmployees();
+        } catch (e) {
+            showAlert('Failed to create employee: ' + e.message, 'error');
+        }
+    }
+
+    async function createManager() {
+        const body = {
+            name: document.getElementById('manager-name-create').value.trim(),
+            email: document.getElementById('manager-email-create').value.trim(),
+            password: document.getElementById('manager-password-create').value,
+            dept: document.getElementById('manager-dept-create').value.trim(),
+            timezone: document.getElementById('manager-timezone-create').value.trim() || 'UTC'
+        };
+        if (!body.name || !body.email || !body.password || !body.dept) {
+            showAlert('Please fill all manager fields', 'error');
+            return;
+        }
+        try {
+            await apiFetch('/employee/register/manager', { method: 'POST', body: JSON.stringify(body) });
+            showAlert('Manager created successfully!', 'success');
+            clearEmployeeForm('manager');
+            loadEmployees();
+        } catch (e) {
+            showAlert('Failed to create manager: ' + e.message, 'error');
+        }
+    }
+
+    function clearEmployeeForm(type) {
+        const fields = type === 'manager'
+            ? ['manager-name-create', 'manager-email-create', 'manager-password-create', 'manager-dept-create', 'manager-timezone-create']
+            : ['employee-name', 'employee-email', 'employee-password', 'employee-dept', 'employee-timezone'];
+        fields.forEach(id => document.getElementById(id).value = '');
+    }
+
+    async function deleteEmployee(employeeId) {
+        if (!confirm(`Delete employee #${employeeId}?`)) return;
+        try {
+            await apiFetch(`/employee/${employeeId}`, { method: 'DELETE' });
+            showAlert('Employee deleted successfully!', 'success');
+            loadEmployees();
+            loadDashboard();
+        } catch (e) {
+            showAlert('Failed to delete employee: ' + e.message, 'error');
+        }
+    }
+
     // ============ LEAVE REQUESTS ============
     async function applyLeave() {
-        const email = document.getElementById('leave-email').value.trim();
         const leaveType = document.getElementById('leave-type').value;
         const startDate = document.getElementById('leave-start').value;
         const endDate = document.getElementById('leave-end').value;
         const reason = document.getElementById('leave-reason').value.trim();
-        if (!email || !startDate || !endDate) {
+        if (!startDate || !endDate) {
             showAlert('Please fill all required fields', 'error');
             return;
         }
@@ -446,8 +584,6 @@
         const leaveRequestId = parseInt(document.getElementById('action-leave-id').value);
         const action = document.getElementById('action-type').value;
         const remarks = document.getElementById('action-remarks').value;
-        const managerEmail = document.getElementById('manager-email').value.trim();
-        if (!managerEmail) { showAlert('Please enter manager email', 'error'); return; }
         try {
             await apiFetch('/leave_requests/approval', {
                 method: 'PUT',
@@ -466,10 +602,8 @@
 
     async function confirmCancelLeave() {
         const leaveId = document.getElementById('cancel-leave-id').value;
-        const email = document.getElementById('cancel-email').value.trim();
-        if (!email) { showAlert('Please enter employee email', 'error'); return; }
         try {
-            await apiFetch(`/leave_requests/cancel/${leaveId}?email=${encodeURIComponent(email)}`, { method: 'PUT' });
+            await apiFetch(`/leave_requests/cancel/${leaveId}`, { method: 'PUT' });
             showAlert('Leave cancelled successfully!', 'success');
             closeCancelModal();
             loadMyLeaves();
@@ -477,7 +611,6 @@
     }
 
     function clearLeaveForm() {
-        document.getElementById('leave-email').value = '';
         document.getElementById('leave-start').value = '';
         document.getElementById('leave-end').value = '';
         document.getElementById('leave-reason').value = '';
@@ -604,7 +737,7 @@
             const vendors = await apiFetch('/vendors');
             const tbody = document.getElementById('vendors-list');
             if (!vendors.length) {
-                tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No vendors found</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No vendors found</td></tr>';
             } else {
                 tbody.innerHTML = vendors.map(v => `<tr>
                     <td>${v.id}</td>
@@ -612,21 +745,59 @@
                     <td>${v.email}</td>
                     <td>${v.phone || 'N/A'}</td>
                     <td>${v.registeredAt || 'N/A'}</td>
+                    <td><button class="btn btn-danger btn-sm" onclick="deleteVendor(${v.id})">Delete</button></td>
                 </tr>`).join('');
             }
         } catch (e) { console.error(e); }
+    }
+
+    async function createVendor() {
+        const body = {
+            name: document.getElementById('vendor-name-create').value.trim(),
+            email: document.getElementById('vendor-email-create').value.trim(),
+            password: document.getElementById('vendor-password-create').value,
+            phone: document.getElementById('vendor-phone-create').value.trim()
+        };
+        if (!body.name || !body.email || !body.password || !body.phone) {
+            showAlert('Please fill all vendor fields', 'error');
+            return;
+        }
+        try {
+            await apiFetch('/vendors/register', { method: 'POST', body: JSON.stringify(body) });
+            showAlert('Vendor created successfully!', 'success');
+            clearVendorForm();
+            loadVendors();
+        } catch (e) {
+            showAlert('Failed to create vendor: ' + e.message, 'error');
+        }
+    }
+
+    function clearVendorForm() {
+        ['vendor-name-create', 'vendor-email-create', 'vendor-password-create', 'vendor-phone-create']
+            .forEach(id => document.getElementById(id).value = '');
+    }
+
+    async function deleteVendor(vendorId) {
+        if (!confirm(`Delete vendor #${vendorId}?`)) return;
+        try {
+            await apiFetch(`/vendors/${vendorId}`, { method: 'DELETE' });
+            showAlert('Vendor deleted successfully!', 'success');
+            loadVendors();
+        } catch (e) {
+            showAlert('Failed to delete vendor: ' + e.message, 'error');
+        }
     }
 
     // ============ MODAL HELPERS ============
     function closeModal() {
         document.getElementById('action-modal').classList.remove('open');
         document.getElementById('action-remarks').value = '';
-        document.getElementById('manager-email').value = '';
+        document.getElementById('manager-email').value = currentUser?.email || '';
     }
 
     function closeCancelModal() {
         document.getElementById('cancel-modal').classList.remove('open');
-        document.getElementById('cancel-email').value = '';
+        document.getElementById('cancel-email').value = currentUser?.email || '';
     }
 
     // ============ FIX 5: LOGOUT — also invalidates server-side session for session users ============
@@ -649,12 +820,6 @@
     document.getElementById('leave-start').valueAsDate = new Date();
     document.getElementById('leave-end').valueAsDate = new Date();
 
-    // Display username
-    const username = localStorage.getItem('username');
-    if (username) document.getElementById('username-display').textContent = ` ${username}`;
-
-    // Initial load
-    loadDashboard();
 </script>
 </body>
 </html>
