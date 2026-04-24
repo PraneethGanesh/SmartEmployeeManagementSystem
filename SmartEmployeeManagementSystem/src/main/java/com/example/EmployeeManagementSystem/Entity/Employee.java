@@ -2,6 +2,7 @@ package com.example.EmployeeManagementSystem.Entity;
 
 import com.example.EmployeeManagementSystem.Enum.Role;
 import com.example.EmployeeManagementSystem.Enum.Status;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -28,7 +29,14 @@ public class Employee implements UserDetails {
     @Enumerated(EnumType.STRING)
     private Status status;
     private String password;
-    private String manager;
+
+    // ✅ Self-referential — replaces `String manager`
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "manager_id", nullable = true)
+    @JsonIgnore // prevent infinite recursion in serialization
+    private Employee manager;
+
+
     private LocalDate joined_at;
     @Enumerated(EnumType.STRING)
     private Role role;
@@ -172,11 +180,12 @@ public class Employee implements UserDetails {
         this.totpEnabled = totpEnabled;
     }
 
-    public String getManager() {
+    public Employee getManager() {
         return manager;
     }
 
-    public void setManager(String manager) {
+    public void setManager(Employee manager) {
         this.manager = manager;
     }
+
 }

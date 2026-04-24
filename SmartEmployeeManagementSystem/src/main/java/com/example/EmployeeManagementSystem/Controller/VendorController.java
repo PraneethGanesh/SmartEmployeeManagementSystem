@@ -32,10 +32,19 @@ public class VendorController {
         this.vendorService = vendorService;
     }
 
-    /**
-     * Vendor retrieves their own profile.
-     * Used by vendor-dashboard.html on load.
-     */
+    @PostMapping("/register")
+    @PreAuthorize("hasRole('Admin')")
+    public ResponseEntity<VendorDTO> registerVendor(@RequestBody VendorRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(vendorService.registerVendor(request));
+    }
+
+    @GetMapping
+    @PreAuthorize("hasRole('VENDOR')")
+    public ResponseEntity<List<VendorDTO>> getAllVendors() {
+        return ResponseEntity.ok(vendorService.getAllVendors());
+    }
+
     @GetMapping("/me")
     @PreAuthorize("hasRole('VENDOR')")
     public ResponseEntity<VendorDTO> getVendor(Authentication authentication) {
