@@ -251,6 +251,7 @@
                                 <select id="leave-type">
                                     <option value="SICK">Sick Leave</option>
                                     <option value="CASUAL">Casual Leave</option>
+                                    <option value="EARNED">Earned Leave</option>
                                 </select>
                             </div>
                             <div class="form-group">
@@ -346,8 +347,10 @@
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label>Restaurant ID</label>
-                                <input type="number" id="sub-restaurant-id" placeholder="Restaurant ID">
+                                <label>Restaurant</label>
+                                <select id="sub-restaurant-id">
+                                    <option value="">Select a restaurant</option>
+                                </select>
                             </div>
                             <div class="form-group">
                                 <label>Schedule Type</label>
@@ -397,6 +400,16 @@
 
 <script>
     const API = 'http://localhost:8080';
+    let availableRestaurants = [];
+
+    function extractRoleFromToken(token) {
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            return payload.role || payload.roles || payload.authorities || '';
+        } catch (e) {
+            return '';
+        }
+    }
 
     // AUTH GUARD
     (function(){
@@ -406,13 +419,10 @@
         // Decode JWT to check role
         if(token) {
             try {
-                const payload = JSON.parse(atob(token.split('.')[1]));
-                const rawRole = payload.role || payload.roles || payload.authorities || '';
-                const normalizedRoles = Array.isArray(rawRole)
-                    ? rawRole.map(v => String(v).replace(/^ROLE_/, ''))
-                    : [String(rawRole).replace(/^ROLE_/, '')];
-                if(normalizedRoles.includes('MANAGER')) { window.location.href = '/manager-dashboard.html'; return; }
-                if(normalizedRoles.includes('VENDOR')) { window.location.href = '/vendor-dashboard.html'; return; }
+                const roles = String(extractRoleFromToken(token));
+                if(roles.includes('ROLE_MANAGER')) { window.location.href = '/manager-dashboard.html'; return; }
+                if(roles.includes('ROLE_VENDOR')) { window.location.href = '/vendor-dashboard.html'; return; }
+                if(roles.includes('ROLE_ADMIN') || roles.includes('ADMIN')) { window.location.href = '/dashboard.html'; return; }
             } catch(e) { console.warn('Could not decode JWT for role check'); }
         }
         initUser();
@@ -486,6 +496,9 @@
         document.getElementById('pageTitle').textContent=name.split('-').map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join(' ');
         const loaders={dashboard:loadDashboard,'my-leaves':loadMyLeaves,'apply-leave':()=>{},'restaurants':loadRestaurants,'subscriptions':loadSubscriptions,'add-subscription':()=>{},'profile':()=>{}};
         if(loaders[name]) loaders[name]();
+        if(name === 'add-subscription') {
+            loadRestaurantChoices();
+        }
     }
 
     async function loadDashboard(){
@@ -546,6 +559,8 @@
             await apiFetch('/leave_requests',{method:'POST',body:JSON.stringify({leaveType,startDate,endDate,reason})});
             showAlert('Leave request submitted!','success');
             clearLeaveForm();
+            loadDashboard();
+            loadMyLeaves();
         }catch(e){showAlert('Failed to submit: '+e.message,'error');}
     }
 
@@ -569,15 +584,42 @@
     async function loadRestaurants(){
     try{
         const data=await apiFetch('/restaurants');
+        availableRestaurants = data || [];
         document.getElementById('restaurants-list').innerHTML=data?.length
             ? data.map(r=>`<tr>
                 <td>${r.name||'—'}</td>
                 <td>${r.supportedMealSlots?.join(', ') || '—'}</td>
-                <td><span class="chip active">${r.active?'Active':'Inactive'}</span></td>
-                <td><button class="btn btn-secondary btn-sm" onclick="document.getElementById('sub-restaurant-id').value='${r.id}';showView('add-subscription',null)">Subscribe</button></td>
+                <td><span class="chip ${r.active ? 'active' : 'rejected'}">${r.active?'Active':'Inactive'}</span></td>
+                <td><button class="btn btn-secondary btn-sm" onclick='openSubscriptionForRestaurant(${r.id}, ${JSON.stringify((r.supportedMealSlots || []))})'>Subscribe</button></td>
               </tr>`).join('')
             : '<tr><td colspan="4" class="empty-state">No restaurants available</td></tr>';
     }catch(e){document.getElementById('restaurants-list').innerHTML='<tr><td colspan="4" class="empty-state">Could not load restaurants</td></tr>';}
+   }
+
+   async function loadRestaurantChoices() {
+    const mealSlot = document.getElementById('sub-meal-slot').value;
+    const select = document.getElementById('sub-restaurant-id');
+    try {
+        const data = await apiFetch(`/restaurants/by-slot?slot=${encodeURIComponent(mealSlot)}`);
+        availableRestaurants = data || [];
+        select.innerHTML = availableRestaurants.length
+            ? '<option value="">Select a restaurant</option>' + availableRestaurants.map(r =>
+                `<option value="${r.id}">${r.name} (${r.address || 'No address'})</option>`
+              ).join('')
+            : '<option value="">No restaurants available for this slot</option>';
+    } catch (e) {
+        select.innerHTML = '<option value="">Could not load restaurants</option>';
+    }
+   }
+
+   function openSubscriptionForRestaurant(restaurantId, supportedMealSlots) {
+    showView('add-subscription', null);
+    if (supportedMealSlots?.length) {
+        document.getElementById('sub-meal-slot').value = supportedMealSlots[0];
+    }
+    loadRestaurantChoices().then(() => {
+        document.getElementById('sub-restaurant-id').value = String(restaurantId);
+    });
    }
 
     async function loadSubscriptions(){
@@ -605,6 +647,8 @@
         this.value === 'WEEKLY' ? 'block' : 'none';
     });
 
+   document.getElementById('sub-meal-slot').addEventListener('change', loadRestaurantChoices);
+
    async function addSubscription(){
     const restaurantId = parseInt(document.getElementById('sub-restaurant-id').value);
     const mealSlot = document.getElementById('sub-meal-slot').value;
@@ -625,6 +669,8 @@
     try{
         await apiFetch('/subscription', {method:'POST', body:JSON.stringify(body)});
         showAlert('Subscribed successfully!','success');
+        loadSubscriptions();
+        loadDashboard();
     }catch(e){
         showAlert('Subscription failed: '+e.message,'error');
     }
