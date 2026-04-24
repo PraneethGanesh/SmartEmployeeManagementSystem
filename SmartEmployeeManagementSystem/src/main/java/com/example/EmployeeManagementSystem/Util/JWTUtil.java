@@ -43,23 +43,12 @@ public class JWTUtil {
         key = Keys.hmacShaKeyFor(secret.getBytes());
     }
 
-    public String generateToken(String username) {
-        String  role;
-        Optional<Employee> empOpt = employeeRepo.findByEmail(username);
-        if (empOpt.isPresent()) {
-            role = empOpt.get().getRole().name(); // assuming enum
-        }
-        else {
-            // Try Vendor
-            Vendor vendor = vendorRepo.findByEmail(username)
-                    .orElseThrow(() -> new RuntimeException("User not found"));
-            role = vendor.getRole().name();
-        }
+    public String generateToken(String username,String role) {
         return Jwts.builder()
-                .setSubject(username)
+                .subject(username)
                 .claim("role",role)
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + Expiration_time))
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + Expiration_time))
                 .signWith(key)
                 .compact();
     }

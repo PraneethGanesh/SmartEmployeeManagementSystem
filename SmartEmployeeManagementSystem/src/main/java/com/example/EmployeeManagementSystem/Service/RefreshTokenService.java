@@ -14,12 +14,10 @@ import java.util.UUID;
 
 @Service
 public class RefreshTokenService {
-    private final RefreshTokenRepository refreshTokenRepository;
     private final EmployeeRepo employeeRepo;
     private final VendorRepo vendorRepo;
 
     public RefreshTokenService(RefreshTokenRepository refreshTokenRepository, EmployeeRepo employeeRepo, VendorRepo vendorRepo) {
-        this.refreshTokenRepository = refreshTokenRepository;
         this.employeeRepo = employeeRepo;
         this.vendorRepo= vendorRepo;
     }

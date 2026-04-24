@@ -108,11 +108,11 @@ public class JWTAuthConfig {
                                 new RequestAttributeSecurityContextRepository()
                         ))
                 )
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
-                        .maximumSessions(1)
-                        .maxSessionsPreventsLogin(false)
-                )
+//                .sessionManagement(session -> session
+//                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+//                        .maximumSessions(1)
+//                        .maxSessionsPreventsLogin(false)
+//                )
                 .authorizeHttpRequests(auth -> auth
                         // Auth endpoints
                         .requestMatchers("/Authenticate", "/Authenticate/refresh").permitAll()
