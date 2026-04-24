@@ -2,6 +2,7 @@ package com.example.EmployeeManagementSystem.Controller;
 
 import com.example.EmployeeManagementSystem.DTO.EmployeeDTO;
 import com.example.EmployeeManagementSystem.DTO.EmployeeDetails;
+import com.example.EmployeeManagementSystem.DTO.LeaveResponseDTO;
 import com.example.EmployeeManagementSystem.DTO.PromoteRequest;
 import com.example.EmployeeManagementSystem.Entity.Employee;
 import com.example.EmployeeManagementSystem.Entity.LeaveRequest;
@@ -55,6 +56,12 @@ public class ManagerController {
     @PreAuthorize("hasRole('MANAGER')")
     public ResponseEntity<?> promoteUser(Authentication authentication, @RequestBody PromoteRequest promoteRequest){
          return manangerService.promoteUser(authentication,promoteRequest);
+    }
+
+    @GetMapping("/pending")
+    @PreAuthorize("hasAnyRole('MANAGER')")
+    public ResponseEntity<List<LeaveResponseDTO>> getAllTheLeaveRequests(Authentication authentication) {
+        return ResponseEntity.ok(manangerService.getAllThePendingLeaveRequests(authentication));
     }
 
 

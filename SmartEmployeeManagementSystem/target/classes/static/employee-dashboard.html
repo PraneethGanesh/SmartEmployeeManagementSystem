@@ -407,9 +407,12 @@
         if(token) {
             try {
                 const payload = JSON.parse(atob(token.split('.')[1]));
-                const roles = payload.roles || payload.authorities || '';
-                if(roles.includes('ROLE_MANAGER')) { window.location.href = '/manager-dashboard.html'; return; }
-                if(roles.includes('ROLE_VENDOR')) { window.location.href = '/vendor-dashboard.html'; return; }
+                const rawRole = payload.role || payload.roles || payload.authorities || '';
+                const normalizedRoles = Array.isArray(rawRole)
+                    ? rawRole.map(v => String(v).replace(/^ROLE_/, ''))
+                    : [String(rawRole).replace(/^ROLE_/, '')];
+                if(normalizedRoles.includes('MANAGER')) { window.location.href = '/manager-dashboard.html'; return; }
+                if(normalizedRoles.includes('VENDOR')) { window.location.href = '/vendor-dashboard.html'; return; }
             } catch(e) { console.warn('Could not decode JWT for role check'); }
         }
         initUser();

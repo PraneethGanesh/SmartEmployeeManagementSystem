@@ -2,20 +2,24 @@ package com.example.EmployeeManagementSystem.Service;
 
 import com.example.EmployeeManagementSystem.DTO.EmployeeDTO;
 import com.example.EmployeeManagementSystem.DTO.EmployeeDetails;
+import com.example.EmployeeManagementSystem.DTO.LeaveResponseDTO;
 import com.example.EmployeeManagementSystem.DTO.PromoteRequest;
 import com.example.EmployeeManagementSystem.Entity.Employee;
 import com.example.EmployeeManagementSystem.Entity.LeaveRequest;
+import com.example.EmployeeManagementSystem.Enum.LeaveStatus;
 import com.example.EmployeeManagementSystem.Enum.Role;
 import com.example.EmployeeManagementSystem.Exception.EmployeeNotFound;
 import com.example.EmployeeManagementSystem.Repository.EmployeeRepo;
 import com.example.EmployeeManagementSystem.Repository.LeaveRequestRepo;
 import com.example.EmployeeManagementSystem.Util.AuthUtil;
+import org.jspecify.annotations.Nullable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class ManangerService {
@@ -106,5 +110,28 @@ public class ManangerService {
         employee.setRole(Role.ADMIN);
         employee.setTimezone(employeeDetails.getTimezone());
         return employeeRepo.save(employee);
+    }
+
+    public List<LeaveResponseDTO> getAllThePendingLeaveRequests(Authentication authentication) {
+        String email=AuthUtil.extractEmail(authentication);
+        Employee manager=employeeRepo.findByEmail(email).orElseThrow(
+                ()->new EmployeeNotFound("Manager with "+email+" not found")
+        );
+        List<LeaveRequest> leaveRequests=leaveRequestRepo.findByStatusAndEmployee_Manager(LeaveStatus.PENDING,manager);
+        return leaveRequests.stream()
+                .map(this::convertToLeaveResponseDTO)
+                .collect(Collectors.toList());
+    }
+
+    private LeaveResponseDTO convertToLeaveResponseDTO(LeaveRequest leaveRequest) {
+        LeaveResponseDTO dto = new LeaveResponseDTO();
+        dto.setLeaveRequestId(leaveRequest.getId());
+        dto.setEmployeeId(leaveRequest.getEmployee().getEmployeeId());
+        dto.setLeaveType(leaveRequest.getLeaveType());
+        dto.setStartDate(leaveRequest.getStartDate());
+        dto.setEndDate(leaveRequest.getEndDate());
+        dto.setReason(leaveRequest.getReason());
+        dto.setStatus(leaveRequest.getStatus());
+        return dto;
     }
 }
