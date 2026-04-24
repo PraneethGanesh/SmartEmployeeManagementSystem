@@ -9,19 +9,22 @@ public enum Role {
             Permission.SUBSCRIPTION_WRITE,
             Permission.SUBSCRIPTION_UPDATE,
             Permission.RESTAURANTS_READ,
-            Permission.SUBSCRIPTION_READ)),
+            Permission.SUBSCRIPTION_READ,
+            Permission.PROFILE_READ)),
     MANAGER(Set.of(Permission.LEAVE_UPDATE,
             Permission.LEAVE_WRITE,
             Permission.SUBSCRIPTION_WRITE,
             Permission.RESTAURANTS_READ,
             Permission.SUBSCRIPTION_UPDATE,
             Permission.LEAVE_READ,
-            Permission.SUBSCRIPTION_READ)),
+            Permission.SUBSCRIPTION_READ,
+            Permission.PROFILE_READ)),
     VENDOR(Set.of(
             Permission.VENDOR_DELETE,
             Permission.RESTAURANTS_ADD,
             Permission.RESTAURANTS_DELETE,
-            Permission.RESTAURANTS_READ
+            Permission.RESTAURANTS_READ,
+            Permission.PROFILE_READ
     )),
     ADMIN(Set.of(
             Permission.LEAVE_READ,
@@ -33,8 +36,11 @@ public enum Role {
             Permission.SUBSCRIPTION_WRITE,
             Permission.SUBSCRIPTION_UPDATE,
             Permission.VENDOR_UPDATE,
-            Permission.VENDOR_DELETE
-    ));
+            Permission.VENDOR_DELETE,
+            Permission.PROFILE_READ
+
+    )),
+    USER(Set.of(Permission.PROFILE_READ));
     private final Set<Permission> permissions;
 
     Role(Set<Permission> permissions) {

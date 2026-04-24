@@ -51,6 +51,9 @@ spring:
           google:
             client-id: ${client_id}
             client-secret: ${client_secret}
+            scope:
+              - email
+              - profile
 
 logging:
   level:

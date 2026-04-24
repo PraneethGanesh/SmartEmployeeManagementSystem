@@ -54,7 +54,13 @@ public class AuthController {
 
             UserDetails user = (UserDetails) auth.getPrincipal();
 
-            String accessToken = jwtUtil.generateToken(user.getUsername());
+            String role = user.getAuthorities().stream()
+                    .map(authority -> authority.getAuthority())
+                    .filter(authority -> authority.startsWith("ROLE_"))
+                    .findFirst()
+                    .orElseThrow(() -> new RuntimeException("Role not found"));
+
+            String accessToken = jwtUtil.generateToken(user.getUsername(),role);
 
             RefreshToken refreshToken;
 
@@ -67,9 +73,7 @@ public class AuthController {
             }
 
             refreshTokenRepository.save(refreshToken);
-
-            String token = jwtUtil.generateToken(authRequest.getUsername());
-            System.out.println("5. Token generated: " + token);
+            System.out.println("5. Token generated: " + accessToken);
 
             return new AuthResponse(accessToken, refreshToken.getToken());
         } catch (Exception e) {
@@ -93,16 +97,19 @@ public class AuthController {
         }
 
         String username;
+        String role;
 
         if (storedToken.getEmployee() != null) {
             username = storedToken.getEmployee().getUsername();
+            role=storedToken.getEmployee().getRole().name();
         } else if (storedToken.getVendor() != null) {
             username = storedToken.getVendor().getUsername();
+            role=storedToken.getVendor().getRole().name();
         } else {
             throw new RuntimeException("Refresh token has no owner");
         }
 
-        String newAccessToken = jwtUtil.generateToken(username);
+        String newAccessToken = jwtUtil.generateToken(username,role);
 
         return new AuthResponse(newAccessToken, storedToken.getToken());
     }

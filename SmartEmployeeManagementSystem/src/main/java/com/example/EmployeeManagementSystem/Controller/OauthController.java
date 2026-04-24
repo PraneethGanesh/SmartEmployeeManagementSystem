@@ -44,11 +44,8 @@ public class OauthController {
                           HttpServletRequest request,
                           HttpServletResponse response) throws IOException {
 
-        HttpSession session = request.getSession(true);
-        session.setAttribute("oauth_role",     role.toUpperCase());
-        session.setAttribute("oauth_timezone", timezone);
-
         // Now hand off to Spring's built-in OAuth2 flow
+        System.out.println("Now hand off to Spring's built-in OAuth2 flow");
         response.sendRedirect("/oauth2/authorization/google");
     }
 }

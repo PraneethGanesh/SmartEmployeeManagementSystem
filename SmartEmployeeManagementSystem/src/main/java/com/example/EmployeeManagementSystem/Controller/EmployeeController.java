@@ -24,7 +24,7 @@ public class EmployeeController {
     }
 
     @GetMapping("/me")
-    @PreAuthorize("hasAnyRole('ADMIN','MANAGER','EMPLOYEE')")
+    @PreAuthorize("hasAuthority('PROFILE_READ')")
     public ResponseEntity<Employee> myAccount(Authentication authentication){
         return ResponseEntity.ok(employeeService.getAccount(authentication));
     }
