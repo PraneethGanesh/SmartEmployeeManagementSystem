@@ -11,20 +11,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-/**
- * Vendor self-service API — used exclusively by authenticated VENDOR accounts.
- *
- * Vendors are created by the Admin via POST /admin/vendors (see AdminController).
- * Vendors log in through the dedicated /vendor-login.html page.
- *
- * Endpoints:
- *   GET  /vendors/me        — get own vendor profile
- *   PUT  /vendors/update    — update own profile
- *   DELETE /vendors         — delete own account
- *
- * Registration and listing endpoints have been moved to AdminController.
- * All endpoints here require ROLE_VENDOR only.
- */
 @RestController
 @RequestMapping("/vendors")
 public class VendorController {
@@ -54,11 +40,7 @@ public class VendorController {
         return ResponseEntity.ok(vendorService.getVendor(authentication));
     }
 
-    /**
-     * Vendor updates their own profile details (name, contact, etc.).
-     * Credentials (email/password) changes should go through a separate
-     * secure flow; this endpoint handles non-sensitive fields.
-     */
+
     @PutMapping("/update")
     @PreAuthorize("hasRole('VENDOR')")
     public ResponseEntity<VendorDTO> updateVendor(
@@ -67,10 +49,6 @@ public class VendorController {
         return ResponseEntity.ok(vendorService.updateVendor(request, authentication));
     }
 
-    /**
-     * Vendor deletes (closes) their own account.
-     * Admin can remove a vendor via DELETE /admin/vendors/{id}.
-     */
     @DeleteMapping
     @PreAuthorize("hasRole('VENDOR')")
     public ResponseEntity<String> deleteVendor(Authentication authentication) {
