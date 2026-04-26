@@ -4,13 +4,18 @@ import com.example.EmployeeManagementSystem.Entity.Employee;
 import com.example.EmployeeManagementSystem.Enum.Role;
 import com.example.EmployeeManagementSystem.Repository.EmployeeRepo;
 import com.example.EmployeeManagementSystem.Repository.VendorRepo;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
+import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -31,46 +36,37 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) {
         System.out.println("=== CustomOAuth2UserService.loadUser() called ===");
-
-        OAuth2User oAuth2User;
-        try {
-            oAuth2User = super.loadUser(userRequest);
-            System.out.println("super.loadUser() succeeded");
-        } catch (Exception e) {
-            System.err.println("super.loadUser() FAILED: " + e.getMessage());
-            e.printStackTrace();
-            throw e;
-        }
+        OAuth2User oAuth2User = super.loadUser(userRequest);
 
         String email = oAuth2User.getAttribute("email");
         String name  = oAuth2User.getAttribute("name");
         System.out.println("OAuth email: " + email);
 
-        try {
-            // ── Returning user — role already set in DB, nothing to do ────────
-            boolean employeeExists = employeeRepo.findByEmail(email).isPresent();
-            boolean vendorExists   = vendorRepo.findByEmail(email).isPresent();
-            System.out.println("employeeExists=" + employeeExists + ", vendorExists=" + vendorExists);
+        boolean employeeExists = employeeRepo.findByEmail(email).isPresent();
+        boolean vendorExists   = vendorRepo.findByEmail(email).isPresent();
+        System.out.println("employeeExists=" + employeeExists + ", vendorExists=" + vendorExists);
 
-            if (employeeExists || vendorExists) {
-                System.out.println("Returning existing user");
-                return oAuth2User;
-            }
+        List<GrantedAuthority> authorities = new   ArrayList<>(oAuth2User.getAuthorities());
 
-            // ── Brand new user — always register as USER ──────────────────────
-            // No session reading, no role param, no timezone param.
-            // Role is always USER. Timezone defaults to Asia/Kolkata.
-            // Admin promotes them to EMPLOYEE/MANAGER later via /admin/promote/{id}
-            // Vendors register separately via POST /vendors/register (not OAuth)
-            registerAsUser(email, name);
-
-        } catch (Exception e) {
-            System.err.println("=== REGISTRATION FAILED ===");
-            e.printStackTrace();
-            throw e;
+        if (employeeExists) {
+            Employee employee = employeeRepo.findByEmail(email).get();
+            // This adds ROLE_ADMIN / ROLE_MANAGER / ROLE_EMPLOYEE etc.
+            authorities.add(new SimpleGrantedAuthority("ROLE_" + employee.getRole().name()));
+            System.out.println("Returning existing employee with role: " + employee.getRole());
+            return new DefaultOAuth2User(authorities, oAuth2User.getAttributes(), "sub");
         }
 
-        return oAuth2User;
+        if (vendorExists) {
+            // add vendor role if needed
+            authorities.add(new SimpleGrantedAuthority("ROLE_VENDOR"));
+            System.out.println("Returning existing vendor");
+            return new DefaultOAuth2User(authorities, oAuth2User.getAttributes(), "sub");
+        }
+
+        // New user
+        registerAsUser(email, name);
+        authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
+        return new DefaultOAuth2User(authorities, oAuth2User.getAttributes(), "sub");
     }
 
     private void registerAsUser(String email, String name) {
