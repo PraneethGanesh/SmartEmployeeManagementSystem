@@ -11,7 +11,6 @@ import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserServ
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.security.oauth2.core.user.OAuth2User;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -50,7 +49,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
         if (employeeExists) {
             Employee employee = employeeRepo.findByEmail(email).get();
-            // This adds ROLE_ADMIN / ROLE_MANAGER / ROLE_EMPLOYEE etc.
             authorities.add(new SimpleGrantedAuthority("ROLE_" + employee.getRole().name()));
             System.out.println("Returning existing employee with role: " + employee.getRole());
             return new DefaultOAuth2User(authorities, oAuth2User.getAttributes(), "sub");
