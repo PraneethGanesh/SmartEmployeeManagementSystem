@@ -20,7 +20,7 @@
             --amber:#f9c74f;--amber-dim:rgba(249,199,79,0.12);
             --font:'Outfit',sans-serif;--mono:'JetBrains Mono',monospace;
         }
-        body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;display:flex;overflow:hidden;}
+        body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;display:flex;overflow:auto;}
 
         .bg-layer{position:fixed;inset:0;z-index:0;
             background:
@@ -51,7 +51,7 @@
         .back-link:hover{color:var(--text2)}
 
         /* RIGHT */
-        .right-panel{width:460px;flex-shrink:0;display:flex;align-items:center;justify-content:center;padding:32px 40px;position:relative;z-index:1;border-left:1px solid var(--border);background:rgba(14,17,24,0.8);backdrop-filter:blur(20px);animation:fadeRight 0.8s ease both;}
+        .right-panel{width:460px;flex-shrink:0;display:flex;align-items:flex-start;overflow-y:auto;justify-content:center;padding:32px 40px;position:relative;z-index:1;border-left:1px solid var(--border);background:rgba(14,17,24,0.8);backdrop-filter:blur(20px);animation:fadeRight 0.8s ease both;}
         @keyframes fadeRight{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:translateX(0)}}
         .form-box{width:100%}
 
@@ -188,7 +188,7 @@
         </div>
 
         <div class="status-box" id="status-box"></div>
-
+        
         <div class="notice">
             <strong>Don't have an account?</strong> Vendor accounts are created exclusively by the system admin. Please contact your administrator to set up access.
         </div>
