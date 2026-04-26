@@ -28,7 +28,7 @@
             color:var(--text);
             min-height:100vh;
             display:flex;
-            overflow:hidden;
+            overflow-y:auto;
         }
 
         /* ---- BACKGROUND ---- */
@@ -108,7 +108,8 @@
         /* ---- RIGHT PANEL (FORM) ---- */
         .right-panel{
             width:460px;flex-shrink:0;
-            display:flex;align-items:center;justify-content:center;
+            display:flex;align-items:flex-start;justify-content:center;
+            overflow-y:auto;
             padding:32px 40px;position:relative;z-index:1;
             border-left:1px solid var(--border);
             background:rgba(14,17,24,0.8);
