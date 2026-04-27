@@ -443,8 +443,10 @@
     localStorage.setItem('last_role', role);
 
     if (role === 'VENDOR') {
-        window.location.href = '/vendor-login.html';
-        return;
+       localStorage.removeItem('jwt_token');
+    localStorage.removeItem('auth_type');
+    showStatus('error', 'Vendors must use the Vendor Login page.');
+    return;
     }
 
     const destination = DASHBOARDS[role] || '/pending.html';
