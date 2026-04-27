@@ -50,9 +50,6 @@ public class Vendor implements UserDetails {
         if (this.registeredAt == null) {
             this.registeredAt = LocalDate.now();
         }
-        if (this.role == null) {
-            this.role = Role.VENDOR;
-        }
     }
 
     public Long getId() { return id; }
@@ -73,7 +70,7 @@ public class Vendor implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        Role effectiveRole = role != null ? role : Role.VENDOR;
+        Role effectiveRole = role;
         Set<SimpleGrantedAuthority> authorities=new HashSet<>();
         authorities.add(new SimpleGrantedAuthority("ROLE_"+effectiveRole.name()));
         authorities.addAll(effectiveRole.getPermissions().stream()

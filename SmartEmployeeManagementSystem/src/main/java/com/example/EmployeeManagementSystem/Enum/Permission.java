@@ -15,5 +15,6 @@ public enum Permission {
     RESTAURANTS_ADD,
     RESTAURANTS_READ,
     RESTAURANTS_DELETE,
-    PROFILE_READ;
+    PROFILE_READ,
+    VENDOR_WRITE;
 }

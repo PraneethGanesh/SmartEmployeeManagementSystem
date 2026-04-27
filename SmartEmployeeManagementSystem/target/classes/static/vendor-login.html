@@ -218,154 +218,179 @@
 
 <script>
     const API = 'http://localhost:8080';
-    const VENDOR_DASHBOARD = '/vendor-dashboard.html';
 
-    // Auth guard: already logged in as vendor?
-    (function(){
-        const token    = localStorage.getItem('jwt_token');
-        const authType = localStorage.getItem('auth_type');
-        const lastRole = localStorage.getItem('last_role');
-        if ((token || authType === 'session') && lastRole === 'VENDOR') {
-            window.location.href = VENDOR_DASHBOARD;
-        }
-    })();
+ const DASHBOARDS = {
+     FOOD_VENDOR: '/vendor-dashboard.html',
+     TECH_VENDOR: '/tech-vendor-dashboard.html'
+ };
 
-    // Status helpers
-    function showStatus(type, msg) {
-        const box = document.getElementById('status-box');
-        box.className     = `status-box ${type}`;
-        box.textContent   = msg;
-        box.style.display = 'block';
-    }
-    function hideStatus() {
-        document.getElementById('status-box').style.display = 'none';
-    }
+ // ── ALREADY LOGGED IN? ────────────────────────────────────────────
+ (function(){
+     const token = localStorage.getItem('jwt_token');
+     if(!token) return;
+     try{
+         const role = getRoleFromJWT(token);
+         if(DASHBOARDS[role]) window.location.href = DASHBOARDS[role];
+     }catch(e){}
+ })();
 
-    // Auth tab switching
-    function switchTab(type) {
-        document.getElementById('jwt-form').style.display     = type === 'jwt'     ? 'block' : 'none';
-        document.getElementById('session-form').style.display = type === 'session' ? 'block' : 'none';
-        document.getElementById('tab-jwt').classList.toggle('active',     type === 'jwt');
-        document.getElementById('tab-session').classList.toggle('active', type === 'session');
-        hideStatus();
-    }
+ // ── HELPERS ───────────────────────────────────────────────────────
+ function getRoleFromJWT(token){
+     const payload = JSON.parse(atob(token.split('.')[1]));
+     const raw = payload.role || payload.roles || payload.authorities || payload.scope || '';
+     const role = Array.isArray(raw) ? raw[0] : raw;
+     return String(role).replace(/^ROLE_/, '').toUpperCase().trim();
+ }
 
-    // Validate token contains VENDOR role
-    function isVendorToken(token) {
-        try {
-            const payload     = JSON.parse(atob(token.split('.')[1]));
-            const authorities = payload.roles || payload.authorities || payload.scope || payload.role || '';
-            const authText    = Array.isArray(authorities) ? authorities.join(',') : String(authorities);
-            return authText.includes('VENDOR') || authText.includes('ROLE_VENDOR');
-        } catch {
-            return false;
-        }
-    }
+ function showStatus(type, msg){
+     const box = document.getElementById('status-box');
+     box.className     = `status-box ${type}`;
+     box.textContent   = msg;
+     box.style.display = 'block';
+ }
+ function hideStatus(){
+     document.getElementById('status-box').style.display = 'none';
+ }
 
-    // JWT Login
-    async function jwtLogin() {
-        const username = document.getElementById('jwt-username').value.trim();
-        const password = document.getElementById('jwt-password').value;
-        if (!username || !password) { showStatus('error', 'Please enter your email and password'); return; }
+ function switchTab(type){
+     document.getElementById('jwt-form').style.display     = type === 'jwt'     ? 'block' : 'none';
+     document.getElementById('session-form').style.display = type === 'session' ? 'block' : 'none';
+     document.getElementById('tab-jwt').classList.toggle('active',     type === 'jwt');
+     document.getElementById('tab-session').classList.toggle('active', type === 'session');
+     hideStatus();
+ }
 
-        const btn = document.getElementById('jwt-btn');
-        btn.classList.add('loading'); btn.textContent = 'Signing in...';
-        showStatus('loading', 'Authenticating...');
+ function redirectByRole(role){
+     const dest = DASHBOARDS[role];
+     if(!dest){
+         showStatus('error', 'This portal is for vendors only. Please use the main login page.');
+         return false;
+     }
+     showStatus('success', `Login successful! Redirecting to ${role === 'TECH_VENDOR' ? 'Tech Vendor' : 'Food Vendor'} dashboard...`);
+     setTimeout(() => window.location.href = dest, 700);
+     return true;
+ }
 
-        try {
-            const res = await fetch(`${API}/Authenticate`, {
-                method:  'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body:    JSON.stringify({ username, password })
-            });
+ // ── JWT LOGIN ─────────────────────────────────────────────────────
+ async function jwtLogin(){
+     const username = document.getElementById('jwt-username').value.trim();
+     const password = document.getElementById('jwt-password').value;
+     if(!username || !password){ showStatus('error', 'Please enter your email and password'); return; }
 
-            if (res.ok) {
-                const data = await res.json();
+     const btn = document.getElementById('jwt-btn');
+     btn.classList.add('loading'); btn.textContent = 'Signing in...';
+     showStatus('loading', 'Authenticating...');
 
-                // Enforce vendor-only access on this page
-                if (!isVendorToken(data.accessToken)) {
-                    showStatus('error', 'This login page is for vendors only. Please use the main login page.');
-                    btn.classList.remove('loading'); btn.textContent = 'Sign In as Vendor';
-                    return;
-                }
+     try{
+         const res = await fetch(`${API}/Authenticate`, {
+             method:  'POST',
+             headers: {'Content-Type': 'application/json'},
+             body:    JSON.stringify({username, password})
+         });
 
-                localStorage.setItem('jwt_token',     data.accessToken);
-                localStorage.setItem('refresh_token', data.refreshToken || '');
-                localStorage.setItem('auth_type',     'jwt');
-                localStorage.setItem('last_role',     'VENDOR');
-                localStorage.setItem('user_timezone', document.getElementById('tz-select').value);
-                showStatus('success', 'Login successful! Redirecting to vendor dashboard...');
-                setTimeout(() => window.location.href = VENDOR_DASHBOARD, 600);
-            } else {
-                const err = await res.text();
-                showStatus('error', 'Login failed: ' + (err || 'Invalid credentials'));
-                btn.classList.remove('loading'); btn.textContent = 'Sign In as Vendor';
-            }
-        } catch(e) {
-            showStatus('error', 'Connection error: ' + e.message);
-            btn.classList.remove('loading'); btn.textContent = 'Sign In as Vendor';
-        }
-    }
+         if(res.ok){
+             const data  = await res.json();
+             const token = data.accessToken || data.token;
+             const role  = getRoleFromJWT(token);
 
-    // Session Login
-    async function sessionLogin() {
-        const username = document.getElementById('session-username').value.trim();
-        const password = document.getElementById('session-password').value;
-        if (!username || !password) { showStatus('error', 'Please enter your email and password'); return; }
+             if(!DASHBOARDS[role]){
+                 showStatus('error', 'This portal is for vendors only. Please use the main login page.');
+                 btn.classList.remove('loading'); btn.textContent = 'Sign In as Vendor';
+                 return;
+             }
 
-        const btn = document.getElementById('session-btn');
-        btn.classList.add('loading'); btn.textContent = 'Signing in...';
-        showStatus('loading', 'Authenticating...');
+             localStorage.setItem('jwt_token',     token);
+             localStorage.setItem('refresh_token', data.refreshToken || '');
+             localStorage.setItem('auth_type',     'jwt');
+             localStorage.setItem('last_role',     role);
+             localStorage.setItem('user_timezone', document.getElementById('tz-select').value);
 
-        try {
-            const res = await fetch(`${API}/session/login`, {
-                method:      'POST',
-                headers:     { 'Content-Type': 'application/json' },
-                body:        JSON.stringify({ username, password }),
-                credentials: 'include'
-            });
-            if (res.ok) {
-                localStorage.setItem('auth_type',     'session');
-                localStorage.setItem('last_role',     'VENDOR');
-                localStorage.setItem('user_timezone', document.getElementById('tz-select').value);
-                showStatus('success', 'Login successful! Redirecting...');
-                setTimeout(() => window.location.href = VENDOR_DASHBOARD, 600);
-            } else {
-                const err = await res.json().catch(() => ({}));
-                showStatus('error', 'Login failed: ' + (err.error || 'Invalid credentials'));
-                btn.classList.remove('loading'); btn.textContent = 'Sign In with Session';
-            }
-        } catch(e) {
-            showStatus('error', 'Connection error: ' + e.message);
-            btn.classList.remove('loading'); btn.textContent = 'Sign In with Session';
-        }
-    }
+             btn.textContent = 'Signed In ✓';
+             redirectByRole(role);
 
-    // Timezone
-    function updateTz() {
-        localStorage.setItem('user_timezone', document.getElementById('tz-select').value);
-        refreshTzClock();
-    }
-    function refreshTzClock() {
-        const tz = document.getElementById('tz-select').value;
-        document.getElementById('tz-time').textContent =
-            new Date().toLocaleTimeString('en-GB', { timeZone: tz, hour12: false });
-    }
+         }else{
+             const err = await res.text();
+             showStatus('error', 'Login failed: ' + (err || 'Invalid credentials'));
+             btn.classList.remove('loading'); btn.textContent = 'Sign In as Vendor';
+         }
+     }catch(e){
+         showStatus('error', 'Connection error: ' + e.message);
+         btn.classList.remove('loading'); btn.textContent = 'Sign In as Vendor';
+     }
+ }
 
-    // Enter key
-    document.addEventListener('keydown', e => {
-        if (e.key !== 'Enter') return;
-        if (document.getElementById('jwt-form').style.display !== 'none') jwtLogin();
-        else sessionLogin();
-    });
+ // ── SESSION LOGIN ─────────────────────────────────────────────────
+ async function sessionLogin(){
+     const username = document.getElementById('session-username').value.trim();
+     const password = document.getElementById('session-password').value;
+     if(!username || !password){ showStatus('error', 'Please enter your email and password'); return; }
 
-    // Init
-    window.onload = () => {
-        const savedTz = localStorage.getItem('user_timezone') || 'Asia/Kolkata';
-        document.getElementById('tz-select').value = savedTz;
-        refreshTzClock();
-        setInterval(refreshTzClock, 1000);
-    };
+     const btn = document.getElementById('session-btn');
+     btn.classList.add('loading'); btn.textContent = 'Signing in...';
+     showStatus('loading', 'Authenticating...');
+
+     try{
+         const res = await fetch(`${API}/session/login`, {
+             method:      'POST',
+             headers:     {'Content-Type': 'application/json'},
+             body:        JSON.stringify({username, password}),
+             credentials: 'include'
+         });
+
+         if(res.ok){
+             // Session login — fetch /employee/me or /vendor/me to get role
+             try{
+                 const meRes = await fetch(`${API}/vendor/me`, {credentials: 'include'});
+                 if(meRes.ok){
+                     const me   = await meRes.json();
+                     const role = String(me.role || '').replace(/^ROLE_/, '').toUpperCase();
+                     localStorage.setItem('auth_type',     'session');
+                     localStorage.setItem('last_role',     role);
+                     localStorage.setItem('user_timezone', document.getElementById('tz-select').value);
+                     btn.textContent = 'Signed In ✓';
+                     redirectByRole(role);
+                     return;
+                 }
+             }catch(e){}
+
+             // Fallback if /vendor/me not available
+             showStatus('error', 'Could not determine vendor type. Please use JWT login.');
+             btn.classList.remove('loading'); btn.textContent = 'Sign In with Session';
+
+         }else{
+             const err = await res.json().catch(()=>({}));
+             showStatus('error', 'Login failed: ' + (err.error || 'Invalid credentials'));
+             btn.classList.remove('loading'); btn.textContent = 'Sign In with Session';
+         }
+     }catch(e){
+         showStatus('error', 'Connection error: ' + e.message);
+         btn.classList.remove('loading'); btn.textContent = 'Sign In with Session';
+     }
+ }
+
+ // ── TIMEZONE ──────────────────────────────────────────────────────
+ function updateTz(){
+     localStorage.setItem('user_timezone', document.getElementById('tz-select').value);
+     refreshTzClock();
+ }
+ function refreshTzClock(){
+     const tz = document.getElementById('tz-select').value;
+     document.getElementById('tz-time').textContent =
+         new Date().toLocaleTimeString('en-GB', {timeZone: tz, hour12: false});
+ }
+
+ document.addEventListener('keydown', e => {
+     if(e.key !== 'Enter') return;
+     if(document.getElementById('jwt-form').style.display !== 'none') jwtLogin();
+     else sessionLogin();
+ });
+
+ window.onload = () => {
+     const savedTz = localStorage.getItem('user_timezone') || 'Asia/Kolkata';
+     document.getElementById('tz-select').value = savedTz;
+     refreshTzClock();
+     setInterval(refreshTzClock, 1000);
+ };
 </script>
 </body>
 </html>

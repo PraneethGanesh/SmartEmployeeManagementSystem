@@ -19,7 +19,8 @@ public enum Role {
             Permission.LEAVE_READ,
             Permission.SUBSCRIPTION_READ,
             Permission.PROFILE_READ)),
-    VENDOR(Set.of(
+    FOOD_VENDOR(Set.of(
+            Permission.VENDOR_WRITE,
             Permission.VENDOR_DELETE,
             Permission.RESTAURANTS_ADD,
             Permission.RESTAURANTS_DELETE,
@@ -35,11 +36,13 @@ public enum Role {
             Permission.SUBSCRIPTION_READ,
             Permission.SUBSCRIPTION_WRITE,
             Permission.SUBSCRIPTION_UPDATE,
+            Permission.VENDOR_WRITE,
             Permission.VENDOR_UPDATE,
             Permission.VENDOR_DELETE,
             Permission.PROFILE_READ
 
     )),
+    TECH_VENDOR(Set.of()),
     USER(Set.of(Permission.PROFILE_READ));
     private final Set<Permission> permissions;
 

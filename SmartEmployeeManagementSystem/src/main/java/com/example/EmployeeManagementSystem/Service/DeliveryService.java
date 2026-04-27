@@ -110,7 +110,7 @@ public class DeliveryService {
             vendor.setName(request.getName());
             vendor.setEmail(request.getEmail());
             vendor.setPhone(request.getPhone());
-            vendor.setRole(Role.VENDOR);
+            vendor.setRole(request.getRole());
             vendor.setPassword(passwordEncoder.encode(request.getPassword()));
             Vendor saved = vendorRepo.save(vendor);
             log.info("Vendor registered: {} (id={})", saved.getName(), saved.getId());

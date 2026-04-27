@@ -1,5 +1,6 @@
 package com.example.EmployeeManagementSystem.DTO;
 
+import com.example.EmployeeManagementSystem.Enum.Role;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
@@ -17,6 +18,8 @@ public class VendorRequest {
 
     private String password;
 
+    private Role role;
+
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
 
@@ -32,5 +35,13 @@ public class VendorRequest {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public Role getRole() {
+        return role;
+    }
+
+    public void setRole(Role role) {
+        this.role = role;
     }
 }

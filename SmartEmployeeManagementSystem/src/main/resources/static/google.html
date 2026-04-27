@@ -425,9 +425,7 @@
         role = getRoleFromJWT(token);
     } else {
         try {
-            const res = await fetch(`${API}/employee/me`, {
-                credentials: 'include'
-            });
+            const res = await fetch(`${API}/employee/me`, { credentials: 'include' });
             if (res.ok) {
                 const emp = await res.json();
                 role = emp.role || 'USER';
@@ -442,14 +440,31 @@
     console.log('Final role for redirect:', role);
     localStorage.setItem('last_role', role);
 
-    if (role === 'VENDOR') {
-       localStorage.removeItem('jwt_token');
-    localStorage.removeItem('auth_type');
-    showStatus('error', 'Vendors must use the Vendor Login page.');
-    return;
+    // Block ALL vendor types from using the main login page
+    if (role === 'FOOD_VENDOR' || role === 'TECH_VENDOR') {
+        localStorage.removeItem('jwt_token');
+        localStorage.removeItem('auth_type');
+        localStorage.removeItem('last_role');
+        // Reset button state
+        const jwtBtn = document.getElementById('jwt-btn');
+        const sesBtn = document.getElementById('session-btn');
+        if (jwtBtn) { jwtBtn.classList.remove('loading'); jwtBtn.textContent = 'Sign In'; }
+        if (sesBtn) { sesBtn.classList.remove('loading'); sesBtn.textContent = 'Sign In with Session'; }
+        showStatus('error', 'Vendors must use the Vendor Login page.');
+        return;
     }
 
-    const destination = DASHBOARDS[role] || '/pending.html';
+    const destination = DASHBOARDS[role];
+    if (!destination) {
+        // Unknown role — don't redirect anywhere, just show error
+        localStorage.removeItem('jwt_token');
+        localStorage.removeItem('auth_type');
+        showStatus('error', 'Unknown role: ' + role + '. Please contact your administrator.');
+        const jwtBtn = document.getElementById('jwt-btn');
+        if (jwtBtn) { jwtBtn.classList.remove('loading'); jwtBtn.textContent = 'Sign In'; }
+        return;
+    }
+
     console.log('Redirecting to:', destination);
     window.location.href = destination;
 }

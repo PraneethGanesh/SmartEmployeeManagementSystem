@@ -29,20 +29,20 @@ public class VendorController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('VENDOR','ADMIN')")
+    @PreAuthorize("hasAnyRole('FOOD_VENDOR','ADMIN','TECH_VENDOR')")
     public ResponseEntity<List<VendorDTO>> getAllVendors() {
         return ResponseEntity.ok(vendorService.getAllVendors());
     }
 
     @GetMapping("/me")
-    @PreAuthorize("hasRole('VENDOR')")
+    @PreAuthorize("hasRole('VENDOR_WRITE')")
     public ResponseEntity<VendorDTO> getVendor(Authentication authentication) {
         return ResponseEntity.ok(vendorService.getVendor(authentication));
     }
 
 
     @PutMapping("/update")
-    @PreAuthorize("hasRole('VENDOR')")
+    @PreAuthorize("hasRole('VENDOR_WRITE')")
     public ResponseEntity<VendorDTO> updateVendor(
             @RequestBody VendorRequest request,
             Authentication authentication) {
