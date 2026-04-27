@@ -129,10 +129,15 @@ public class JWTAuthConfig {
                         .requestMatchers("/login.html", "/google.html").permitAll()
 
                         // Dashboards — served as static HTML, actual data is protected by JWT
-                        .requestMatchers("/dashboard.html").permitAll()
-                        .requestMatchers("/admin-dashboard.html").permitAll()
-                        .requestMatchers("/employee-dashboard.html").permitAll()
-                        .requestMatchers("/manager-dashboard.html").permitAll()
+                        .requestMatchers("/login.html",
+                                "/google.html",
+                                "/vendor-login.html",
+                                "/vendor-dashboard.html",
+                                "/tech-vendor-dashboard.html",
+                                "/employee-dashboard.html",
+                                "/manager-dashboard.html",
+                                "/dashboard.html",
+                                "/pending.html").permitAll()
 
                         // Vendor pages
                         .requestMatchers("/vendor-login.html").permitAll()
