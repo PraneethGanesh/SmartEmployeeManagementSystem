@@ -1,9 +1,6 @@
 package com.example.EmployeeManagementSystem.Service;
 
-import com.example.EmployeeManagementSystem.DTO.EmployeeDTO;
-import com.example.EmployeeManagementSystem.DTO.EmployeeDetails;
-import com.example.EmployeeManagementSystem.DTO.LeaveResponseDTO;
-import com.example.EmployeeManagementSystem.DTO.PromoteRequest;
+import com.example.EmployeeManagementSystem.DTO.*;
 import com.example.EmployeeManagementSystem.Entity.Employee;
 import com.example.EmployeeManagementSystem.Entity.LeaveRequest;
 import com.example.EmployeeManagementSystem.Enum.LeaveStatus;
@@ -22,12 +19,12 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-public class ManangerService {
+public class ManagerService {
     private final EmployeeRepo employeeRepo;
     private final PasswordEncoder passwordEncoder;
     private final LeaveRequestRepo leaveRequestRepo;
 
-    public ManangerService(EmployeeRepo employeeRepo, PasswordEncoder passwordEncoder, LeaveRequestRepo leaveRequestRepo) {
+    public ManagerService(EmployeeRepo employeeRepo, PasswordEncoder passwordEncoder, LeaveRequestRepo leaveRequestRepo) {
         this.employeeRepo = employeeRepo;
         this.passwordEncoder = passwordEncoder;
         this.leaveRequestRepo = leaveRequestRepo;
@@ -58,12 +55,13 @@ public class ManangerService {
         return employeeRepo.findByManager(manager);
     }
 
-    public List<LeaveRequest> getAllLeaveRequestByManager(Authentication authentication) {
+    public List<ManagerLeaveResponseDTO> getAllLeaveRequestByManager(Authentication authentication) {
         String email=AuthUtil.extractEmail(authentication);
        Employee manager=employeeRepo.findByEmail(email).orElseThrow(
                ()->new EmployeeNotFound("Manager with "+email+" not found")
        );
-       return leaveRequestRepo.findByEmployee_Manager(manager);
+       List<LeaveRequest> requests=leaveRequestRepo.findByEmployee_Manager(manager);
+       return requests.stream().map(request->toManagerLeaveResponseDTO(request)).toList();
     }
 
     public List<EmployeeDTO> getUsers(){
@@ -133,5 +131,16 @@ public class ManangerService {
         dto.setReason(leaveRequest.getReason());
         dto.setStatus(leaveRequest.getStatus());
         return dto;
+    }
+
+    private ManagerLeaveResponseDTO toManagerLeaveResponseDTO(LeaveRequest leaveRequest){
+        ManagerLeaveResponseDTO managerLeaveResponseDTO=new ManagerLeaveResponseDTO();
+        managerLeaveResponseDTO.setEmployeeName(leaveRequest.getEmployee().getName());
+        managerLeaveResponseDTO.setLeaveType(leaveRequest.getLeaveType());
+        managerLeaveResponseDTO.setStartDate(leaveRequest.getStartDate());
+        managerLeaveResponseDTO.setEndDate(leaveRequest.getEndDate());
+        managerLeaveResponseDTO.setStatus(leaveRequest.getStatus());
+        managerLeaveResponseDTO.setReason(leaveRequest.getReason());
+        return managerLeaveResponseDTO;
     }
 }

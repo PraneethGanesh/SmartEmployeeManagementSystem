@@ -1,12 +1,8 @@
 package com.example.EmployeeManagementSystem.Controller;
 
-import com.example.EmployeeManagementSystem.DTO.EmployeeDTO;
-import com.example.EmployeeManagementSystem.DTO.EmployeeDetails;
-import com.example.EmployeeManagementSystem.DTO.LeaveResponseDTO;
-import com.example.EmployeeManagementSystem.DTO.PromoteRequest;
+import com.example.EmployeeManagementSystem.DTO.*;
 import com.example.EmployeeManagementSystem.Entity.Employee;
-import com.example.EmployeeManagementSystem.Entity.LeaveRequest;
-import com.example.EmployeeManagementSystem.Service.ManangerService;
+import com.example.EmployeeManagementSystem.Service.ManagerService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -17,9 +13,9 @@ import java.util.List;
 @RestController
 @RequestMapping("/manager")
 public class ManagerController {
-   private final ManangerService manangerService;
+   private final ManagerService manangerService;
 
-    public ManagerController(ManangerService manangerService) {
+    public ManagerController(ManagerService manangerService) {
         this.manangerService = manangerService;
     }
 
@@ -42,7 +38,7 @@ public class ManagerController {
 
     @GetMapping("/requests")
     @PreAuthorize("hasRole('MANAGER')")
-    public List<LeaveRequest> getAllLeaveRequestByManager(Authentication authentication){
+    public List<ManagerLeaveResponseDTO> getAllLeaveRequestByManager(Authentication authentication){
         return manangerService.getAllLeaveRequestByManager(authentication);
     }
 
