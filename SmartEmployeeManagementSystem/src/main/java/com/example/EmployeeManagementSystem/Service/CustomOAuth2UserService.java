@@ -50,6 +50,12 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         if (employeeExists) {
             Employee employee = employeeRepo.findByEmail(email).get();
             authorities.add(new SimpleGrantedAuthority("ROLE_" + employee.getRole().name()));
+
+            // ADD THIS — loads LEAVE_CANCEL, SUBSCRIPTION_READ, etc. into the session
+            employee.getRole().getPermissions().forEach(permission ->
+                    authorities.add(new SimpleGrantedAuthority(permission.name()))
+            );
+
             System.out.println("Returning existing employee with role: " + employee.getRole());
             return new DefaultOAuth2User(authorities, oAuth2User.getAttributes(), "sub");
         }

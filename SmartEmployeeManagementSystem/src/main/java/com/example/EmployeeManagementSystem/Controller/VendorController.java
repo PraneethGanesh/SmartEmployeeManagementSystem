@@ -22,14 +22,14 @@ public class VendorController {
     }
 
     @PostMapping("/register")
-    @PreAuthorize("hasRole('Admin')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<VendorDTO> registerVendor(@RequestBody VendorRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(vendorService.registerVendor(request));
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('VENDOR')")
+    @PreAuthorize("hasAnyRole('VENDOR','ADMIN')")
     public ResponseEntity<List<VendorDTO>> getAllVendors() {
         return ResponseEntity.ok(vendorService.getAllVendors());
     }
@@ -50,7 +50,7 @@ public class VendorController {
     }
 
     @DeleteMapping
-    @PreAuthorize("hasRole('VENDOR')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> deleteVendor(Authentication authentication) {
         vendorService.deleteVendor(authentication);
         return ResponseEntity.ok(

@@ -12,6 +12,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.web.bind.annotation.*;
+import jakarta.servlet.http.Cookie;
 
 import java.util.Map;
 
@@ -63,13 +64,22 @@ public class SessionAuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<?> logout(HttpServletRequest request) {
-        HttpSession session = request.getSession(false);
-        if (session != null) {
-            session.invalidate();
-        }
+    public ResponseEntity<?> logout(HttpSession session,
+                                    HttpServletRequest request,
+                                    HttpServletResponse response) {
+        // Invalidate Spring Security context
         SecurityContextHolder.clearContext();
-        return ResponseEntity.ok(Map.of("message", "Logged out successfully"));
+
+        // Invalidate HTTP session (kills OAuth2 session too)
+        session.invalidate();
+
+        // Clear the session cookie
+        Cookie cookie = new Cookie("JSESSIONID", null);
+        cookie.setMaxAge(0);
+        cookie.setPath("/");
+        response.addCookie(cookie);
+
+        return ResponseEntity.ok("Logged out");
     }
 
     @GetMapping("/me")

@@ -23,7 +23,7 @@ public class SubscriptionController {
 
     //Authentication makes sure that whoever is logged can add subscription and cannot add other subscription
     @PostMapping
-    @PreAuthorize("hasAnyRole('EMPLOYEE','MANAGER')")
+    @PreAuthorize("hasAnyRole('EMPLOYEE','MANAGER','ADMIN','VENDOR')")
     public ResponseEntity<?> addSubscription(@RequestBody SubscriptionRequest request,Authentication authentication) {
         subscriptionService.addSubscription(request,authentication);
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -64,7 +64,7 @@ public class SubscriptionController {
     }
 
     @GetMapping("/user")
-    @PreAuthorize("hasAnyRole('EMPLOYEE','MANAGER')")
+    @PreAuthorize("hasAuthority('SUBSCRIPTION_READ')")
     public ResponseEntity<List<SubscriptionDTO>> getSubscriptionOfUser(Authentication authentication){
         return ResponseEntity.ok(subscriptionService.getSubscriptionOfUser(authentication));
     }

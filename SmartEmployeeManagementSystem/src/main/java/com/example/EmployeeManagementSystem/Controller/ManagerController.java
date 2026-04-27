@@ -29,7 +29,7 @@ public class ManagerController {
     }
 
     @PostMapping("/employees")
-    @PreAuthorize("hasRole('MANAGER')")
+    @PreAuthorize("hasAnyRole('MANAGER')")
     public Employee createEmployee(@RequestBody EmployeeDetails employeeDetails, Authentication authentication){
        return manangerService.createEmp(employeeDetails,authentication);
     }

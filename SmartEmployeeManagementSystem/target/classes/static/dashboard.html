@@ -456,7 +456,7 @@
             return;
         }
         try {
-            await apiFetch('/employee/register', { method: 'POST', body: JSON.stringify(body) });
+            await apiFetch('/admin/employees', { method: 'POST', body: JSON.stringify(body) });
             showAlert('Employee created successfully!', 'success');
             clearEmployeeForm('employee');
             loadEmployees();
@@ -478,7 +478,7 @@
             return;
         }
         try {
-            await apiFetch('/employee/register/manager', { method: 'POST', body: JSON.stringify(body) });
+            await apiFetch('/admin/employee/manager', { method: 'POST', body: JSON.stringify(body) });
             showAlert('Manager created successfully!', 'success');
             clearEmployeeForm('manager');
             loadEmployees();
@@ -497,7 +497,7 @@
     async function deleteEmployee(employeeId) {
         if (!confirm(`Delete employee #${employeeId}?`)) return;
         try {
-            await apiFetch(`/employee/${employeeId}`, { method: 'DELETE' });
+            await apiFetch(`/admin/employee/${employeeId}`, { method: 'DELETE' });
             showAlert('Employee deleted successfully!', 'success');
             loadEmployees();
             loadDashboard();
@@ -694,6 +694,18 @@
         catch (e) { showAlert('Failed: ' + e.message, 'error'); }
     }
 
+    async function cancelSub(id){
+        if(!confirm('Cancel this subscription?')) return;
+        try{
+            await apiFetch(`/subscription/${id}/expire`, {method:'PUT'});
+            showAlert('Subscription cancelled','success');
+            loadSubscriptions();
+        }
+        catch(e){
+            showAlert('Failed to cancel: ' + e.message,'error');
+        }
+    }
+
     function clearSubscriptionForm() {
         document.getElementById('sub-email').value = '';
         document.getElementById('sub-restaurant-id').value = '';
@@ -802,18 +814,22 @@
 
     // ============ FIX 5: LOGOUT — also invalidates server-side session for session users ============
     // Previously logout() only cleared localStorage, leaving the JSESSIONID cookie active.
-    async function logout() {
-        const authType = localStorage.getItem('auth_type');
-        if (authType === 'session') {
-            try {
-                await fetch(`${API}/session/logout`, { method: 'POST', credentials: 'include' });
-            } catch (e) { /* ignore network errors during logout */ }
-        }
+    function logout(){
+        // Clear all localStorage
         localStorage.removeItem('jwt_token');
-        localStorage.removeItem('username');
+        localStorage.removeItem('refresh_token');
         localStorage.removeItem('auth_type');
-        showAlert('Logged out successfully', 'success');
-        setTimeout(() => window.location.href = '/google.html', 500);
+        localStorage.removeItem('last_role');
+
+        // Call server logout to invalidate session
+        fetch(`${API}/session/logout`, {
+            method: 'POST',
+            credentials: 'include'
+        }).finally(() => {
+            // Force expire the session cookie on client side
+            document.cookie = 'JSESSIONID=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+            window.location.href = '/google.html';
+        });
     }
 
     // Set today's date as default for leave form
