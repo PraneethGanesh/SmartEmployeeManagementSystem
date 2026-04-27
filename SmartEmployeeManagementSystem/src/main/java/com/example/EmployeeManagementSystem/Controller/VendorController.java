@@ -22,14 +22,14 @@ public class VendorController {
     }
 
     @PostMapping("/register")
-    @PreAuthorize("hasRole('Admin')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<VendorDTO> registerVendor(@RequestBody VendorRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(vendorService.registerVendor(request));
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('VENDOR')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<VendorDTO>> getAllVendors() {
         return ResponseEntity.ok(vendorService.getAllVendors());
     }
