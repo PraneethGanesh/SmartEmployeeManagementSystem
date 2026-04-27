@@ -1,0 +1,12 @@
+com\example\EmployeeManagementSystem\Enum\AssignmentStatus.class
+com\example\EmployeeManagementSystem\DTO\DeviceResponseDTO.class
+com\example\EmployeeManagementSystem\Enum\DeviceType.class
+com\example\EmployeeManagementSystem\Entity\DeviceAssignment.class
+com\example\EmployeeManagementSystem\Enum\DeviceStatus.class
+com\example\EmployeeManagementSystem\DTO\DeviceDTO.class
+com\example\EmployeeManagementSystem\Controller\DeviceController.class
+com\example\EmployeeManagementSystem\Service\DeviceService.class
+com\example\EmployeeManagementSystem\Repository\DeviceRepository.class
+com\example\EmployeeManagementSystem\Repository\DeviceAssignmentRepo.class
+com\example\EmployeeManagementSystem\Entity\Device.class
+com\example\EmployeeManagementSystem\DTO\AssignDeviceRequest.class
