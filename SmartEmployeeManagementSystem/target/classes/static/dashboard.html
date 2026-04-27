@@ -99,6 +99,8 @@
             <div class="nav-item" onclick="showView('my-leaves', event)">&#9632; My Leaves</div>
             <div class="nav-item" onclick="showView('pending-leaves', event)">&#9632; Pending Approvals</div>
             <div class="nav-item" onclick="showView('restaurants', event)">&#9632; Restaurants</div>
+            <div class="nav-item" onclick="showView('subscriptions', event)">&#9632; Subscriptions</div>
+            <div class="nav-item" onclick="showView('add-subscription', event)">&#9632; Add Subscription</div>
             <div class="nav-item" onclick="showView('vendors', event)">&#9632; Vendors</div>
         </div>
     </div>
@@ -217,13 +219,54 @@
                 <div class="section-title" style="margin-bottom: 20px;">Create Meal Subscription</div>
                 <div class="form-card">
                     <div class="form-grid">
-                        <div class="form-group full"><label>Employee Email</label><input type="email" id="sub-email" placeholder="employee@company.com"></div>
-                        <div class="form-group"><label>Restaurant ID</label><input type="number" id="sub-restaurant-id" placeholder="Restaurant ID"></div>
-                        <div class="form-group"><label>Meal Slot</label><select id="sub-slot"><option value="BREAKFAST">Breakfast</option><option value="LUNCH">Lunch</option><option value="DINNER">Dinner</option></select></div>
-                        <div class="form-group"><label>Schedule Type</label><select id="sub-schedule"><option value="DAILY">Daily</option><option value="WEEKLY">Weekly</option></select></div>
-                        <div class="form-group" id="day-of-week-group" style="display:none;"><label>Day of Week</label><select id="sub-day"><option value="MONDAY">Monday</option><option value="TUESDAY">Tuesday</option><option value="WEDNESDAY">Wednesday</option><option value="THURSDAY">Thursday</option><option value="FRIDAY">Friday</option><option value="SATURDAY">Saturday</option><option value="SUNDAY">Sunday</option></select></div>
+                        <div class="form-group full">
+                            <label>Employee Email</label>
+                            <input type="email" id="sub-email" placeholder="employee@company.com">
+                        </div>
+                        <div class="form-group full">
+                            <label>Restaurant</label>
+                            <select id="sub-restaurant-select">
+                                <option value="">-- Select Restaurant --</option>
+                            </select>
+                        </div>
+                        <div class="form-group full">
+                            <label>Meal Slots</label>
+                            <div id="meal-slot-checkboxes" style="display:flex; gap:16px; flex-wrap:wrap; margin-top:6px;">
+                                <label style="display:flex;align-items:center;gap:6px;text-transform:none;font-size:13px;font-weight:400;color:var(--text);">
+                                    <input type="checkbox" value="BREAKFAST" style="width:15px;height:15px;padding:0;background:var(--bg3);"> Breakfast
+                                </label>
+                                <label style="display:flex;align-items:center;gap:6px;text-transform:none;font-size:13px;font-weight:400;color:var(--text);">
+                                    <input type="checkbox" value="LUNCH" style="width:15px;height:15px;padding:0;background:var(--bg3);"> Lunch
+                                </label>
+                                <label style="display:flex;align-items:center;gap:6px;text-transform:none;font-size:13px;font-weight:400;color:var(--text);">
+                                    <input type="checkbox" value="DINNER" style="width:15px;height:15px;padding:0;background:var(--bg3);"> Dinner
+                                </label>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Schedule Type</label>
+                            <select id="sub-schedule">
+                                <option value="DAILY">Daily</option>
+                                <option value="WEEKLY">Weekly</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="day-of-week-group" style="display:none;">
+                            <label>Day of Week</label>
+                            <select id="sub-day">
+                                <option value="MONDAY">Monday</option>
+                                <option value="TUESDAY">Tuesday</option>
+                                <option value="WEDNESDAY">Wednesday</option>
+                                <option value="THURSDAY">Thursday</option>
+                                <option value="FRIDAY">Friday</option>
+                                <option value="SATURDAY">Saturday</option>
+                                <option value="SUNDAY">Sunday</option>
+                            </select>
+                        </div>
                     </div>
-                    <div class="modal-actions" style="margin-top: 20px;"><button class="btn btn-primary" onclick="addSubscription()">Create Subscription</button><button class="btn btn-secondary" onclick="clearSubscriptionForm()">Clear</button></div>
+                    <div class="modal-actions" style="margin-top: 20px;">
+                        <button class="btn btn-primary" onclick="addSubscription()">Create Subscription</button>
+                        <button class="btn btn-secondary" onclick="clearSubscriptionForm()">Clear</button>
+                    </div>
                 </div>
             </div>
 
@@ -340,7 +383,6 @@
             });
 
             if (response.status === 401) {
-                // FIX: Clear ALL auth state, not just jwt_token
                 localStorage.removeItem('jwt_token');
                 localStorage.removeItem('auth_type');
                 showAlert('Session expired. Please login again.', 'error');
@@ -354,7 +396,12 @@
             }
 
             const text = await response.text();
-            return text ? JSON.parse(text) : null;
+            if (!text) return null;
+            try {
+                return JSON.parse(text);  // ← try JSON first
+            } catch {
+                return text;              // ← fall back to plain text
+            }
         } catch (e) {
             if (!e.message.includes('Unauthorized')) {
                 showAlert(e.message, 'error');
@@ -388,6 +435,7 @@
             'pending-leaves': loadPendingLeaves,
             'restaurants': loadRestaurants,
             'subscriptions': loadSubscriptions,
+            'add-subscription': loadRestaurantDropdown,
             'deliveries': loadDeliveries,
             'vendors': loadVendors
         };
@@ -478,7 +526,7 @@
             return;
         }
         try {
-            await apiFetch('/admin/employee/manager', { method: 'POST', body: JSON.stringify(body) });
+            await apiFetch('/admin/employees/manager', { method: 'POST', body: JSON.stringify(body) });
             showAlert('Manager created successfully!', 'success');
             clearEmployeeForm('manager');
             loadEmployees();
@@ -638,39 +686,91 @@
     }
 
     // ============ SUBSCRIPTIONS ============
+
+    // Populate restaurant dropdown — called when Add Subscription view loads
+    async function loadRestaurantDropdown() {
+        try {
+            const restaurants = await apiFetch('/restaurants');
+            const arr = Array.isArray(restaurants) ? restaurants : [];
+            const select = document.getElementById('sub-restaurant-select');
+            select.innerHTML = '<option value="">-- Select Restaurant --</option>';
+            arr.filter(r => r.active).forEach(r => {
+                const opt = document.createElement('option');
+                opt.value = r.id || r.restaurantId;
+                opt.textContent = r.name;
+                // Store supported slots as data attribute for filtering
+                opt.dataset.slots = JSON.stringify(r.supportedMealSlots || []);
+                select.appendChild(opt);
+            });
+        } catch (e) { console.error('Failed to load restaurants:', e); }
+    }
+
+    // When restaurant changes, only show meal slot checkboxes it supports
+    document.getElementById('sub-restaurant-select')?.addEventListener('change', function () {
+        const selected = this.options[this.selectedIndex];
+        const supported = selected?.dataset?.slots ? JSON.parse(selected.dataset.slots) : [];
+        const boxes = document.querySelectorAll('#meal-slot-checkboxes input[type=checkbox]');
+        boxes.forEach(cb => {
+            const wrapper = cb.parentElement;
+            if (!supported.length || supported.includes(cb.value)) {
+                wrapper.style.display = 'flex';
+                wrapper.style.opacity = '1';
+                cb.disabled = false;
+            } else {
+                cb.checked = false;
+                cb.disabled = true;
+                wrapper.style.opacity = '0.3';
+            }
+        });
+    });
+
     async function loadSubscriptions() {
         try {
             const subscriptions = await apiFetch('/subscription/user');
+            const arr = Array.isArray(subscriptions) ? subscriptions : [];
             const tbody = document.getElementById('subscriptions-list');
-            if (!subscriptions.length) {
-                tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No subscriptions found</td></tr>';
-            } else {
-                tbody.innerHTML = subscriptions.map(s => `<tr>
-                    <td>${s.subscriptionId}</td>
-                    <td>${s.restaurantName || 'N/A'}</td>
-                    <td><span class="chip">${s.mealSlot}</span></td>
-                    <td>${s.scheduleType}</td>
-                    <td><span class="chip ${s.status?.toLowerCase()}">${s.status}</span></td>
-                    <td>${s.nextDeliveryTime ? new Date(s.nextDeliveryTime).toLocaleDateString() : 'Not scheduled'}</td>
-                    <td class="action-row">
-                        ${s.status === 'ACTIVE' ? `<button class="btn btn-secondary btn-sm" onclick="pauseSubscription(${s.subscriptionId})">Pause</button>` : ''}
-                        ${s.status === 'PAUSED' ? `<button class="btn btn-primary btn-sm" onclick="resumeSubscription(${s.subscriptionId})">Resume</button>` : ''}
-                        <button class="btn btn-danger btn-sm" onclick="expireSubscription(${s.subscriptionId})">Expire</button>
-                    </td>
-                </tr>`).join('');
-            }
+            tbody.innerHTML = arr.length
+                ? arr.map(s => `<tr>
+                <td>${s.subscriptionId}</td>
+                <td>${s.restaurantName || 'N/A'}</td>
+                <td><span class="chip">${s.mealSlot}</span></td>
+                <td>${s.scheduleType}</td>
+                <td><span class="chip ${s.status?.toLowerCase()}">${s.status}</span></td>
+                <td>${s.nextDeliveryTime ? new Date(s.nextDeliveryTime).toLocaleDateString() : 'Not scheduled'}</td>
+                <td class="action-row">
+                    ${s.status === 'ACTIVE' ? `<button class="btn btn-secondary btn-sm" onclick="pauseSubscription(${s.subscriptionId})">Pause</button>` : ''}
+                    ${s.status === 'PAUSED' ? `<button class="btn btn-primary btn-sm" onclick="resumeSubscription(${s.subscriptionId})">Resume</button>` : ''}
+                    <button class="btn btn-danger btn-sm" onclick="expireSubscription(${s.subscriptionId})">Expire</button>
+                </td>
+            </tr>`).join('')
+                : '<tr><td colspan="7" class="empty-state">No subscriptions found</td></tr>';
         } catch (e) { console.error(e); }
     }
 
     async function addSubscription() {
         const email = document.getElementById('sub-email').value.trim();
-        const restaurantId = parseInt(document.getElementById('sub-restaurant-id').value);
-        const mealSlot = document.getElementById('sub-slot').value;
+        const restaurantId = parseInt(document.getElementById('sub-restaurant-select').value);
         const scheduleType = document.getElementById('sub-schedule').value;
         const dayOfWeek = document.getElementById('sub-day').value;
-        if (!email || !restaurantId) { showAlert('Please fill email and restaurant ID', 'error'); return; }
-        const body = { restaurantId, mealSlot, scheduleType };
+
+        const selectedSlots = [...document.querySelectorAll('#meal-slot-checkboxes input[type=checkbox]:checked')]
+            .map(cb => cb.value);
+
+        if (!email) { showAlert('Please enter employee email', 'error'); return; }
+        if (!restaurantId) { showAlert('Please select a restaurant', 'error'); return; }
+        if (!selectedSlots.length) { showAlert('Please select at least one meal slot', 'error'); return; }
+
+        const body = {
+            scheduleType,
+            mealSlots: selectedSlots,                          // ["BREAKFAST", "LUNCH"]
+            slotOrders: selectedSlots.map(slot => ({           // [{ mealSlot: "BREAKFAST", restaurantId: 1 }, ...]
+                mealSlot: slot,
+                restaurantId: restaurantId
+            }))
+        };
+
         if (scheduleType === 'WEEKLY') body.dayOfWeek = dayOfWeek;
+
         try {
             await apiFetch('/subscription', { method: 'POST', body: JSON.stringify(body) });
             showAlert('Subscription created successfully!', 'success');
@@ -694,23 +794,18 @@
         catch (e) { showAlert('Failed: ' + e.message, 'error'); }
     }
 
-    async function cancelSub(id){
-        if(!confirm('Cancel this subscription?')) return;
-        try{
-            await apiFetch(`/subscription/${id}/expire`, {method:'PUT'});
-            showAlert('Subscription cancelled','success');
-            loadSubscriptions();
-        }
-        catch(e){
-            showAlert('Failed to cancel: ' + e.message,'error');
-        }
-    }
-
     function clearSubscriptionForm() {
         document.getElementById('sub-email').value = '';
-        document.getElementById('sub-restaurant-id').value = '';
-        document.getElementById('sub-slot').value = 'BREAKFAST';
+        document.getElementById('sub-restaurant-select').value = '';
         document.getElementById('sub-schedule').value = 'DAILY';
+        document.getElementById('day-of-week-group').style.display = 'none';
+        // Uncheck all and re-enable all slots
+        document.querySelectorAll('#meal-slot-checkboxes input[type=checkbox]').forEach(cb => {
+            cb.checked = false;
+            cb.disabled = false;
+            cb.parentElement.style.opacity = '1';
+            cb.parentElement.style.display = 'flex';
+        });
     }
 
     document.getElementById('sub-schedule')?.addEventListener('change', function () {
