@@ -434,11 +434,13 @@
     }
 
     async function apiFetch(path, opts={}){
-    const res = await fetch(`${API}${path}`,{
-        ...opts,
-        headers:{'Content-Type':'application/json',...getAuthHeader(),...(opts.headers||{})},
-        credentials: (!token && authType === 'session') ? 'include' : 'omit'
-    });
+        const token = localStorage.getItem('jwt_token');      // ← add this
+        const authType = localStorage.getItem('auth_type');   // ← add this
+        const res = await fetch(`${API}${path}`,{
+            ...opts,
+            headers:{'Content-Type':'application/json',...getAuthHeader(),...(opts.headers||{})},
+            credentials: (!token && authType === 'session') ? 'include' : 'omit'
+        });
     if(res.status===401){
         localStorage.removeItem('jwt_token'); localStorage.removeItem('auth_type');
         showAlert('Session expired. Please login again.','error');
@@ -587,30 +589,32 @@
         availableRestaurants = data || [];
         document.getElementById('restaurants-list').innerHTML=data?.length
             ? data.map(r=>`<tr>
-                <td>${r.name||'—'}</td>
-                <td>${r.supportedMealSlots?.join(', ') || '—'}</td>
-                <td><span class="chip ${r.active ? 'active' : 'rejected'}">${r.active?'Active':'Inactive'}</span></td>
-                <td><button class="btn btn-secondary btn-sm" onclick='openSubscriptionForRestaurant(${r.id}, ${JSON.stringify((r.supportedMealSlots || []))})'>Subscribe</button></td>
-              </tr>`).join('')
+    <td>${r.name||'—'}</td>
+    <td>${r.supportedMealSlots?.join(', ') || '—'}</td>
+    <td><span class="chip ${r.active ? 'active' : 'rejected'}">${r.active?'Active':'Inactive'}</span></td>
+    <td><button class="btn btn-secondary btn-sm"
+        onclick='openSubscriptionForRestaurant(${r.restaurantId||r.id}, ${JSON.stringify(r.supportedMealSlots||[])})'>
+        Subscribe</button></td>
+</tr>`).join('')
             : '<tr><td colspan="4" class="empty-state">No restaurants available</td></tr>';
     }catch(e){document.getElementById('restaurants-list').innerHTML='<tr><td colspan="4" class="empty-state">Could not load restaurants</td></tr>';}
    }
 
-   async function loadRestaurantChoices() {
-    const mealSlot = document.getElementById('sub-meal-slot').value;
-    const select = document.getElementById('sub-restaurant-id');
-    try {
-        const data = await apiFetch(`/restaurants/by-slot?slot=${encodeURIComponent(mealSlot)}`);
-        availableRestaurants = data || [];
-        select.innerHTML = availableRestaurants.length
-            ? '<option value="">Select a restaurant</option>' + availableRestaurants.map(r =>
-                `<option value="${r.id}">${r.name} (${r.address || 'No address'})</option>`
-              ).join('')
-            : '<option value="">No restaurants available for this slot</option>';
-    } catch (e) {
-        select.innerHTML = '<option value="">Could not load restaurants</option>';
+    async function loadRestaurantChoices() {
+        const select = document.getElementById('sub-restaurant-id');
+        try {
+            const data = await apiFetch('/restaurants'); // ← same as manager
+            availableRestaurants = data || [];
+            select.innerHTML = availableRestaurants.length
+                ? '<option value="">Select a restaurant</option>' +
+                availableRestaurants.map(r =>
+                    `<option value="${r.restaurantId||r.id}">${r.name}</option>`
+                ).join('')
+                : '<option value="">No restaurants available</option>';
+        } catch(e) {
+            select.innerHTML = '<option value="">Could not load restaurants</option>';
+        }
     }
-   }
 
    function openSubscriptionForRestaurant(restaurantId, supportedMealSlots) {
     showView('add-subscription', null);

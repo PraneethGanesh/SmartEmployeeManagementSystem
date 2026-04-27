@@ -169,6 +169,7 @@
             <div class="nav-item" onclick="showView('my-leaves',this)"><span>◷</span> My Leaves</div>
             <div class="nav-item" onclick="showView('my-subscriptions',this)"><span>🍱</span> My Subscriptions</div>
             <div class="nav-item" onclick="showView('add-subscription',this)"><span>＋</span> Subscribe to Meal</div>
+            <div class="nav-item" onclick="showView('restaurants',this)"><span>🏪</span> Restaurants</div>
         </nav>
         <div class="sidebar-footer">
             <div class="user-card">
@@ -443,6 +444,7 @@
                             </div>
                         </div>
 
+
                         <!-- Slot Orders -->
                         <div style="margin-top:20px">
                             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
@@ -456,6 +458,21 @@
                             <button class="btn btn-primary" onclick="submitSubscription()">Subscribe</button>
                             <button class="btn btn-secondary" onclick="clearSubscriptionForm()">Clear</button>
                         </div>
+                    </div>
+                </div>
+            </div>
+            <!-- RESTAURANTS -->
+            <div id="restaurants-view" class="view">
+                <div class="section">
+                    <div class="section-head">
+                        <div><div class="section-title">🏪 Restaurants</div><div class="section-sub">All available restaurants</div></div>
+                        <button class="btn btn-secondary btn-sm" onclick="loadRestaurants()">↺ Refresh</button>
+                    </div>
+                    <div class="tablewrap">
+                        <table>
+                            <thead><tr><th>ID</th><th>Name</th><th>Address</th><th>Status</th></tr></thead>
+                            <tbody id="restaurants-list"><tr><td colspan="4" class="empty-state">Loading...</td></tr></tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -514,7 +531,7 @@
         document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
         if(el)el.classList.add('active');
         document.getElementById('pageTitle').textContent=name.split('-').map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join(' ');
-       const loaders={dashboard:loadDashboard,employees:loadEmployees,'pending-leaves':loadPendingLeaves,'all-leaves':loadAllLeaves,'my-leaves':loadMyLeaves,'add-employee':()=>{},'promote-users':loadUsers,'my-subscriptions':loadMySubscriptions,'add-subscription':()=>{}};
+       const loaders={dashboard:loadDashboard,employees:loadEmployees,'pending-leaves':loadPendingLeaves,'all-leaves':loadAllLeaves,'my-leaves':loadMyLeaves,'add-employee':()=>{},'promote-users':loadUsers,'my-subscriptions':loadMySubscriptions,'add-subscription':()=>{},restaurants: loadRestaurants };
         if(loaders[name])loaders[name]();
     }
 
@@ -798,6 +815,21 @@ async function promoteUser(email){
         }
     }catch(e){ showAlert('Failed: '+e.message,'error'); }
 }
+    async function loadRestaurants(){
+        try{
+            const data = await apiFetch('/restaurants');
+            document.getElementById('restaurants-list').innerHTML = (data||[]).length
+                ? data.map(r=>`<tr>
+                <td style="font-family:var(--mono);font-size:12px">#${r.restaurantId||r.id}</td>
+                <td>${r.name||'—'}</td>
+                <td style="font-size:12px;color:var(--text3)">${r.address||'—'}</td>
+                <td><span class="chip active">${r.status||'ACTIVE'}</span></td>
+            </tr>`).join('')
+                : '<tr><td colspan="4" class="empty-state">No restaurants found</td></tr>';
+        }catch(e){
+            document.getElementById('restaurants-list').innerHTML='<tr><td colspan="4" class="empty-state">Could not load</td></tr>';
+        }
+    }
 
 // ── SUBSCRIPTIONS ──────────────────────────────────────────
 
@@ -821,13 +853,21 @@ async function loadMySubscriptions(){
 }
 
 let slotRowCount = 0;
-function addSlotRow(){
-    slotRowCount++;
-    const id = slotRowCount;
-    const div = document.createElement('div');
-    div.id = `slot-row-${id}`;
-    div.style.cssText = 'display:grid;grid-template-columns:1fr 1fr auto;gap:12px;margin-bottom:10px;align-items:end';
-    div.innerHTML = `
+    async function addSlotRow(){
+        slotRowCount++;
+        const id = slotRowCount;
+        const div = document.createElement('div');
+        div.id = `slot-row-${id}`;
+        div.style.cssText = 'display:grid;grid-template-columns:1fr 1fr auto;gap:12px;margin-bottom:10px;align-items:end';
+
+        // Fetch restaurants for the dropdown
+        let options = '<option value="">Loading...</option>';
+        try{
+            const data = await apiFetch('/restaurants');
+            options = data.map(r => `<option value="${r.restaurantId||r.id}">${r.name}</option>`).join('');
+        }catch(e){ options = '<option value="">Could not load</option>'; }
+
+        div.innerHTML = `
         <div class="form-group" style="margin:0">
             <label>Meal Slot</label>
             <select id="slot-meal-${id}">
@@ -837,13 +877,13 @@ function addSlotRow(){
             </select>
         </div>
         <div class="form-group" style="margin:0">
-            <label>Restaurant ID</label>
-            <input type="number" id="slot-restaurant-${id}" placeholder="Enter restaurant ID">
+            <label>Restaurant</label>
+            <select id="slot-restaurant-${id}">${options}</select>
         </div>
         <button class="btn btn-reject btn-sm" onclick="removeSlotRow(${id})" style="margin-bottom:1px">✕</button>
     `;
-    document.getElementById('slot-rows').appendChild(div);
-}
+        document.getElementById('slot-rows').appendChild(div);
+    }
 
 function removeSlotRow(id){
     document.getElementById(`slot-row-${id}`)?.remove();
@@ -854,50 +894,51 @@ function toggleDayOfWeek(){
     document.getElementById('day-of-week-group').style.display = isWeekly ? 'flex' : 'none';
 }
 
-async function submitSubscription(){
-    const scheduleType = document.getElementById('sub-schedule').value;
-    const dayOfWeek    = scheduleType === 'WEEKLY' ? document.getElementById('sub-day').value : null;
+    async function submitSubscription(){
+        const scheduleType = document.getElementById('sub-schedule').value;
+        const dayOfWeek    = scheduleType === 'WEEKLY' ? document.getElementById('sub-day').value : null;
 
-    // Collect slot rows
-    const slotOrders = [];
-    const mealSlots  = [];
-    let valid = true;
+        const slotOrders = [];
+        let valid = true;
 
-    document.querySelectorAll('[id^="slot-row-"]').forEach(row => {
-        const idNum = row.id.split('-')[2];
-        const mealSlot     = document.getElementById(`slot-meal-${idNum}`)?.value;
-        const restaurantId = document.getElementById(`slot-restaurant-${idNum}`)?.value;
-        if(!mealSlot || !restaurantId){ valid = false; return; }
-        mealSlots.push(mealSlot);
-        slotOrders.push({ mealSlot, restaurantId: parseInt(restaurantId) });
-    });
+        document.querySelectorAll('[id^="slot-row-"]').forEach(row => {
+            const idNum        = row.id.split('-')[2];
+            const mealSlot     = document.getElementById(`slot-meal-${idNum}`)?.value;
+            const restaurantVal = document.getElementById(`slot-restaurant-${idNum}`)?.value;
 
-    if(!valid || slotOrders.length === 0){
-        showAlert('Please add at least one slot with a restaurant ID','error');
-        return;
-    }
-    if(scheduleType === 'WEEKLY' && !dayOfWeek){
-        showAlert('Please select a day of week for weekly schedule','error');
-        return;
-    }
+            if(!mealSlot || !restaurantVal){ valid = false; return; }
 
-    try{
-        const res = await fetch(`${API}/subscription`, {
-            method: 'POST',
-            headers: {'Content-Type':'application/json', ...getAuthHeader()},
-            credentials: 'include',
-            body: JSON.stringify({ scheduleType, dayOfWeek, mealSlots, slotOrders })
+            const restaurantId = parseInt(restaurantVal);
+            if(isNaN(restaurantId)){ valid = false; return; }
+
+            slotOrders.push({ mealSlot, restaurantId });
         });
-        const text = await res.text();
-        if(res.ok){
-            showAlert('Subscription added successfully! 🍱','success');
-            clearSubscriptionForm();
-            loadMySubscriptions();
-        } else {
-            showAlert('Error: '+text,'error');
+
+        if(!valid || slotOrders.length === 0){
+            showAlert('Please add at least one valid slot','error');
+            return;
         }
-    }catch(e){ showAlert('Failed: '+e.message,'error'); }
-}
+
+        // Derive mealSlots from slotOrders to satisfy @NotEmpty
+        const mealSlots = slotOrders.map(s => s.mealSlot);
+
+        try{
+            const res = await fetch(`${API}/subscription`, {
+                method: 'POST',
+                headers: {'Content-Type':'application/json', ...getAuthHeader()},
+                credentials: 'include',
+                body: JSON.stringify({ scheduleType, dayOfWeek, mealSlots, slotOrders })
+            });
+            const text = await res.text();
+            if(res.ok){
+                showAlert('Subscription added successfully! 🍱','success');
+                clearSubscriptionForm();
+                loadMySubscriptions();
+            } else {
+                showAlert('Error: '+text,'error');
+            }
+        }catch(e){ showAlert('Failed: '+e.message,'error'); }
+    }
 
 function clearSubscriptionForm(){
     document.getElementById('sub-schedule').value = 'DAILY';
