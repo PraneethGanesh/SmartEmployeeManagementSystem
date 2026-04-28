@@ -355,7 +355,7 @@
                     </div>
                     <div class="tablewrap">
                         <table>
-                            <thead><tr><th>Device</th><th>Type</th><th>Serial</th><th>Status</th><th>Assigned To</th></tr></thead>
+                            <thead><tr><th>Device</th><th>Type</th><th>Status</th><th>Assigned To</th></tr></thead>
                             <tbody id="dash-devices"></tbody>
                         </table>
                     </div>
@@ -387,7 +387,7 @@
                     </div>
                     <div class="tablewrap">
                         <table>
-                            <thead><tr><th>ID</th><th>Device Name</th><th>Brand</th><th>Type</th><th>Serial</th><th>Warranty</th><th>Status</th><th>Actions</th></tr></thead>
+                            <thead><tr><th>ID</th><th>Device Name</th><th>Brand</th><th>Type</th><th>Warranty</th><th>Status</th><th>Actions</th></tr></thead>
                             <tbody id="devices-list"></tbody>
                         </table>
                     </div>
@@ -405,9 +405,16 @@
                     </div>
                     <div class="card-body">
                         <div class="form-grid">
-                            <div class="form-group"><label class="form-label">Device Name</label><input class="form-input" id="d-name" placeholder="Dell XPS 15 9520"></div>
-                            <div class="form-group"><label class="form-label">Brand</label><input class="form-input" id="d-brand" placeholder="Dell"></div>
-                            <div class="form-group"><label class="form-label">Device Type</label>
+                            <div class="form-group">
+                                <label class="form-label">Device Name</label>
+                                <input class="form-input" id="d-name" placeholder="Dell XPS 15 9520">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Brand</label>
+                                <input class="form-input" id="d-brand" placeholder="Dell">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Device Type</label>
                                 <select class="form-input" id="d-type">
                                     <option value="LAPTOP">Laptop</option>
                                     <option value="DESKTOP">Desktop</option>
@@ -420,17 +427,10 @@
                                     <option value="OTHER">Other</option>
                                 </select>
                             </div>
-                            <div class="form-group"><label class="form-label">Serial Number</label><input class="form-input" id="d-serial" placeholder="SN-2024-XXXXX"></div>
-                            <div class="form-group"><label class="form-label">Model Number</label><input class="form-input" id="d-model" placeholder="XPS-9520-i7"></div>
-                            <div class="form-group"><label class="form-label">Purchase Date</label><input class="form-input" type="date" id="d-purchase"></div>
-                            <div class="form-group"><label class="form-label">Warranty Expiry</label><input class="form-input" type="date" id="d-warranty"></div>
-                            <div class="form-group"><label class="form-label">Under Warranty</label>
-                                <select class="form-input" id="d-under-warranty">
-                                    <option value="true">Yes</option>
-                                    <option value="false">No</option>
-                                </select>
+                            <div class="form-group">
+                                <label class="form-label">Warranty Expiry</label>
+                                <input class="form-input" type="date" id="d-warranty">
                             </div>
-                            <div class="form-group full"><label class="form-label">Description</label><input class="form-input" id="d-desc" placeholder="16GB RAM, 512GB SSD, Intel i7 12th Gen"></div>
                         </div>
                         <div class="form-actions">
                             <button class="btn btn-primary" onclick="addDevice()">Register Device</button>
@@ -544,7 +544,15 @@
                     </div>
                     <div class="tablewrap">
                         <table>
-                            <thead><tr><th>Device</th><th>Type</th><th>Employee</th><th>Assigned By</th><th>Assigned Date</th><th>Expected Return</th><th>Status</th></tr></thead>
+                            <thead>
+                            <tr>
+                                <th>Device</th>
+                                <th>Type</th>
+                                <th>Employee</th>
+                                <th>Assigned Date</th>
+                                <th>Status</th>
+                            </tr>
+                            </thead>
                             <tbody id="assignments-list"></tbody>
                         </table>
                     </div>
@@ -568,10 +576,8 @@
                         <div class="detail-grid">
                             <div class="detail-item"><div class="detail-label">Email</div><div class="detail-value" id="profile-email">--</div></div>
                             <div class="detail-item"><div class="detail-label">Phone</div><div class="detail-value" id="profile-phone">--</div></div>
-                            <div class="detail-item"><div class="detail-label">Company</div><div class="detail-value" id="profile-company">--</div></div>
-                            <div class="detail-item"><div class="detail-label">Vendor Type</div><div class="detail-value" id="profile-vtype">--</div></div>
                             <div class="detail-item"><div class="detail-label">Registered</div><div class="detail-value" id="profile-reg">--</div></div>
-                            <div class="detail-item"><div class="detail-label">Status</div><div class="detail-value"><span class="chip active_assign" id="profile-status">ACTIVE</span></div></div>
+                            <div class="detail-item"><div class="detail-label">Status</div><div class="detail-value"><span class="chip active_assign">ACTIVE</span></div></div>
                         </div>
                     </div>
                 </div>
@@ -609,7 +615,7 @@
       try{
         const p = JSON.parse(atob(token.split('.')[1]));
         const role = (p.role||'').replace(/^ROLE_/,'');
-        if(role !== 'TECH_VENDOR'){ window.location.href='/login.html'; return; }
+        if(role !== 'TECH_VENDOR'){ window.location.href='/google.html'; return; }
         const email = p.sub||p.email||'TechVendor';
         document.getElementById('topbar-email').textContent = email;
         document.getElementById('sidebar-name').textContent = email.split('@')[0];
@@ -669,8 +675,8 @@
     // ── DASHBOARD ─────────────────────────────────────────────────────
     function loadDashboard(){
       document.getElementById('stat-total').textContent = devicesCache.length || 0;
-      document.getElementById('stat-avail').textContent = devicesCache.filter(d=>d.status==='AVAILABLE').length || 0;
-      document.getElementById('stat-repair').textContent = devicesCache.filter(d=>d.status==='UNDER_REPAIR').length || 0;
+      document.getElementById('stat-avail').textContent = devicesCache.filter(d=>d.deviceStatus==='AVAILABLE').length || 0;
+      document.getElementById('stat-repair').textContent = devicesCache.filter(d=>d.deviceStatus==='UNDER_REPAIR').length || 0;
       const openSR = srCache.filter(s=>s.status==='OPEN'||s.status==='ACKNOWLEDGED');
       document.getElementById('stat-open').textContent = openSR.length || 0;
 
@@ -697,76 +703,75 @@
       document.getElementById('dash-devices').innerHTML = devicesCache.slice(0,8).map(d=>`
         <tr><td class="main-cell">${d.deviceName||'—'}</td>
         <td>${chip(d.deviceType)}</td>
-        <td>${d.serialNumber||'—'}</td>
-        <td>${chip(d.status)}</td>
-        <td>${d.assignedToName||'—'}</td></tr>`).join('') ||
+        <td>${chip(d.deviceStatus)}</td>
+       <td>${d.assignedEmployeeName||'—'}</td></tr>`).join('') ||
         `<tr><td colspan="5" class="empty">No devices</td></tr>`;
     }
 
     // ── DEVICES ───────────────────────────────────────────────────────
     async function loadMyDevices(){
-      try{
-        const data = await apiFetch('/tech-vendor/devices/my');
-        devicesCache = data || [];
-        renderDevices(devicesCache);
-      }catch(e){ renderDevices([]); }
-    }
+  try{
+    const data = await apiFetch('/devices/vendor/me');
+    devicesCache = data || [];
+    renderDevices(devicesCache);
+  }catch(e){ renderDevices([]); }
+}
 
     function renderDevices(list){
-      document.getElementById('devices-list').innerHTML = list.length
-        ? list.map(d=>`<tr>
-            <td style="font-family:var(--mono);font-size:11px;color:var(--text3)">#${d.id}</td>
-            <td class="main-cell">${d.deviceName||'—'}</td>
-            <td>${d.brand||'—'}</td>
-            <td>${chip(d.deviceType)}</td>
-            <td>${d.serialNumber||'—'}</td>
-            <td>${d.underWarranty ? `<span style="color:var(--green);font-size:10px;font-family:var(--mono)">✓ ${d.warrantyExpiryDate||''}</span>` : `<span style="color:var(--text3);font-size:10px;font-family:var(--mono)">✗ Expired</span>`}</td>
-            <td>${chip(d.status)}</td>
-            <td><div class="action-row">
-              <button class="btn btn-ghost btn-xs" onclick="viewDevice(${d.id})">Details</button>
-            </div></td>
-          </tr>`).join('')
-        : `<tr><td colspan="8"><div class="empty"><div class="empty-icon">⬡</div>No devices registered yet</div></td></tr>`;
-    }
+  document.getElementById('devices-list').innerHTML = list.length
+    ? list.map(d=>`<tr>
+        <td style="font-family:var(--mono);font-size:11px;color:var(--text3)">#${d.id}</td>
+        <td class="main-cell">${d.deviceName||'—'}</td>
+        <td>${d.brand||'—'}</td>
+        <td>${chip(d.deviceType)}</td>
+        <td style="font-size:11px;font-family:var(--mono)">
+          ${d.warrantyExpiryDate
+            ? (new Date(d.warrantyExpiryDate) > new Date()
+                ? `<span style="color:var(--green)">✓ ${d.warrantyExpiryDate}</span>`
+                : `<span style="color:var(--red)">✗ ${d.warrantyExpiryDate}</span>`)
+            : '<span style="color:var(--text3)">—</span>'}
+        </td>
+        <td>${chip(d.deviceStatus)}</td>
+        <td><div class="action-row">
+          <button class="btn btn-ghost btn-xs" onclick="viewDevice(${d.id})">Details</button>
+        </div></td>
+      </tr>`).join('')
+    : `<tr><td colspan="7"><div class="empty"><div class="empty-icon">⬡</div>No devices registered yet</div></td></tr>`;
+}
 
     function filterDevices(){
       const q = document.getElementById('device-search').value.toLowerCase();
       const f = document.getElementById('device-filter').value;
       renderDevices(devicesCache.filter(d=>{
         const matchQ = !q || (d.deviceName||'').toLowerCase().includes(q)||(d.serialNumber||'').toLowerCase().includes(q)||(d.brand||'').toLowerCase().includes(q);
-        const matchF = !f || d.status === f;
+        const matchF = !f || d.deviceStatus === f;
         return matchQ && matchF;
       }));
     }
 
     async function addDevice(){
-      const body = {
-        deviceName: document.getElementById('d-name').value.trim(),
-        brand: document.getElementById('d-brand').value.trim(),
-        deviceType: document.getElementById('d-type').value,
-        serialNumber: document.getElementById('d-serial').value.trim(),
-        modelNumber: document.getElementById('d-model').value.trim(),
-        purchaseDate: document.getElementById('d-purchase').value,
-        warrantyExpiryDate: document.getElementById('d-warranty').value,
-        underWarranty: document.getElementById('d-under-warranty').value === 'true',
-        description: document.getElementById('d-desc').value.trim()
-      };
-      if(!body.deviceName||!body.serialNumber||!body.deviceType){
-        showAlert('Device name, type and serial are required','error'); return;
-      }
-      try{
-        await apiFetch('/tech-vendor/devices', {method:'POST', body:JSON.stringify(body)});
-        showAlert('Device registered successfully!','success');
-        clearDeviceForm();
-        loadMyDevices();
-      }catch(e){ showAlert('Failed: '+e.message,'error'); }
-    }
+  const body = {
+    deviceName: document.getElementById('d-name').value.trim(),
+    brand: document.getElementById('d-brand').value.trim(),
+    deviceType: document.getElementById('d-type').value,
+    warrantyExpiryDate: document.getElementById('d-warranty').value || null,
+  };
+  if(!body.deviceName || !body.brand || !body.deviceType){
+    showAlert('Device name, brand and type are required','error'); return;
+  }
+  try{
+    await apiFetch('/devices', {method:'POST', body:JSON.stringify(body)});
+    showAlert('Device registered successfully!','success');
+    clearDeviceForm();
+    loadMyDevices();
+  }catch(e){ showAlert('Failed: '+e.message,'error'); }
+}
 
-    function clearDeviceForm(){
-      ['d-name','d-brand','d-serial','d-model','d-purchase','d-warranty','d-desc'].forEach(id=>document.getElementById(id).value='');
-      document.getElementById('d-type').value='LAPTOP';
-      document.getElementById('d-under-warranty').value='true';
-    }
+
+   function clearDeviceForm(){
+  ['d-name','d-brand','d-warranty'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('d-type').value='LAPTOP';
+}
 
     // ── SERVICE REQUESTS ──────────────────────────────────────────────
     async function loadServiceRequests(){
@@ -879,66 +884,72 @@
 
     // ── ASSIGNMENTS ───────────────────────────────────────────────────
     async function loadAssignments(){
-      try{
-        const data = await apiFetch('/tech-vendor/assignments');
-        assignmentsCache = data || [];
-        document.getElementById('assignments-list').innerHTML = assignmentsCache.length
-          ? assignmentsCache.map(a=>`<tr>
-              <td class="main-cell">${a.deviceName||'Device #'+a.deviceId}</td>
-              <td>${chip(a.deviceType)}</td>
-              <td>${a.employeeName||'Employee #'+a.employeeId}</td>
-              <td>${a.assignedByName||'Admin'}</td>
-              <td style="font-size:11px;font-family:var(--mono)">${a.assignedDate||'—'}</td>
-              <td style="font-size:11px;font-family:var(--mono)">${a.expectedReturnDate||'—'}</td>
-              <td>${chip(a.status==='ACTIVE'?'active_assign':a.status?.toLowerCase())}</td>
-            </tr>`).join('')
-          : `<tr><td colspan="7"><div class="empty"><div class="empty-icon">◎</div>No assignments found</div></td></tr>`;
-      }catch(e){}
-    }
+    try{
+    const data = await apiFetch('/devices/assignments'); // confirm your actual endpoint path
+    assignmentsCache = data || [];
+    document.getElementById('assignments-list').innerHTML = assignmentsCache.length
+      ? assignmentsCache.map(a=>`<tr>
+          <td class="main-cell">${a.deviceName||'—'}</td>
+          <td>${chip(a.deviceType)}</td>
+          <td>${a.employeeName||'—'}</td>
+          <td style="font-size:11px;font-family:var(--mono)">${a.assignedDate||'—'}</td>
+          <td>${chip(a.status==='ACTIVE'?'active_assign':a.status?.toLowerCase())}</td>
+        </tr>`).join('')
+      : `<tr><td colspan="5"><div class="empty"><div class="empty-icon">◎</div>No assignments found</div></td></tr>`;
+    }catch(e){}
+   }
 
     // ── PROFILE ───────────────────────────────────────────────────────
     async function loadProfile(){
-      try{
-        const data = await apiFetch('/tech-vendor/profile');
-        document.getElementById('profile-name').textContent = data.name||'--';
-        document.getElementById('profile-phone').textContent = data.phone||'--';
-        document.getElementById('profile-company').textContent = data.companyName||'--';
-        document.getElementById('profile-vtype').textContent = data.vendorType||'Tech Vendor';
-        document.getElementById('profile-reg').textContent = data.registeredAt ? data.registeredAt.split('T')[0] : '--';
-        document.getElementById('profile-avatar').textContent = (data.name||'T').charAt(0).toUpperCase();
-        document.getElementById('sidebar-name').textContent = data.name||'TechVendor';
-      }catch(e){}
-    }
+  try{
+    const data = await apiFetch('/vendors/me');  // fix endpoint
+    document.getElementById('profile-name').textContent = data.name || '--';
+    document.getElementById('profile-email').textContent = data.email || '--';
+    document.getElementById('profile-phone').textContent = data.phone || '--';
+    document.getElementById('profile-reg').textContent = data.registeredAt || '--';
+    document.getElementById('profile-avatar').textContent = (data.name||'T').charAt(0).toUpperCase();
+    document.getElementById('sidebar-name').textContent = data.name || 'TechVendor';
+  }catch(e){}
+}
 
     // ── DEVICE DETAIL MODAL ───────────────────────────────────────────
     async function viewDevice(id){
-      const d = devicesCache.find(x=>x.id===id);
-      if(!d) return;
-      document.getElementById('modal-device-name').textContent = d.deviceName;
-      document.getElementById('modal-detail-grid').innerHTML = `
-        <div class="detail-item"><div class="detail-label">Brand</div><div class="detail-value">${d.brand||'—'}</div></div>
-        <div class="detail-item"><div class="detail-label">Type</div><div class="detail-value">${chip(d.deviceType)}</div></div>
-        <div class="detail-item"><div class="detail-label">Serial Number</div><div class="detail-value">${d.serialNumber||'—'}</div></div>
-        <div class="detail-item"><div class="detail-label">Model</div><div class="detail-value">${d.modelNumber||'—'}</div></div>
-        <div class="detail-item"><div class="detail-label">Status</div><div class="detail-value">${chip(d.status)}</div></div>
-        <div class="detail-item"><div class="detail-label">Under Warranty</div><div class="detail-value">${d.underWarranty ? '<span style="color:var(--green);font-family:var(--mono)">Yes</span>' : '<span style="color:var(--red);font-family:var(--mono)">No</span>'}</div></div>
-        <div class="detail-item"><div class="detail-label">Purchase Date</div><div class="detail-value">${d.purchaseDate||'—'}</div></div>
-        <div class="detail-item"><div class="detail-label">Warranty Expiry</div><div class="detail-value">${d.warrantyExpiryDate||'—'}</div></div>
-        <div class="detail-item" style="grid-column:1/-1"><div class="detail-label">Description</div><div class="detail-value">${d.description||'—'}</div></div>
-      `;
-      const repairs = repairsCache.filter(r=>r.deviceId===id);
-      document.getElementById('modal-repair-history').innerHTML = repairs.length
-        ? `<div class="timeline">${repairs.map(r=>`
-            <div class="tl-item">
-              <div class="tl-dot ${r.repairStatus==='FIXED'?'green':r.repairStatus==='IRREPARABLE'?'red':r.repairStatus==='IN_PROGRESS'?'amber':'cyan'}">⚙</div>
-              <div class="tl-content">
-                <div class="tl-title">${r.issueReported||'Repair'}</div>
-                <div class="tl-meta">${chip(r.repairStatus)} · ${r.sentDate||'—'} → ${r.actualReturnDate||'pending'} · ${r.repairCost ? '₹'+r.repairCost : 'cost pending'}</div>
-              </div>
-            </div>`).join('')}</div>`
-        : `<div class="empty" style="padding:16px">No repair history</div>`;
-      document.getElementById('device-modal').classList.add('open');
-    }
+  const d = devicesCache.find(x=>x.id===id);
+  if(!d) return;
+  document.getElementById('modal-device-name').textContent = d.deviceName;
+
+  // Derive warranty status from expiry date
+  const today = new Date();
+  const warrantyExpiry = d.warrantyExpiryDate ? new Date(d.warrantyExpiryDate) : null;
+  const warrantyDisplay = warrantyExpiry
+    ? (warrantyExpiry > today
+        ? `<span style="color:var(--green);font-family:var(--mono)">✓ Valid until ${d.warrantyExpiryDate}</span>`
+        : `<span style="color:var(--red);font-family:var(--mono)">✗ Expired ${d.warrantyExpiryDate}</span>`)
+    : '<span style="color:var(--text3);font-family:var(--mono)">—</span>';
+
+  document.getElementById('modal-detail-grid').innerHTML = `
+    <div class="detail-item"><div class="detail-label">Brand</div><div class="detail-value">${d.brand||'—'}</div></div>
+    <div class="detail-item"><div class="detail-label">Type</div><div class="detail-value">${chip(d.deviceType)}</div></div>
+    <div class="detail-item"><div class="detail-label">Status</div><div class="detail-value">${chip(d.deviceStatus)}</div></div>
+    <div class="detail-item"><div class="detail-label">Warranty</div><div class="detail-value">${warrantyDisplay}</div></div>
+    <div class="detail-item"><div class="detail-label">Assigned To</div><div class="detail-value">${d.assignedEmployeeName||'<span style="color:var(--text3)">Unassigned</span>'}</div></div>
+    <div class="detail-item"><div class="detail-label">Added On</div><div class="detail-value">${d.createdAt ? d.createdAt.split('T')[0] : '—'}</div></div>
+  `;
+
+  const repairs = repairsCache.filter(r=>r.deviceId===id);
+  document.getElementById('modal-repair-history').innerHTML = repairs.length
+    ? `<div class="timeline">${repairs.map(r=>`
+        <div class="tl-item">
+          <div class="tl-dot ${r.repairStatus==='FIXED'?'green':r.repairStatus==='IRREPARABLE'?'red':r.repairStatus==='IN_PROGRESS'?'amber':'cyan'}">⚙</div>
+          <div class="tl-content">
+            <div class="tl-title">${r.issueReported||'Repair'}</div>
+            <div class="tl-meta">${chip(r.repairStatus)} · ${r.sentDate||'—'} → ${r.actualReturnDate||'pending'} · ${r.repairCost ? '₹'+r.repairCost : 'cost pending'}</div>
+          </div>
+        </div>`).join('')}</div>`
+    : `<div class="empty" style="padding:16px">No repair history</div>`;
+
+  document.getElementById('device-modal').classList.add('open');
+}
 
     function closeModal(){
       document.getElementById('device-modal').classList.remove('open');

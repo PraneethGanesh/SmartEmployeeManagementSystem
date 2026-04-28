@@ -2,10 +2,13 @@ package com.example.EmployeeManagementSystem.DTO;
 
 import com.example.EmployeeManagementSystem.Enum.DeviceType;
 
+import java.time.LocalDate;
+
 public class DeviceDTO {
     private String deviceName;       // e.g. "Dell XPS 15"
     private String brand;
     private DeviceType deviceType;
+    private LocalDate warrantyExpiryDate;
 
     public String getDeviceName() {
         return deviceName;
@@ -29,5 +32,13 @@ public class DeviceDTO {
 
     public void setDeviceType(DeviceType deviceType) {
         this.deviceType = deviceType;
+    }
+
+    public LocalDate getWarrantyExpiryDate() {
+        return warrantyExpiryDate;
+    }
+
+    public void setWarrantyExpiryDate(LocalDate warrantyExpiryDate) {
+        this.warrantyExpiryDate = warrantyExpiryDate;
     }
 }

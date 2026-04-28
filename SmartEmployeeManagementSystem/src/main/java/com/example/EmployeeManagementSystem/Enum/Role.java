@@ -3,47 +3,50 @@ package com.example.EmployeeManagementSystem.Enum;
 import java.util.Collection;
 import java.util.Set;
 
+import static com.example.EmployeeManagementSystem.Enum.Permission.*;
+
+
 public enum Role {
-    EMPLOYEE(Set.of(Permission.LEAVE_WRITE,
-            Permission.LEAVE_CANCEL,
-            Permission.SUBSCRIPTION_WRITE,
-            Permission.SUBSCRIPTION_UPDATE,
-            Permission.RESTAURANTS_READ,
-            Permission.SUBSCRIPTION_READ,
-            Permission.PROFILE_READ)),
-    MANAGER(Set.of(Permission.LEAVE_UPDATE,
-            Permission.LEAVE_WRITE,
-            Permission.SUBSCRIPTION_WRITE,
-            Permission.RESTAURANTS_READ,
-            Permission.SUBSCRIPTION_UPDATE,
-            Permission.LEAVE_READ,
-            Permission.SUBSCRIPTION_READ,
-            Permission.PROFILE_READ)),
+    EMPLOYEE(Set.of(LEAVE_WRITE,
+           LEAVE_CANCEL,
+            SUBSCRIPTION_WRITE,
+           SUBSCRIPTION_UPDATE,
+            RESTAURANTS_READ,
+            SUBSCRIPTION_READ,
+            PROFILE_READ)),
+    MANAGER(Set.of(LEAVE_UPDATE,
+            LEAVE_WRITE,
+            SUBSCRIPTION_WRITE,
+            RESTAURANTS_READ,
+            SUBSCRIPTION_UPDATE,
+            LEAVE_READ,
+            SUBSCRIPTION_READ,
+            PROFILE_READ)),
     FOOD_VENDOR(Set.of(
-            Permission.VENDOR_WRITE,
-            Permission.VENDOR_DELETE,
-            Permission.RESTAURANTS_ADD,
-            Permission.RESTAURANTS_DELETE,
-            Permission.RESTAURANTS_READ,
-            Permission.PROFILE_READ
+            VENDOR_WRITE,
+            VENDOR_DELETE,
+            RESTAURANTS_ADD,
+            RESTAURANTS_DELETE,
+            RESTAURANTS_READ,
+            PROFILE_READ
     )),
     ADMIN(Set.of(
-            Permission.LEAVE_READ,
-            Permission.LEAVE_WRITE,
-            Permission.LEAVE_UPDATE,
-            Permission.LEAVE_CANCEL,
-            Permission.RESTAURANTS_READ,
-            Permission.SUBSCRIPTION_READ,
-            Permission.SUBSCRIPTION_WRITE,
-            Permission.SUBSCRIPTION_UPDATE,
-            Permission.VENDOR_WRITE,
-            Permission.VENDOR_UPDATE,
-            Permission.VENDOR_DELETE,
-            Permission.PROFILE_READ
+            LEAVE_READ,
+            LEAVE_WRITE,
+            LEAVE_UPDATE,
+            LEAVE_CANCEL,
+            RESTAURANTS_READ,
+            SUBSCRIPTION_READ,
+            SUBSCRIPTION_WRITE,
+            SUBSCRIPTION_UPDATE,
+            VENDOR_WRITE,
+            VENDOR_UPDATE,
+            VENDOR_DELETE,
+            PROFILE_READ
 
     )),
-    TECH_VENDOR(Set.of()),
-    USER(Set.of(Permission.PROFILE_READ));
+    TECH_VENDOR(Set.of(VENDOR_WRITE)),
+    USER(Set.of(PROFILE_READ));
     private final Set<Permission> permissions;
 
     Role(Set<Permission> permissions) {
