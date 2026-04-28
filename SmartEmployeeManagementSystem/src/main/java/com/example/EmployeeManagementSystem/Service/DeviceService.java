@@ -1,6 +1,7 @@
 package com.example.EmployeeManagementSystem.Service;
 
 import com.example.EmployeeManagementSystem.DTO.AssignDeviceRequest;
+import com.example.EmployeeManagementSystem.DTO.DeviceAssignmentResponseDTO;
 import com.example.EmployeeManagementSystem.DTO.DeviceDTO;
 import com.example.EmployeeManagementSystem.DTO.DeviceResponseDTO;
 import com.example.EmployeeManagementSystem.Entity.Device;
@@ -11,6 +12,7 @@ import com.example.EmployeeManagementSystem.Enum.AssignmentStatus;
 import com.example.EmployeeManagementSystem.Enum.DeviceStatus;
 import com.example.EmployeeManagementSystem.Enum.Role;
 import com.example.EmployeeManagementSystem.Enum.Status;
+import com.example.EmployeeManagementSystem.Exception.VendorNotFoundException;
 import com.example.EmployeeManagementSystem.Repository.DeviceAssignmentRepo;
 import com.example.EmployeeManagementSystem.Repository.DeviceRepository;
 import com.example.EmployeeManagementSystem.Repository.EmployeeRepo;
@@ -49,6 +51,7 @@ public class DeviceService {
 
         Device device = new Device();
         device.setDeviceName(deviceDTO.getDeviceName());
+        device.setWarrantyExpiryDate(deviceDTO.getWarrantyExpiryDate());
         device.setBrand(deviceDTO.getBrand());
         device.setDeviceStatus(DeviceStatus.AVAILABLE);
         device.setDeviceType(deviceDTO.getDeviceType());
@@ -72,7 +75,7 @@ public class DeviceService {
         Employee employee = employeeRepo.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Employee not found"));
 
-        return deviceAssignmentRepo.findByEmployeeEmployeeIdAndStatus(employee.getEmployeeId(), AssignmentStatus.ACTIVE)
+        return deviceAssignmentRepo.findByAssignedToEmployeeIdAndStatus(employee.getEmployeeId(), AssignmentStatus.ACTIVE)
                 .stream()
                 .map(DeviceAssignment::getDevice)
                 .map(this::toDeviceResponse)
@@ -116,7 +119,7 @@ public class DeviceService {
 
         DeviceAssignment assignment = new DeviceAssignment();
         assignment.setDevice(device);
-        assignment.setEmployee(employee);
+        assignment.setAssignedTo(employee);
         assignment.setStatus(AssignmentStatus.ACTIVE);
         assignment.setAssignedDate(LocalDate.now());
 
@@ -128,29 +131,62 @@ public class DeviceService {
         return savedAssignment;
     }
 
+
+
     private DeviceResponseDTO toDeviceResponse(Device device) {
         DeviceResponseDTO response = new DeviceResponseDTO();
         response.setId(device.getId());
         response.setDeviceName(device.getDeviceName());
         response.setBrand(device.getBrand());
+        response.setWarrantyExpiryDate(device.getWarrantyExpiryDate());
         response.setDeviceType(device.getDeviceType());
         response.setDeviceStatus(device.getDeviceStatus());
 
         if (device.getTechVendor() != null) {
-            response.setVendorId(device.getTechVendor().getId());
+            response.setVendor(device.getTechVendor());
         }
 
         DeviceAssignment currentAssignment = device.getCurrentAssignment();
         if (currentAssignment != null) {
             response.setAssignedDate(currentAssignment.getAssignedDate());
 
-            Employee assignedEmployee = currentAssignment.getEmployee();
+            Employee assignedEmployee = currentAssignment.getAssignedTo();
             if (assignedEmployee != null) {
-                response.setAssignedEmployeeId(assignedEmployee.getEmployeeId());
+                response.setAssignedEmployee(assignedEmployee);
                 response.setAssignedEmployeeName(assignedEmployee.getName());
             }
         }
 
         return response;
+    }
+
+    public List<DeviceAssignmentResponseDTO> getDeviceAssignmentOfvendor(Authentication authentication) {
+     String email=AuthUtil.extractEmail(authentication);
+     Vendor vendor=vendorRepo.findByEmail(email).orElseThrow(
+             ()->new VendorNotFoundException("Vendor:"+email+" not found")
+     );
+     List<DeviceAssignment> deviceAssignments=deviceAssignmentRepo.getAllAssignmentsByVendorId(vendor.getId());
+     return deviceAssignments.stream().map(deviceAssignment -> toAssignmentDTO(deviceAssignment)).toList();
+    }
+
+    private DeviceAssignmentResponseDTO toAssignmentDTO(DeviceAssignment a) {
+        DeviceAssignmentResponseDTO dto = new DeviceAssignmentResponseDTO();
+        dto.setId(a.getId());
+        dto.setStatus(a.getStatus());
+        dto.setAssignedDate(a.getAssignedDate());
+
+        if (a.getDevice() != null) {
+            dto.setDeviceId(a.getDevice().getId());
+            dto.setDeviceName(a.getDevice().getDeviceName());
+            dto.setDeviceBrand(a.getDevice().getBrand());
+            dto.setDeviceType(a.getDevice().getDeviceType());
+        }
+
+        if (a.getAssignedTo() != null) {
+            dto.setEmployeeId(a.getAssignedTo().getEmployeeId());
+            dto.setEmployeeName(a.getAssignedTo().getName()); // adjust to your Employee field
+        }
+
+        return dto;
     }
 }
