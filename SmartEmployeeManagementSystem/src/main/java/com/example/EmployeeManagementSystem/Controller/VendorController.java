@@ -35,14 +35,14 @@ public class VendorController {
     }
 
     @GetMapping("/me")
-    @PreAuthorize("hasRole('VENDOR_WRITE')")
+    @PreAuthorize("hasAuthority('VENDOR_WRITE')")
     public ResponseEntity<VendorDTO> getVendor(Authentication authentication) {
         return ResponseEntity.ok(vendorService.getVendor(authentication));
     }
 
 
     @PutMapping("/update")
-    @PreAuthorize("hasRole('VENDOR_WRITE')")
+    @PreAuthorize("hasAuthority('VENDOR_WRITE')")
     public ResponseEntity<VendorDTO> updateVendor(
             @RequestBody VendorRequest request,
             Authentication authentication) {

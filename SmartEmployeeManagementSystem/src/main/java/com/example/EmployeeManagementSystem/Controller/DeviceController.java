@@ -1,6 +1,7 @@
 package com.example.EmployeeManagementSystem.Controller;
 
 import com.example.EmployeeManagementSystem.DTO.AssignDeviceRequest;
+import com.example.EmployeeManagementSystem.DTO.DeviceAssignmentResponseDTO;
 import com.example.EmployeeManagementSystem.DTO.DeviceDTO;
 import com.example.EmployeeManagementSystem.DTO.DeviceResponseDTO;
 import com.example.EmployeeManagementSystem.Entity.Device;
@@ -56,6 +57,14 @@ public class DeviceController {
         DeviceAssignment assignment = deviceService.assignDevice(deviceId, request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body("Device " + assignment.getDevice().getId()
-                        + " assigned to employee " + assignment.getEmployee().getEmployeeId());
+                        + " assigned to employee " + assignment.getAssignedTo().getEmployeeId());
     }
+
+    @GetMapping("/assignments")
+    @PreAuthorize("hasRole('TECH_VENDOR')")
+    public List<DeviceAssignmentResponseDTO> getDeviceAssignmentOfvendor(Authentication authentication){
+        return deviceService.getDeviceAssignmentOfvendor(authentication);
+
+    }
+
 }

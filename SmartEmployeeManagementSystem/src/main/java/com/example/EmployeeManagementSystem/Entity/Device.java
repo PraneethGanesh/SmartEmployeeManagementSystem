@@ -5,6 +5,7 @@ import com.example.EmployeeManagementSystem.Enum.DeviceStatus;
 import com.example.EmployeeManagementSystem.Enum.DeviceType;
 import jakarta.persistence.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -28,6 +29,8 @@ public class Device {
     private DeviceType deviceType;
 
     private LocalDateTime createdAt;
+
+    private LocalDate warrantyExpiryDate;
 
     public Long getId() {
         return id;
@@ -91,5 +94,13 @@ public class Device {
 
     public void setCurrentAssignment(DeviceAssignment currentAssignment) {
         this.currentAssignment = currentAssignment;
+    }
+
+    public LocalDate getWarrantyExpiryDate() {
+        return warrantyExpiryDate;
+    }
+
+    public void setWarrantyExpiryDate(LocalDate warrantyExpiryDate) {
+        this.warrantyExpiryDate = warrantyExpiryDate;
     }
 }
