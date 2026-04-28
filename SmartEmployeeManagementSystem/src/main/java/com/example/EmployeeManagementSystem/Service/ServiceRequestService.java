@@ -3,6 +3,7 @@ package com.example.EmployeeManagementSystem.Service;
 import com.example.EmployeeManagementSystem.DTO.AdminActionDTO;
 import com.example.EmployeeManagementSystem.DTO.RepairDTO;
 import com.example.EmployeeManagementSystem.DTO.ServiceRequestDTO;
+import com.example.EmployeeManagementSystem.DTO.ServiceRequestResponseDTO;
 import com.example.EmployeeManagementSystem.Entity.Device;
 import com.example.EmployeeManagementSystem.Entity.Employee;
 import com.example.EmployeeManagementSystem.Entity.ServiceRequest;
@@ -70,10 +71,21 @@ public class ServiceRequestService {
     }
 
 
-    public List<ServiceRequestDTO> getAllOpenServiceRequests(){
+    public List<ServiceRequestResponseDTO> getAllOpenServiceRequests(){
         List<ServiceRequest> serviceRequestList=serviceRequestRepository.findByStatus(ServiceRequestStatus.OPEN);
-        return serviceRequestList.stream().map(serviceRequest -> toServiceRequestDTO(serviceRequest)).toList();
+        return serviceRequestList.stream().map(serviceRequest -> toServiceRequestResponseDTO(serviceRequest)).toList();
 
+    }
+
+    public List<ServiceRequestResponseDTO> getMyServiceRequests(Authentication authentication) {
+        String email = AuthUtil.extractEmail(authentication);
+        Employee employee = employeeRepo.findByEmail(email)
+                .orElseThrow(() -> new EmployeeNotFound("Employee not found: " + email));
+
+        List<ServiceRequest> serviceRequestList = serviceRequestRepository.findByRaisedByOrderByRaisedAtDesc(employee);
+        return serviceRequestList.stream()
+                .map(this::toServiceRequestResponseDTO)
+                .toList();
     }
 
     private ServiceRequestDTO toServiceRequestDTO(ServiceRequest serviceRequest){
@@ -83,6 +95,31 @@ public class ServiceRequestService {
         requestDTO.setIssueDescription(serviceRequest.getIssueDescription());
         requestDTO.setUrgent(serviceRequest.isUrgent());
         return requestDTO;
+    }
+
+    private ServiceRequestResponseDTO toServiceRequestResponseDTO(ServiceRequest serviceRequest) {
+        ServiceRequestResponseDTO responseDTO = new ServiceRequestResponseDTO();
+        responseDTO.setId(serviceRequest.getId());
+        responseDTO.setRequestType(serviceRequest.getRequestType() != null
+                ? serviceRequest.getRequestType().name()
+                : null);
+        responseDTO.setStatus(serviceRequest.getStatus() != null
+                ? serviceRequest.getStatus().name()
+                : null);
+        responseDTO.setIssueDescription(serviceRequest.getIssueDescription());
+        responseDTO.setAdminRemarks(serviceRequest.getAdminRemarks());
+        responseDTO.setResolution(serviceRequest.getResolution());
+        responseDTO.setUrgent(serviceRequest.isUrgent());
+        responseDTO.setRaisedAt(serviceRequest.getRaisedAt());
+        responseDTO.setResolvedAt(serviceRequest.getResolvedAt());
+        responseDTO.setDeviceName(serviceRequest.getDevice() != null
+                ? serviceRequest.getDevice().getDeviceName()
+                : null);
+        responseDTO.setReviewedByName(serviceRequest.getReviewedBy() != null
+                ? serviceRequest.getReviewedBy().getName()
+                : null);
+        responseDTO.setRaisedByName(serviceRequest.getRaisedBy().getName());
+        return responseDTO;
     }
 
     public ServiceRequest updateServiceRequestByAdmin(Authentication authentication, AdminActionDTO actionDTO){

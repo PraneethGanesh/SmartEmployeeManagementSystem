@@ -3,6 +3,7 @@ package com.example.EmployeeManagementSystem.Controller;
 import com.example.EmployeeManagementSystem.DTO.AdminActionDTO;
 import com.example.EmployeeManagementSystem.DTO.RepairDTO;
 import com.example.EmployeeManagementSystem.DTO.ServiceRequestDTO;
+import com.example.EmployeeManagementSystem.DTO.ServiceRequestResponseDTO;
 import com.example.EmployeeManagementSystem.Entity.ServiceRequest;
 import com.example.EmployeeManagementSystem.Service.ServiceRequestService;
 import org.springframework.http.HttpStatus;
@@ -36,9 +37,15 @@ public class ServiceRequestController {
                 .body(serviceRequestService.createServiceRequest(serviceRequestDTO, authentication));
     }
 
+    @GetMapping("/my")
+    @PreAuthorize("hasAnyRole('EMPLOYEE','MANAGER','ADMIN')")
+    public ResponseEntity<List<ServiceRequestResponseDTO>> getMyServiceRequests(Authentication authentication) {
+        return ResponseEntity.ok(serviceRequestService.getMyServiceRequests(authentication));
+    }
+
     @GetMapping("/open")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<ServiceRequestDTO>> getAllOpenServiceRequests() {
+    public ResponseEntity<List<ServiceRequestResponseDTO>> getAllOpenServiceRequests() {
         return ResponseEntity.ok(serviceRequestService.getAllOpenServiceRequests());
     }
 

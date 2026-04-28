@@ -14,6 +14,7 @@ com\example\EmployeeManagementSystem\DTO\AdminActionDTO.class
 com\example\EmployeeManagementSystem\Controller\ServiceRequestController.class
 com\example\EmployeeManagementSystem\DTO\ServiceRequestDTO.class
 com\example\EmployeeManagementSystem\Repository\DeviceRepository.class
+com\example\EmployeeManagementSystem\DTO\ServiceRequestResponseDTO.class
 com\example\EmployeeManagementSystem\Repository\DeviceAssignmentRepo.class
 com\example\EmployeeManagementSystem\DTO\RepairDTO.class
 com\example\EmployeeManagementSystem\Entity\Device.class
