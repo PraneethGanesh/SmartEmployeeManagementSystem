@@ -54,7 +54,7 @@ public class LeaveAccrualService {
 
                 // Find or create entitlement row for this employee/type/year
                 LeaveEntitlement entitlement = entitlementRepository
-                        .findByEmployeeIdAndLeaveTypeIdAndYear(
+                        .findByEmployeeEmployeeIdAndLeaveTypeIdAndYear(
                                 employee.getEmployeeId(), leaveType.getId(), year)
                         .orElseGet(() -> createNewEntitlement(employee, leaveType, year));
 
@@ -109,7 +109,7 @@ public class LeaveAccrualService {
         // Carry forward last year's closing balance (if the type supports it)
         if (leaveType.isCarriesForward()) {
             BigDecimal lastYearClosing = entitlementRepository
-                    .findByEmployeeIdAndLeaveTypeIdAndYear(
+                    .findByEmployeeEmployeeIdAndLeaveTypeIdAndYear(
                             employee.getEmployeeId(), leaveType.getId(), year - 1)
                     .map(LeaveEntitlement::getClosingBalance)
                     .orElse(BigDecimal.ZERO);

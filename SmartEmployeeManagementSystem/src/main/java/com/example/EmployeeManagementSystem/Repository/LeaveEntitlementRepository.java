@@ -11,12 +11,12 @@ import java.util.Optional;
 public interface LeaveEntitlementRepository extends JpaRepository<LeaveEntitlement, Long> {
 
     // Find a specific employee's entitlement for a leave type in a given year
-    Optional<LeaveEntitlement> findByEmployeeIdAndLeaveTypeIdAndYear(
+    Optional<LeaveEntitlement> findByEmployeeEmployeeIdAndLeaveTypeIdAndYear(
             Long employeeId, Integer leaveTypeId, Integer year
     );
 
     // All entitlements for an employee in a given year
-    List<LeaveEntitlement> findByEmployeeIdAndYear(Long employeeId, Integer year);
+    List<LeaveEntitlement> findByEmployeeEmployeeIdAndYear(Long employeeId, Integer year);
 
     // Sum of closing balances for carry-forwardable types (used by cap check in Phase 5)
     @Query("""

@@ -92,6 +92,7 @@
         .chip.approved{background:var(--green-dim);color:var(--green);border:1px solid rgba(52,211,153,0.2)}
         .chip.rejected{background:var(--red-dim);color:var(--red);border:1px solid rgba(248,113,113,0.2)}
         .chip.active{background:var(--green-dim);color:var(--green);border:1px solid rgba(52,211,153,0.2)}
+        .chip.open { background: var(--accent-dim); color: var(--accent); }
         .chip.employee{background:var(--blue-dim);color:var(--blue)}
         .chip.manager{background:var(--accent-dim);color:var(--accent)}
 
@@ -170,6 +171,8 @@
             <div class="nav-item" onclick="showView('my-subscriptions',this)"><span>🍱</span> My Subscriptions</div>
             <div class="nav-item" onclick="showView('add-subscription',this)"><span>＋</span> Subscribe to Meal</div>
             <div class="nav-item" onclick="showView('restaurants',this)"><span>🏪</span> Restaurants</div>
+            <div class="nav-item" onclick="showView('my-devices',this)"><span>⊞</span> My Devices</div>
+            <div class="nav-item" onclick="showView('service-requests', this)"><span class="icon">⚙</span> Service Requests</div>
         </nav>
         <div class="sidebar-footer">
             <div class="user-card">
@@ -275,6 +278,13 @@
                             <div class="form-group"><label>Full Name</label><input id="emp-name" placeholder="John Doe"></div>
                             <div class="form-group"><label>Email</label><input type="email" id="emp-email" placeholder="john@company.com"></div>
                             <div class="form-group"><label>Password</label><input type="password" id="emp-pass" placeholder="Temporary password"></div>
+                            <div class="form-group"><label>Gender</label>
+                                <select id="emp-gender">
+                                    <option value="M">Male</option>
+                                    <option value="F">Female</option>
+                                    <option value="O">Other</option>
+                                </select>
+                            </div>
                             <div class="form-group"><label>Timezone</label>
                                 <select id="emp-timezone">
                                     <option value="UTC">UTC</option>
@@ -477,6 +487,109 @@
                 </div>
             </div>
 
+            <!-- MY DEVICES -->
+            <div id="my-devices-view" class="view">
+                <div class="section">
+                    <div class="section-head">
+                        <div>
+                            <div class="section-title">⊞ My Assigned Devices</div>
+                            <div class="section-sub">Devices currently assigned to you</div>
+                        </div>
+                        <button class="btn btn-secondary btn-sm" onclick="loadMyAssignedDevices()">↺ Refresh</button>
+                    </div>
+                    <div class="tablewrap">
+                        <table>
+                            <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Device Name</th>
+                                <th>Brand</th>
+                                <th>Type</th>
+                                <th>Warranty</th>
+                                <th>Assigned On</th>
+                                <th>Status</th>
+                            </tr>
+                            </thead>
+                            <tbody id="my-devices-list">
+                            <tr><td colspan="7" class="empty-state">Loading...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SERVICE REQUESTS -->
+            <div id="service-requests-view" class="view">
+
+                <!-- List -->
+                <div class="section" style="margin-bottom:20px">
+                    <div class="section-head">
+                        <div>
+                            <div class="section-title">My Service Requests</div>
+                            <div class="section-sub">All requests you have raised</div>
+                        </div>
+                        <button class="btn btn-secondary btn-sm" onclick="loadServiceRequestsList()">↺ Refresh</button>
+                    </div>
+                    <div class="tablewrap">
+                        <table>
+                            <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Device</th>
+                                <th>Type</th>
+                                <th>Description</th>
+                                <th>Urgent</th>
+                                <th>Status</th>
+                                <th>Raised At</th>
+                            </tr>
+                            </thead>
+                            <tbody id="service-requests-list">
+                            <tr><td colspan="7" class="empty-state">Loading...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Raise form -->
+                <div class="section">
+                    <div class="section-head"><div class="section-title">Raise a New Request</div></div>
+                    <div class="form-card">
+                        <div class="form-grid">
+                            <div class="form-group full">
+                                <label>Device</label>
+                                <select id="sr-device-select">
+                                    <option value="">-- Select your device --</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Request Type</label>
+                                <select id="sr-type">
+                                    <option value="REPAIR">Repair</option>
+                                    <option value="REPLACEMENT">Replacement</option>
+                                    <option value="UPGRADE">Upgrade</option>
+                                    <option value="MAINTENANCE">Maintenance</option>
+                                    <option value="RETURN">Return</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="display:flex;align-items:center;gap:10px;padding-top:22px">
+                                <input type="checkbox" id="sr-urgent" style="width:16px;height:16px;padding:0;flex-shrink:0">
+                                <label for="sr-urgent" style="text-transform:none;font-size:13px;font-weight:500;color:var(--text);cursor:pointer;letter-spacing:0">
+                                    Mark as Urgent
+                                </label>
+                            </div>
+                            <div class="form-group full">
+                                <label>Issue Description</label>
+                                <textarea id="sr-description" rows="3" placeholder="Describe the issue in detail..."></textarea>
+                            </div>
+                        </div>
+                        <div class="form-actions">
+                            <button class="btn btn-primary" onclick="submitServiceRequest()">Submit Request</button>
+                            <button class="btn btn-secondary" onclick="clearServiceRequestForm()">Clear</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 </div>
@@ -508,11 +621,24 @@
         const t=localStorage.getItem('jwt_token');
         return t?{'Authorization':`Bearer ${t}`}:{};
     }
-    async function apiFetch(path,opts={}){
-        const res=await fetch(`${API}${path}`,{...opts,headers:{'Content-Type':'application/json',...getAuthHeader(),...(opts.headers||{})},credentials:'include'});
-        if(res.status===401){localStorage.removeItem('jwt_token');localStorage.removeItem('auth_type');showAlert('Session expired','error');setTimeout(()=>window.location.href='/login.html',1500);throw new Error('Unauthorized');}
-        const text=await res.text();return text?JSON.parse(text):null;
+   async function apiFetch(path, opts={}){
+    const res = await fetch(`${API}${path}`, {
+        ...opts,
+        headers: {'Content-Type':'application/json',...getAuthHeader(),...(opts.headers||{})},
+        credentials: 'include'
+    });
+    if(res.status===401){
+        localStorage.removeItem('jwt_token');
+        localStorage.removeItem('auth_type');
+        showAlert('Session expired','error');
+        setTimeout(()=>window.location.href='/google.html',1500);
+        throw new Error('Unauthorized');
     }
+    const text = await res.text();
+    if(!text) return null;
+    try { return JSON.parse(text); }  // try JSON first
+    catch { return text; }            // fall back to plain string
+}
 
     async function initUser(){
         const token=localStorage.getItem('jwt_token');
@@ -531,7 +657,7 @@
         document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
         if(el)el.classList.add('active');
         document.getElementById('pageTitle').textContent=name.split('-').map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join(' ');
-       const loaders={dashboard:loadDashboard,employees:loadEmployees,'pending-leaves':loadPendingLeaves,'all-leaves':loadAllLeaves,'my-leaves':loadMyLeaves,'add-employee':()=>{},'promote-users':loadUsers,'my-subscriptions':loadMySubscriptions,'add-subscription':()=>{},restaurants: loadRestaurants };
+       const loaders={dashboard:loadDashboard,employees:loadEmployees,'pending-leaves':loadPendingLeaves,'all-leaves':loadAllLeaves,'my-leaves':loadMyLeaves,'add-employee':()=>{},'promote-users':loadUsers,'my-subscriptions':loadMySubscriptions,'add-subscription':()=>{},restaurants: loadRestaurants, 'my-devices': loadMyAssignedDevices,'service-requests': loadServiceRequests};
         if(loaders[name])loaders[name]();
     }
 
@@ -607,6 +733,7 @@
     const name     = document.getElementById('emp-name').value.trim();
     const email    = document.getElementById('emp-email').value.trim();
     const password = document.getElementById('emp-pass').value;
+    const gender   = document.getElementById('emp-gender').value;
     const timezone = document.getElementById('emp-timezone').value;
     if(!name || !email || !password){
         showAlert('Please fill all required fields','error');
@@ -615,7 +742,7 @@
     try{
         await apiFetch('/manager/employees', {
             method: 'POST',
-            body: JSON.stringify({ name, email, password, timezone })
+            body: JSON.stringify({ name, email, password, timezone, gender })
         });
         showAlert('Employee added successfully!','success');
         clearEmpForm();
@@ -625,12 +752,16 @@
 
    function clearEmpForm(){
     ['emp-name','emp-email','emp-pass'].forEach(id=>document.getElementById(id).value='');
-    document.getElementById('emp-timezone').value='UTC';
-   }
+    document.getElementById('emp-timezone').value = 'UTC';
+    document.getElementById('emp-gender').selectedIndex = 0;
+}
     async function deleteEmployee(id){
         if(!confirm('Remove this employee?'))return;
         try{await apiFetch(`/employee/${id}`,{method:'DELETE'});showAlert('Employee removed','success');loadEmployees();}
-        catch(e){showAlert('Failed to remove employee','error');}
+        catch(e){
+        console.log(e);
+        showAlert('Failed to remove employee','error');
+        }
     }
 
     async function loadPendingLeaves(){
@@ -945,6 +1076,112 @@ function clearSubscriptionForm(){
     document.getElementById('day-of-week-group').style.display = 'none';
     document.getElementById('slot-rows').innerHTML = '';
     slotRowCount = 0;
+}
+
+// ============ MY DEVICES ============
+async function loadMyAssignedDevices() {
+    try {
+        const devices = await apiFetch('/devices/my');
+        const tbody = document.getElementById('my-devices-list');
+        if (!devices || !devices.length) {
+            tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No devices assigned to you</td></tr>';
+            return;
+        }
+        const today = new Date();
+        tbody.innerHTML = devices.map(d => {
+            const warrantyExpiry = d.warrantyExpiryDate ? new Date(d.warrantyExpiryDate) : null;
+            const warrantyDisplay = warrantyExpiry
+                ? (warrantyExpiry > today
+                    ? `<span style="color:var(--green);font-size:11px">✓ ${d.warrantyExpiryDate}</span>`
+                    : `<span style="color:var(--red);font-size:11px">✗ Expired ${d.warrantyExpiryDate}</span>`)
+                : '<span style="color:var(--text3);font-size:11px">—</span>';
+            return `<tr>
+                <td style="font-family:var(--mono);font-size:12px">#${d.id}</td>
+                <td><strong>${d.deviceName || '—'}</strong></td>
+                <td>${d.brand || '—'}</td>
+                <td><span class="chip employee">${(d.deviceType || '').toLowerCase()}</span></td>
+                <td>${warrantyDisplay}</td>
+                <td style="font-family:var(--mono);font-size:12px;color:var(--text3)">${d.assignedDate || '—'}</td>
+                <td><span class="chip active">ASSIGNED</span></td>
+            </tr>`;
+        }).join('');
+    } catch (e) {
+        document.getElementById('my-devices-list').innerHTML =
+            '<tr><td colspan="7" class="empty-state">Could not load devices</td></tr>';
+    }
+}
+
+   // ============ SERVICE REQUESTS ============
+async function loadServiceRequests() {
+    await Promise.all([loadServiceRequestsList(), loadMyDevicesForSR()]);
+}
+
+async function loadServiceRequestsList() {
+    try {
+        const requests = await apiFetch('/service-requests/my');
+        const tbody = document.getElementById('service-requests-list');
+        if (!requests || !requests.length) {
+            tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No service requests yet</td></tr>';
+            return;
+        }
+        tbody.innerHTML = requests.map(r => `<tr>
+            <td style="color:var(--text3);font-family:var(--mono)">#${r.id}</td>
+            <td>${r.deviceName || '—'}</td>
+            <td><span class="chip pending">${r.requestType}</span></td>
+            <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+                ${r.issueDescription || '—'}
+            </td>
+            <td>${r.urgent
+                ? '<span class="chip rejected">YES</span>'
+                : '<span style="color:var(--text3)">No</span>'}
+            </td>
+            <td><span class="chip ${(r.status || '').toLowerCase()}">${r.status || '—'}</span></td>
+            <td style="font-size:12px;color:var(--text3)">
+                ${r.raisedAt ? new Date(r.raisedAt).toLocaleDateString() : '—'}
+            </td>
+        </tr>`).join('');
+    } catch (e) { console.error(e); }
+}
+
+async function loadMyDevicesForSR() {
+    try {
+        const devices = await apiFetch('/devices/my');
+        const select = document.getElementById('sr-device-select');
+        select.innerHTML = '<option value="">-- Select your device --</option>';
+        (devices || []).forEach(d => {
+            const opt = document.createElement('option');
+            opt.value = d.id;
+            opt.textContent = `${d.deviceName} (${d.brand || d.deviceType || 'Device'})`;
+            select.appendChild(opt);
+        });
+    } catch (e) { console.error('Failed to load devices for SR', e); }
+}
+
+async function submitServiceRequest() {
+    const deviceId = parseInt(document.getElementById('sr-device-select').value);
+    const requestType = document.getElementById('sr-type').value;
+    const issueDescription = document.getElementById('sr-description').value.trim();
+    const urgent = document.getElementById('sr-urgent').checked;
+
+    if (!deviceId) { showAlert('Please select a device', 'error'); return; }
+    if (!issueDescription) { showAlert('Please describe the issue', 'error'); return; }
+
+    try {
+        await apiFetch('/service-requests', {
+            method: 'POST',
+            body: JSON.stringify({ deviceId, requestType, issueDescription, urgent })
+        });
+        showAlert('Service request submitted!', 'success');
+        clearServiceRequestForm();
+        loadServiceRequestsList();
+    } catch (e) { showAlert('Failed: ' + e.message, 'error'); }
+}
+
+function clearServiceRequestForm() {
+    document.getElementById('sr-device-select').value = '';
+    document.getElementById('sr-type').value = 'REPAIR';
+    document.getElementById('sr-description').value = '';
+    document.getElementById('sr-urgent').checked = false;
 }
 
     function logout(){

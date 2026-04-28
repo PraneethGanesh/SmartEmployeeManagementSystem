@@ -40,6 +40,7 @@ D:\SmartEmployeeManagementSystem\SmartEmployeeManagementSystem\src\main\java\com
 D:\SmartEmployeeManagementSystem\SmartEmployeeManagementSystem\src\main\java\com\example\EmployeeManagementSystem\DTO\RestaurantDTO.java
 D:\SmartEmployeeManagementSystem\SmartEmployeeManagementSystem\src\main\java\com\example\EmployeeManagementSystem\DTO\RestaurantRequest.java
 D:\SmartEmployeeManagementSystem\SmartEmployeeManagementSystem\src\main\java\com\example\EmployeeManagementSystem\DTO\ServiceRequestDTO.java
+D:\SmartEmployeeManagementSystem\SmartEmployeeManagementSystem\src\main\java\com\example\EmployeeManagementSystem\DTO\ServiceRequestResponseDTO.java
 D:\SmartEmployeeManagementSystem\SmartEmployeeManagementSystem\src\main\java\com\example\EmployeeManagementSystem\DTO\SubscriptionDTO.java
 D:\SmartEmployeeManagementSystem\SmartEmployeeManagementSystem\src\main\java\com\example\EmployeeManagementSystem\DTO\SubscriptionRequest.java
 D:\SmartEmployeeManagementSystem\SmartEmployeeManagementSystem\src\main\java\com\example\EmployeeManagementSystem\DTO\VendorDTO.java
@@ -50,7 +51,9 @@ D:\SmartEmployeeManagementSystem\SmartEmployeeManagementSystem\src\main\java\com
 D:\SmartEmployeeManagementSystem\SmartEmployeeManagementSystem\src\main\java\com\example\EmployeeManagementSystem\Entity\Device.java
 D:\SmartEmployeeManagementSystem\SmartEmployeeManagementSystem\src\main\java\com\example\EmployeeManagementSystem\Entity\DeviceAssignment.java
 D:\SmartEmployeeManagementSystem\SmartEmployeeManagementSystem\src\main\java\com\example\EmployeeManagementSystem\Entity\Employee.java
+D:\SmartEmployeeManagementSystem\SmartEmployeeManagementSystem\src\main\java\com\example\EmployeeManagementSystem\Entity\LeaveEntitlement.java
 D:\SmartEmployeeManagementSystem\SmartEmployeeManagementSystem\src\main\java\com\example\EmployeeManagementSystem\Entity\LeaveRequest.java
+D:\SmartEmployeeManagementSystem\SmartEmployeeManagementSystem\src\main\java\com\example\EmployeeManagementSystem\Entity\LeaveType.java
 D:\SmartEmployeeManagementSystem\SmartEmployeeManagementSystem\src\main\java\com\example\EmployeeManagementSystem\Entity\RefreshToken.java
 D:\SmartEmployeeManagementSystem\SmartEmployeeManagementSystem\src\main\java\com\example\EmployeeManagementSystem\Entity\Restaurant.java
 D:\SmartEmployeeManagementSystem\SmartEmployeeManagementSystem\src\main\java\com\example\EmployeeManagementSystem\Entity\ServiceRequest.java
@@ -60,6 +63,7 @@ D:\SmartEmployeeManagementSystem\SmartEmployeeManagementSystem\src\main\java\com
 D:\SmartEmployeeManagementSystem\SmartEmployeeManagementSystem\src\main\java\com\example\EmployeeManagementSystem\Enum\DeliveryStatus.java
 D:\SmartEmployeeManagementSystem\SmartEmployeeManagementSystem\src\main\java\com\example\EmployeeManagementSystem\Enum\DeviceStatus.java
 D:\SmartEmployeeManagementSystem\SmartEmployeeManagementSystem\src\main\java\com\example\EmployeeManagementSystem\Enum\DeviceType.java
+D:\SmartEmployeeManagementSystem\SmartEmployeeManagementSystem\src\main\java\com\example\EmployeeManagementSystem\Enum\Gender.java
 D:\SmartEmployeeManagementSystem\SmartEmployeeManagementSystem\src\main\java\com\example\EmployeeManagementSystem\Enum\LeaveStatus.java
 D:\SmartEmployeeManagementSystem\SmartEmployeeManagementSystem\src\main\java\com\example\EmployeeManagementSystem\Enum\LeaveType.java
 D:\SmartEmployeeManagementSystem\SmartEmployeeManagementSystem\src\main\java\com\example\EmployeeManagementSystem\Enum\MealSlot.java
@@ -88,13 +92,16 @@ D:\SmartEmployeeManagementSystem\SmartEmployeeManagementSystem\src\main\java\com
 D:\SmartEmployeeManagementSystem\SmartEmployeeManagementSystem\src\main\java\com\example\EmployeeManagementSystem\Repository\DeviceAssignmentRepo.java
 D:\SmartEmployeeManagementSystem\SmartEmployeeManagementSystem\src\main\java\com\example\EmployeeManagementSystem\Repository\DeviceRepository.java
 D:\SmartEmployeeManagementSystem\SmartEmployeeManagementSystem\src\main\java\com\example\EmployeeManagementSystem\Repository\EmployeeRepo.java
+D:\SmartEmployeeManagementSystem\SmartEmployeeManagementSystem\src\main\java\com\example\EmployeeManagementSystem\Repository\LeaveEntitlementRepository.java
 D:\SmartEmployeeManagementSystem\SmartEmployeeManagementSystem\src\main\java\com\example\EmployeeManagementSystem\Repository\LeaveRequestRepo.java
+D:\SmartEmployeeManagementSystem\SmartEmployeeManagementSystem\src\main\java\com\example\EmployeeManagementSystem\Repository\LeaveTypeRepository.java
 D:\SmartEmployeeManagementSystem\SmartEmployeeManagementSystem\src\main\java\com\example\EmployeeManagementSystem\Repository\RefreshTokenRepository.java
 D:\SmartEmployeeManagementSystem\SmartEmployeeManagementSystem\src\main\java\com\example\EmployeeManagementSystem\Repository\RestaurantRepository.java
 D:\SmartEmployeeManagementSystem\SmartEmployeeManagementSystem\src\main\java\com\example\EmployeeManagementSystem\Repository\ServiceRequestRepository.java
 D:\SmartEmployeeManagementSystem\SmartEmployeeManagementSystem\src\main\java\com\example\EmployeeManagementSystem\Repository\SubscriptionRepository.java
 D:\SmartEmployeeManagementSystem\SmartEmployeeManagementSystem\src\main\java\com\example\EmployeeManagementSystem\Repository\VendorRepo.java
 D:\SmartEmployeeManagementSystem\SmartEmployeeManagementSystem\src\main\java\com\example\EmployeeManagementSystem\Scheduler\DeliveryScheduler.java
+D:\SmartEmployeeManagementSystem\SmartEmployeeManagementSystem\src\main\java\com\example\EmployeeManagementSystem\Scheduler\LeaveAccrualScheduler.java
 D:\SmartEmployeeManagementSystem\SmartEmployeeManagementSystem\src\main\java\com\example\EmployeeManagementSystem\Scheduler\LeaveStatusScheduler.java
 D:\SmartEmployeeManagementSystem\SmartEmployeeManagementSystem\src\main\java\com\example\EmployeeManagementSystem\security\ApiKeyAuthenticationProvider.java
 D:\SmartEmployeeManagementSystem\SmartEmployeeManagementSystem\src\main\java\com\example\EmployeeManagementSystem\security\ApiKeyAuthenticationToken.java
@@ -104,6 +111,7 @@ D:\SmartEmployeeManagementSystem\SmartEmployeeManagementSystem\src\main\java\com
 D:\SmartEmployeeManagementSystem\SmartEmployeeManagementSystem\src\main\java\com\example\EmployeeManagementSystem\Service\DeliveryTimeService.java
 D:\SmartEmployeeManagementSystem\SmartEmployeeManagementSystem\src\main\java\com\example\EmployeeManagementSystem\Service\DeviceService.java
 D:\SmartEmployeeManagementSystem\SmartEmployeeManagementSystem\src\main\java\com\example\EmployeeManagementSystem\Service\EmployeeService.java
+D:\SmartEmployeeManagementSystem\SmartEmployeeManagementSystem\src\main\java\com\example\EmployeeManagementSystem\Service\LeaveAccrualService.java
 D:\SmartEmployeeManagementSystem\SmartEmployeeManagementSystem\src\main\java\com\example\EmployeeManagementSystem\Service\LeaveRequestService.java
 D:\SmartEmployeeManagementSystem\SmartEmployeeManagementSystem\src\main\java\com\example\EmployeeManagementSystem\Service\ManagerService.java
 D:\SmartEmployeeManagementSystem\SmartEmployeeManagementSystem\src\main\java\com\example\EmployeeManagementSystem\Service\MealSlotService.java
