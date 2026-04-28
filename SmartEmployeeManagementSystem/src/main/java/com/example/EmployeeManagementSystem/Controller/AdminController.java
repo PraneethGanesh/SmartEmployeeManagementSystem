@@ -4,16 +4,14 @@ import com.example.EmployeeManagementSystem.DTO.EmployeeDTO;
 import com.example.EmployeeManagementSystem.DTO.VendorDTO;
 import com.example.EmployeeManagementSystem.DTO.VendorRequest;
 import com.example.EmployeeManagementSystem.Entity.Employee;
-import com.example.EmployeeManagementSystem.Service.DeliveryService;
-import com.example.EmployeeManagementSystem.Service.EmployeeService;
-import com.example.EmployeeManagementSystem.Service.LeaveRequestService;
-import com.example.EmployeeManagementSystem.Service.RestaurantService;
-import com.example.EmployeeManagementSystem.Service.SubscriptionService;
+import com.example.EmployeeManagementSystem.Service.*;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -26,18 +24,21 @@ public class AdminController {
     private final LeaveRequestService leaveRequestService;
     private final RestaurantService restaurantService;
     private final SubscriptionService subscriptionService;
+    private final LeaveAccrualService accrualService;
 
     public AdminController(
             EmployeeService employeeService,
             DeliveryService.VendorService vendorService,
             LeaveRequestService leaveRequestService,
             RestaurantService restaurantService,
-            SubscriptionService subscriptionService) {
+            SubscriptionService subscriptionService,
+            LeaveAccrualService accrualService) {
         this.employeeService = employeeService;
         this.vendorService = vendorService;
         this.leaveRequestService = leaveRequestService;
         this.restaurantService = restaurantService;
         this.subscriptionService = subscriptionService;
+        this.accrualService = accrualService;
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -148,5 +149,16 @@ public class AdminController {
     @GetMapping("/subscriptions")
     public ResponseEntity<?> getAllSubscriptions() {
         return ResponseEntity.ok(subscriptionService.getAllSubscriptions());
+    }
+
+    @PostMapping("/leave/accrue")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<String> triggerAccrual(
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
+    ) {
+        LocalDate accrualDate = (date != null) ? date : LocalDate.now();
+        accrualService.runMonthlyAccrual(accrualDate);
+        return ResponseEntity.ok("Accrual complete for " + accrualDate);
     }
 }

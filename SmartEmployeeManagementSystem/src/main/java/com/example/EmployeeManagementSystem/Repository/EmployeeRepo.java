@@ -2,6 +2,7 @@ package com.example.EmployeeManagementSystem.Repository;
 
 import com.example.EmployeeManagementSystem.Entity.Employee;
 import com.example.EmployeeManagementSystem.Enum.Role;
+import com.example.EmployeeManagementSystem.Enum.Status;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -15,6 +16,6 @@ public interface EmployeeRepo extends JpaRepository<Employee,Long> {
     long countByRole(Role role);
 
     List<Employee> findByManager(Employee manager);
-
+    List<Employee> findByStatus(Status status);
     List<Employee> findByRole(Role role);
 }
