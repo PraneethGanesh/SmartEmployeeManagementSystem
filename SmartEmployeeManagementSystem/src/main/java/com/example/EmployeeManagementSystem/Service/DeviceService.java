@@ -143,7 +143,7 @@ public class DeviceService {
         response.setDeviceStatus(device.getDeviceStatus());
 
         if (device.getTechVendor() != null) {
-            response.setVendor(device.getTechVendor());
+            response.setVendorName(device.getTechVendor().getName());
         }
 
         DeviceAssignment currentAssignment = device.getCurrentAssignment();
@@ -152,7 +152,7 @@ public class DeviceService {
 
             Employee assignedEmployee = currentAssignment.getAssignedTo();
             if (assignedEmployee != null) {
-                response.setAssignedEmployee(assignedEmployee);
+                response.setAssignedEmployeeId(assignedEmployee.getEmployeeId());
                 response.setAssignedEmployeeName(assignedEmployee.getName());
             }
         }

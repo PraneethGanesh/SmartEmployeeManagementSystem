@@ -1,11 +1,14 @@
 package com.example.EmployeeManagementSystem.DTO;
 
 
+import com.example.EmployeeManagementSystem.Enum.Gender;
+
 public class EmployeeDTO {
     private String name;
     private String email;
     private String dept;
     private String password;
+    private Gender gender;
     private String timezone;
 
     public String getTimezone() {
@@ -46,5 +49,13 @@ public class EmployeeDTO {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public Gender getGender() {
+        return gender;
+    }
+
+    public void setGender(Gender gender) {
+        this.gender = gender;
     }
 }
