@@ -18,7 +18,7 @@ public class DeviceAssignment {
 
     @ManyToOne
     @JoinColumn(name = "employee_id")
-    private Employee employee;
+    private Employee assignedTo;
 
     @Enumerated(EnumType.STRING)
     private AssignmentStatus status;
@@ -41,12 +41,12 @@ public class DeviceAssignment {
         this.device = device;
     }
 
-    public Employee getEmployee() {
-        return employee;
+    public Employee getAssignedTo() {
+        return assignedTo;
     }
 
-    public void setEmployee(Employee employee) {
-        this.employee = employee;
+    public void setAssignedTo(Employee assignedTo) {
+        this.assignedTo = assignedTo;
     }
 
     public LocalDate getAssignedDate() {

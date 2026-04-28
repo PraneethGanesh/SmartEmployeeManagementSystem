@@ -1,5 +1,7 @@
 package com.example.EmployeeManagementSystem.DTO;
 
+import com.example.EmployeeManagementSystem.Entity.Employee;
+import com.example.EmployeeManagementSystem.Entity.Vendor;
 import com.example.EmployeeManagementSystem.Enum.DeviceStatus;
 import com.example.EmployeeManagementSystem.Enum.DeviceType;
 
@@ -11,10 +13,12 @@ public class DeviceResponseDTO {
     private String brand;
     private DeviceType deviceType;
     private DeviceStatus deviceStatus;
-    private Long vendorId;
-    private Long assignedEmployeeId;
+    private Vendor vendor;
+    private Employee assignedEmployee;
     private String assignedEmployeeName;
     private LocalDate assignedDate;
+
+    private LocalDate warrantyExpiryDate;
 
     public Long getId() {
         return id;
@@ -56,20 +60,20 @@ public class DeviceResponseDTO {
         this.deviceStatus = deviceStatus;
     }
 
-    public Long getVendorId() {
-        return vendorId;
+    public Vendor getVendor() {
+        return vendor;
     }
 
-    public void setVendorId(Long vendorId) {
-        this.vendorId = vendorId;
+    public void setVendor(Vendor vendor) {
+        this.vendor = vendor;
     }
 
-    public Long getAssignedEmployeeId() {
-        return assignedEmployeeId;
+    public Employee getAssignedEmployee() {
+        return assignedEmployee;
     }
 
-    public void setAssignedEmployeeId(Long assignedEmployeeId) {
-        this.assignedEmployeeId = assignedEmployeeId;
+    public void setAssignedEmployee(Employee assignedEmployee) {
+        this.assignedEmployee = assignedEmployee;
     }
 
     public String getAssignedEmployeeName() {
@@ -86,5 +90,13 @@ public class DeviceResponseDTO {
 
     public void setAssignedDate(LocalDate assignedDate) {
         this.assignedDate = assignedDate;
+    }
+
+    public LocalDate getWarrantyExpiryDate() {
+        return warrantyExpiryDate;
+    }
+
+    public void setWarrantyExpiryDate(LocalDate warrantyExpiryDate) {
+        this.warrantyExpiryDate = warrantyExpiryDate;
     }
 }
