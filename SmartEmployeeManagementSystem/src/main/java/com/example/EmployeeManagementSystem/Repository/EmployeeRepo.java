@@ -4,6 +4,8 @@ import com.example.EmployeeManagementSystem.Entity.Employee;
 import com.example.EmployeeManagementSystem.Enum.Role;
 import com.example.EmployeeManagementSystem.Enum.Status;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -18,4 +20,6 @@ public interface EmployeeRepo extends JpaRepository<Employee,Long> {
     List<Employee> findByManager(Employee manager);
     List<Employee> findByStatus(Status status);
     List<Employee> findByRole(Role role);
+    @Query("SELECT e FROM Employee e WHERE e.manager.employeeId = :managerId")
+    List<Employee> findByManagerEmployeeId(@Param("managerId") Long managerId);
 }

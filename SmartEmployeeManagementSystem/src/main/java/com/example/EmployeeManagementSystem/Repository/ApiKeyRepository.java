@@ -16,12 +16,10 @@ public interface ApiKeyRepository extends JpaRepository<ApiKey, Long> {
 
     Optional<ApiKey> findByApiKeyAndActiveTrue(String apiKey);
 
-    // FIX: Change from findByEmployeeIdAndActiveTrue to findByEmployee_EmployeeIdAndActiveTrue
-    // Because Employee entity uses employeeId, not id
+
     List<ApiKey> findByEmployee_EmployeeIdAndActiveTrue(Long employeeId);
 
-    // FIX: Change from findByVendorIdAndActiveTrue to findByVendor_IdAndActiveTrue
-    // Because Vendor entity uses id as primary key
+
     List<ApiKey> findByVendor_IdAndActiveTrue(Long vendorId);
 
     @Modifying

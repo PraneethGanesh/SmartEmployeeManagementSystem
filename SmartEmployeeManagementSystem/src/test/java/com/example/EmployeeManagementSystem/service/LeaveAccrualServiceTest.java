@@ -57,7 +57,7 @@ class LeaveAccrualServiceTest {
 
         when(employeeRepo.findByStatus(Status.ACTIVE)).thenReturn(List.of(emp));
         when(leaveTypeRepo.findAll()).thenReturn(List.of(maternity));
-        when(entitlementRepo.findByEmployeeIdAndLeaveTypeIdAndYear(any(), any(), any()))
+        when(entitlementRepo.findByEmployeeEmployeeIdAndLeaveTypeIdAndYear(any(), any(), any()))
                 .thenReturn(Optional.empty());
 
         // Simulate new entitlement creation

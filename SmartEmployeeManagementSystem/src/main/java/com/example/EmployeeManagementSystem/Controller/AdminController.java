@@ -25,6 +25,7 @@ public class AdminController {
     private final RestaurantService restaurantService;
     private final SubscriptionService subscriptionService;
     private final LeaveAccrualService accrualService;
+    private final SickLeaveResetService resetService;
 
     public AdminController(
             EmployeeService employeeService,
@@ -32,13 +33,15 @@ public class AdminController {
             LeaveRequestService leaveRequestService,
             RestaurantService restaurantService,
             SubscriptionService subscriptionService,
-            LeaveAccrualService accrualService) {
+            LeaveAccrualService accrualService,
+            SickLeaveResetService resetService) {
         this.employeeService = employeeService;
         this.vendorService = vendorService;
         this.leaveRequestService = leaveRequestService;
         this.restaurantService = restaurantService;
         this.subscriptionService = subscriptionService;
         this.accrualService = accrualService;
+        this.resetService=resetService;
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -161,4 +164,15 @@ public class AdminController {
         accrualService.runMonthlyAccrual(accrualDate);
         return ResponseEntity.ok("Accrual complete for " + accrualDate);
     }
+    @PostMapping("/reset-sick")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<String> triggerSickReset(
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
+    ) {
+        LocalDate resetDate = (date != null) ? date : LocalDate.now();
+        resetService.runMonthlyReset(resetDate);
+        return ResponseEntity.ok("Sick leave reset complete for " + resetDate);
+    }
+
 }
