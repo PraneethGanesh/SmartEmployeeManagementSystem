@@ -3,7 +3,6 @@ package com.example.EmployeeManagementSystem.Entity;
 import com.example.EmployeeManagementSystem.Enum.ServiceRequestStatus;
 import com.example.EmployeeManagementSystem.Enum.ServiceRequestType;
 import jakarta.persistence.*;
-import org.springframework.data.annotation.Id;
 
 import java.time.LocalDateTime;
 
