@@ -52,8 +52,9 @@
         th { text-align: left; padding: 12px 16px; background: var(--bg3); color: var(--text3); font-size: 11px; font-weight: 600; text-transform: uppercase; }
         td { padding: 12px 16px; border-top: 1px solid var(--border); }
         .chip { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; display: inline-block; }
-        .chip.active, .chip.approved, .chip.delivered { background: var(--green-dim); color: var(--green); }
-        .chip.pending, .chip.scheduled { background: var(--amber-dim); color: var(--amber); }
+        .chip.active, .chip.approved, .chip.delivered, .chip.repair_done { background: var(--green-dim); color: var(--green); }
+        .chip.pending, .chip.scheduled, .chip.sent_for_repair { background: var(--amber-dim); color: var(--amber); }
+        .chip.open { background: var(--accent-dim); color: var(--accent); }
         .chip.inactive, .chip.rejected, .chip.cancelled, .chip.expired { background: var(--red-dim); color: var(--red); }
         .chip.on_leave { background: var(--violet-dim); color: var(--violet); }
         .chip.employee { background: var(--accent-dim); color: var(--accent); }
@@ -102,6 +103,10 @@
             <div class="nav-item" onclick="showView('subscriptions', event)">&#9632; Subscriptions</div>
             <div class="nav-item" onclick="showView('add-subscription', event)">&#9632; Add Subscription</div>
             <div class="nav-item" onclick="showView('vendors', event)">&#9632; Vendors</div>
+            <div class="nav-item" onclick="showView('devices', event)">&#9632; Devices</div>
+            <div class="nav-item" onclick="showView('my-devices', event)">&#9632; My Devices</div>
+            <div class="nav-item" onclick="showView('service-requests', event)">&#9632; Service Requests</div>
+            <div class="nav-item" onclick="showView('admin-service-requests', event)">&#9632; All Service Requests</div>
         </div>
     </div>
 
@@ -143,6 +148,13 @@
                         <div class="form-group"><label>Password</label><input type="password" id="employee-password" placeholder="Temporary password"></div>
                         <div class="form-group"><label>Department</label><input type="text" id="employee-dept" placeholder="Department"></div>
                         <div class="form-group full"><label>Timezone</label><input type="text" id="employee-timezone" placeholder="Asia/Kolkata"></div>
+                        <div class="form-group"><label>Gender</label>
+                            <select id="employee-gender">
+                                <option value="M">Male</option>
+                                <option value="F">Female</option>
+                                <option value="O">Other</option>
+                            </select>
+                        </div>
                     </div>
                     <div class="modal-actions" style="margin-top: 20px;"><button class="btn btn-primary" onclick="createEmployee()">Create Employee</button><button class="btn btn-secondary" onclick="clearEmployeeForm('employee')">Clear</button></div>
                 </div>
@@ -157,6 +169,13 @@
                         <div class="form-group"><label>Password</label><input type="password" id="manager-password-create" placeholder="Temporary password"></div>
                         <div class="form-group"><label>Department</label><input type="text" id="manager-dept-create" placeholder="Department"></div>
                         <div class="form-group full"><label>Timezone</label><input type="text" id="manager-timezone-create" placeholder="Asia/Kolkata"></div>
+                        <div class="form-group"><label>Gender</label>
+                            <select id="manager-gender">
+                                <option value="M">Male</option>
+                                <option value="F">Female</option>
+                                <option value="O">Other</option>
+                            </select>
+                        </div>
                     </div>
                     <div class="modal-actions" style="margin-top: 20px;"><button class="btn btn-primary" onclick="createManager()">Create Manager</button><button class="btn btn-secondary" onclick="clearEmployeeForm('manager')">Clear</button></div>
                 </div>
@@ -289,6 +308,153 @@
                 <div class="table-wrap"><table><thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Phone</th><th>Registered</th><th>Actions</th></tr></thead><tbody id="vendors-list"></tbody></table></div>
             </div>
 
+            <!-- DEVICES VIEW -->
+            <div id="devices-view" class="view">
+                <div class="section-head">
+                    <div class="section-title">Unassigned Devices</div>
+                    <button class="btn btn-primary btn-sm" onclick="loadUnassignedDevices()">Refresh</button>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Device Name</th>
+                            <th>Brand</th>
+                            <th>Type</th>
+                            <th>Warranty</th>
+                            <th>Vendor</th>
+                            <th>Actions</th>
+                        </tr>
+                        </thead>
+                        <tbody id="devices-list"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ASSIGN DEVICE MODAL -->
+            <div id="assign-modal" class="modal-overlay">
+                <div class="modal">
+                    <div class="modal-title">Assign Device to Employee</div>
+                    <input type="hidden" id="assign-device-id">
+                    <div class="form-group" style="margin-bottom:12px">
+                        <label>Device</label>
+                        <input type="text" id="assign-device-name" readonly style="color:var(--text2)">
+                    </div>
+                    <div class="form-group" style="margin-bottom:12px">
+                        <label>Employee</label>
+                        <select id="assign-employee-select">
+                            <option value="">-- Select Employee --</option>
+                        </select>
+                    </div>
+                    <div class="modal-actions">
+                        <button class="btn btn-primary" onclick="confirmAssign()">Assign</button>
+                        <button class="btn btn-secondary" onclick="closeAssignModal()">Cancel</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MY DEVICES VIEW -->
+            <div id="my-devices-view" class="view">
+                <div class="section-head">
+                    <div class="section-title">My Assigned Devices</div>
+                    <button class="btn btn-primary btn-sm" onclick="loadMyAssignedDevices()">Refresh</button>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Device Name</th>
+                            <th>Brand</th>
+                            <th>Type</th>
+                            <th>Warranty</th>
+                            <th>Assigned On</th>
+                            <th>Status</th>
+                        </tr>
+                        </thead>
+                        <tbody id="my-devices-list"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- MY SERVICE REQUESTS VIEW -->
+            <div id="service-requests-view" class="view">
+                <div class="section-head">
+                    <div class="section-title">My Service Requests</div>
+                    <button class="btn btn-primary btn-sm" onclick="loadServiceRequests()">Refresh</button>
+                </div>
+                <div class="table-wrap" style="margin-bottom:24px">
+                    <table>
+                        <thead><tr>
+                            <th>ID</th><th>Device</th><th>Type</th>
+                            <th>Description</th><th>Urgent</th><th>Status</th><th>Raised At</th>
+                        </tr></thead>
+                        <tbody id="service-requests-list"></tbody>
+                    </table>
+                </div>
+
+                <div class="section-title" style="margin-bottom:16px">Raise a New Request</div>
+                <div class="form-card">
+                    <div class="form-grid">
+                        <div class="form-group full">
+                            <label>Device</label>
+                            <select id="sr-device-select">
+                                <option value="">-- Select your device --</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Request Type</label>
+                            <select id="sr-type">
+                                <option value="REPAIR">Repair</option>
+                                <option value="REPLACEMENT">Replacement</option>
+                                <option value="UPGRADE">Upgrade</option>
+                                <option value="MAINTENANCE">Maintenance</option>
+                                <option value="RETURN">Return</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="display:flex;align-items:center;gap:10px;padding-top:20px">
+                            <input type="checkbox" id="sr-urgent" style="width:16px;height:16px;padding:0">
+                            <label style="text-transform:none;font-size:13px;font-weight:400;color:var(--text);cursor:pointer" for="sr-urgent">Mark as Urgent</label>
+                        </div>
+                        <div class="form-group full">
+                            <label>Issue Description</label>
+                            <textarea id="sr-description" rows="3" placeholder="Describe the issue in detail..."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-actions" style="margin-top:20px">
+                        <button class="btn btn-primary" onclick="submitServiceRequest()">Submit Request</button>
+                        <button class="btn btn-secondary" onclick="clearServiceRequestForm()">Clear</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============ ADMIN SERVICE REQUESTS VIEW ============ -->
+            <div id="admin-service-requests-view" class="view">
+                <div class="section-head">
+                    <div class="section-title">All Open Service Requests</div>
+                    <button class="btn btn-primary btn-sm" onclick="loadAdminServiceRequests()">Refresh</button>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Employee</th>
+                            <th>Device</th>
+                            <th>Type</th>
+                            <th>Description</th>
+                            <th>Urgent</th>
+                            <th>Status</th>
+                            <th>Raised At</th>
+                            <th>Actions</th>
+                        </tr>
+                        </thead>
+                        <tbody id="admin-service-requests-list"></tbody>
+                    </table>
+                </div>
+            </div>
+
         </div>
     </div>
 </div>
@@ -312,6 +478,43 @@
         <input type="hidden" id="cancel-leave-id">
         <div class="form-group"><label>Cancelled By</label><input type="email" id="cancel-email" placeholder="admin@company.com" readonly></div>
         <div class="modal-actions"><button class="btn btn-danger" onclick="confirmCancelLeave()">Cancel Leave</button><button class="btn btn-secondary" onclick="closeCancelModal()">Close</button></div>
+    </div>
+</div>
+
+<!-- Admin Service Request Action Modal -->
+<div id="admin-sr-modal" class="modal-overlay">
+    <div class="modal">
+        <div class="modal-title">Update Service Request <span id="admin-sr-modal-id" style="color:var(--accent)"></span></div>
+        <input type="hidden" id="admin-sr-id">
+
+        <div class="form-group" style="margin-bottom:14px">
+            <label>Device</label>
+            <input type="text" id="admin-sr-device-display" readonly style="color:var(--text2)">
+        </div>
+        <div class="form-group" style="margin-bottom:14px">
+            <label>Employee</label>
+            <input type="text" id="admin-sr-employee-display" readonly style="color:var(--text2)">
+        </div>
+        <div class="form-group" style="margin-bottom:14px">
+            <label>Update Status</label>
+            <select id="admin-sr-status">
+                <option value="SENT_FOR_REPAIR">Sent for Repair — device will be marked Under Repair</option>
+                <option value="REPAIR_DONE">Repair Done</option>
+                <option value="REJECTED">Rejected</option>
+            </select>
+        </div>
+        <div class="form-group" style="margin-bottom:4px">
+            <label>Admin Remarks</label>
+            <textarea id="admin-sr-remarks" rows="3" placeholder="Add remarks or instructions for the vendor..."></textarea>
+        </div>
+        <div id="admin-sr-repair-hint" style="font-size:11px;color:var(--amber);margin-top:6px;display:none;">
+            ⚠ Selecting "Sent for Repair" will automatically mark the device as <strong>Under Repair</strong>.
+        </div>
+
+        <div class="modal-actions">
+            <button class="btn btn-primary" onclick="submitAdminSRUpdate()">Update Request</button>
+            <button class="btn btn-secondary" onclick="closeAdminSRModal()">Cancel</button>
+        </div>
     </div>
 </div>
 
@@ -339,15 +542,8 @@
                 credentials: 'include'
             });
 
-            if (response.status === 401) {
-                window.location.href = '/login.html';
-                return;
-            }
-
-            if (!response.ok) {
-                window.location.href = '/login.html';
-                return;
-            }
+            if (response.status === 401) { window.location.href = '/login.html'; return; }
+            if (!response.ok) { window.location.href = '/login.html'; return; }
 
             const employee = await response.json();
             const role = employee.role || 'EMPLOYEE';
@@ -368,13 +564,9 @@
         }
     })();
 
-    // ============ FIX 3: AUTH HEADER — session users send no JWT, rely on cookie ============
-    // Previously getAuthHeader() always tried to send JWT. Session-logged-in users
-    // had no jwt_token, so every API call went out without auth and got 401.
     function getAuthHeader() {
         const token = localStorage.getItem('jwt_token');
         return token ? { 'Authorization': `Bearer ${token}` } : {};
-        // Session users rely on credentials:'include' (JSESSIONID cookie) — no header needed.
     }
 
     async function apiFetch(path, opts = {}) {
@@ -404,15 +596,9 @@
 
             const text = await response.text();
             if (!text) return null;
-            try {
-                return JSON.parse(text);  // ← try JSON first
-            } catch {
-                return text;              // ← fall back to plain text
-            }
+            try { return JSON.parse(text); } catch { return text; }
         } catch (e) {
-            if (!e.message.includes('Unauthorized')) {
-                showAlert(e.message, 'error');
-            }
+            if (!e.message.includes('Unauthorized')) showAlert(e.message, 'error');
             throw e;
         }
     }
@@ -444,7 +630,11 @@
             'subscriptions': loadSubscriptions,
             'add-subscription': loadRestaurantDropdown,
             'deliveries': loadDeliveries,
-            'vendors': loadVendors
+            'vendors': loadVendors,
+            'devices': loadUnassignedDevices,
+            'my-devices': loadMyAssignedDevices,
+            'service-requests': loadServiceRequests,
+            'admin-service-requests': loadAdminServiceRequests
         };
         if (loaders[viewName]) loaders[viewName]();
     }
@@ -504,6 +694,7 @@
             email: document.getElementById('employee-email').value.trim(),
             password: document.getElementById('employee-password').value,
             dept: document.getElementById('employee-dept').value.trim(),
+            gender: document.getElementById('employee-gender').value,
             timezone: document.getElementById('employee-timezone').value.trim() || 'UTC'
         };
         if (!body.name || !body.email || !body.password || !body.dept) {
@@ -515,9 +706,7 @@
             showAlert('Employee created successfully!', 'success');
             clearEmployeeForm('employee');
             loadEmployees();
-        } catch (e) {
-            showAlert('Failed to create employee: ' + e.message, 'error');
-        }
+        } catch (e) { showAlert('Failed to create employee: ' + e.message, 'error'); }
     }
 
     async function createManager() {
@@ -526,9 +715,10 @@
             email: document.getElementById('manager-email-create').value.trim(),
             password: document.getElementById('manager-password-create').value,
             dept: document.getElementById('manager-dept-create').value.trim(),
+            gender: document.getElementById('manager-gender').value,
             timezone: document.getElementById('manager-timezone-create').value.trim() || 'UTC'
         };
-        if (!body.name || !body.email || !body.password || !body.dept) {
+        if (!body.name || !body.email || !body.password || !body.dept || !body.gender) {
             showAlert('Please fill all manager fields', 'error');
             return;
         }
@@ -537,9 +727,7 @@
             showAlert('Manager created successfully!', 'success');
             clearEmployeeForm('manager');
             loadEmployees();
-        } catch (e) {
-            showAlert('Failed to create manager: ' + e.message, 'error');
-        }
+        } catch (e) { showAlert('Failed to create manager: ' + e.message, 'error'); }
     }
 
     function clearEmployeeForm(type) {
@@ -556,9 +744,7 @@
             showAlert('Employee deleted successfully!', 'success');
             loadEmployees();
             loadDashboard();
-        } catch (e) {
-            showAlert('Failed to delete employee: ' + e.message, 'error');
-        }
+        } catch (e) { showAlert('Failed to delete employee: ' + e.message, 'error'); }
     }
 
     // ============ LEAVE REQUESTS ============
@@ -567,10 +753,7 @@
         const startDate = document.getElementById('leave-start').value;
         const endDate = document.getElementById('leave-end').value;
         const reason = document.getElementById('leave-reason').value.trim();
-        if (!startDate || !endDate) {
-            showAlert('Please fill all required fields', 'error');
-            return;
-        }
+        if (!startDate || !endDate) { showAlert('Please fill all required fields', 'error'); return; }
         try {
             await apiFetch('/leave_requests', {
                 method: 'POST',
@@ -583,25 +766,25 @@
     }
 
     async function loadMyLeaves() {
-    try {
-        const data = await apiFetch('/leave_requests/employee');
-        const leaves = data.requests || []; // ← extract the array from wrapper
-        const tbody = document.getElementById('my-leaves-list');
-        if (!leaves.length) {
-            tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No leave requests found</td></tr>';
-        } else {
-            tbody.innerHTML = leaves.map(l => `<tr>
-                <td>${l.leaveRequestId}</td>
-                <td><span class="chip">${l.leaveType}</span></td>
-                <td>${l.startDate}</td>
-                <td>${l.endDate}</td>
-                <td><span class="chip ${l.status?.toLowerCase()}">${l.status}</span></td>
-                <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;">${l.reason || '-'}</td>
-                <td>${l.status === 'PENDING' ? `<button class="btn btn-danger btn-sm" onclick="openCancelModal(${l.leaveRequestId})">Cancel</button>` : '-'}</td>
-            </tr>`).join('');
-        }
-    } catch (e) { console.error(e); }
-}
+        try {
+            const data = await apiFetch('/leave_requests/employee');
+            const leaves = data.requests || [];
+            const tbody = document.getElementById('my-leaves-list');
+            if (!leaves.length) {
+                tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No leave requests found</td></tr>';
+            } else {
+                tbody.innerHTML = leaves.map(l => `<tr>
+                    <td>${l.leaveRequestId}</td>
+                    <td><span class="chip">${l.leaveType}</span></td>
+                    <td>${l.startDate}</td>
+                    <td>${l.endDate}</td>
+                    <td><span class="chip ${l.status?.toLowerCase()}">${l.status}</span></td>
+                    <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;">${l.reason || '-'}</td>
+                    <td>${l.status === 'PENDING' ? `<button class="btn btn-danger btn-sm" onclick="openCancelModal(${l.leaveRequestId})">Cancel</button>` : '-'}</td>
+                </tr>`).join('');
+            }
+        } catch (e) { console.error(e); }
+    }
 
     async function loadPendingLeaves() {
         try {
@@ -693,8 +876,6 @@
     }
 
     // ============ SUBSCRIPTIONS ============
-
-    // Populate restaurant dropdown — called when Add Subscription view loads
     async function loadRestaurantDropdown() {
         try {
             const restaurants = await apiFetch('/restaurants');
@@ -705,14 +886,12 @@
                 const opt = document.createElement('option');
                 opt.value = r.id || r.restaurantId;
                 opt.textContent = r.name;
-                // Store supported slots as data attribute for filtering
                 opt.dataset.slots = JSON.stringify(r.supportedMealSlots || []);
                 select.appendChild(opt);
             });
         } catch (e) { console.error('Failed to load restaurants:', e); }
     }
 
-    // When restaurant changes, only show meal slot checkboxes it supports
     document.getElementById('sub-restaurant-select')?.addEventListener('change', function () {
         const selected = this.options[this.selectedIndex];
         const supported = selected?.dataset?.slots ? JSON.parse(selected.dataset.slots) : [];
@@ -720,13 +899,9 @@
         boxes.forEach(cb => {
             const wrapper = cb.parentElement;
             if (!supported.length || supported.includes(cb.value)) {
-                wrapper.style.display = 'flex';
-                wrapper.style.opacity = '1';
-                cb.disabled = false;
+                wrapper.style.display = 'flex'; wrapper.style.opacity = '1'; cb.disabled = false;
             } else {
-                cb.checked = false;
-                cb.disabled = true;
-                wrapper.style.opacity = '0.3';
+                cb.checked = false; cb.disabled = true; wrapper.style.opacity = '0.3';
             }
         });
     });
@@ -759,25 +934,16 @@
         const restaurantId = parseInt(document.getElementById('sub-restaurant-select').value);
         const scheduleType = document.getElementById('sub-schedule').value;
         const dayOfWeek = document.getElementById('sub-day').value;
-
-        const selectedSlots = [...document.querySelectorAll('#meal-slot-checkboxes input[type=checkbox]:checked')]
-            .map(cb => cb.value);
-
+        const selectedSlots = [...document.querySelectorAll('#meal-slot-checkboxes input[type=checkbox]:checked')].map(cb => cb.value);
         if (!email) { showAlert('Please enter employee email', 'error'); return; }
         if (!restaurantId) { showAlert('Please select a restaurant', 'error'); return; }
         if (!selectedSlots.length) { showAlert('Please select at least one meal slot', 'error'); return; }
-
         const body = {
             scheduleType,
-            mealSlots: selectedSlots,                          // ["BREAKFAST", "LUNCH"]
-            slotOrders: selectedSlots.map(slot => ({           // [{ mealSlot: "BREAKFAST", restaurantId: 1 }, ...]
-                mealSlot: slot,
-                restaurantId: restaurantId
-            }))
+            mealSlots: selectedSlots,
+            slotOrders: selectedSlots.map(slot => ({ mealSlot: slot, restaurantId }))
         };
-
         if (scheduleType === 'WEEKLY') body.dayOfWeek = dayOfWeek;
-
         try {
             await apiFetch('/subscription', { method: 'POST', body: JSON.stringify(body) });
             showAlert('Subscription created successfully!', 'success');
@@ -806,12 +972,9 @@
         document.getElementById('sub-restaurant-select').value = '';
         document.getElementById('sub-schedule').value = 'DAILY';
         document.getElementById('day-of-week-group').style.display = 'none';
-        // Uncheck all and re-enable all slots
         document.querySelectorAll('#meal-slot-checkboxes input[type=checkbox]').forEach(cb => {
-            cb.checked = false;
-            cb.disabled = false;
-            cb.parentElement.style.opacity = '1';
-            cb.parentElement.style.display = 'flex';
+            cb.checked = false; cb.disabled = false;
+            cb.parentElement.style.opacity = '1'; cb.parentElement.style.display = 'flex';
         });
     }
 
@@ -874,17 +1037,14 @@
             role: document.getElementById('vendor-role').value
         };
         if (!body.name || !body.email || !body.password || !body.phone) {
-            showAlert('Please fill all vendor fields', 'error');
-            return;
+            showAlert('Please fill all vendor fields', 'error'); return;
         }
         try {
             await apiFetch('/vendors/register', { method: 'POST', body: JSON.stringify(body) });
             showAlert('Vendor created successfully!', 'success');
             clearVendorForm();
             loadVendors();
-        } catch (e) {
-            showAlert('Failed to create vendor: ' + e.message, 'error');
-        }
+        } catch (e) { showAlert('Failed to create vendor: ' + e.message, 'error'); }
     }
 
     function clearVendorForm() {
@@ -898,9 +1058,7 @@
             await apiFetch(`/vendors/${vendorId}`, { method: 'DELETE' });
             showAlert('Vendor deleted successfully!', 'success');
             loadVendors();
-        } catch (e) {
-            showAlert('Failed to delete vendor: ' + e.message, 'error');
-        }
+        } catch (e) { showAlert('Failed to delete vendor: ' + e.message, 'error'); }
     }
 
     // ============ MODAL HELPERS ============
@@ -915,30 +1073,259 @@
         document.getElementById('cancel-email').value = currentUser?.email || '';
     }
 
-    // ============ FIX 5: LOGOUT — also invalidates server-side session for session users ============
-    // Previously logout() only cleared localStorage, leaving the JSESSIONID cookie active.
-    function logout(){
-        // Clear all localStorage
+    // ============ DEVICES ============
+    async function loadUnassignedDevices() {
+        try {
+            const devices = await apiFetch('/devices/unassigned');
+            const tbody = document.getElementById('devices-list');
+            if (!devices || !devices.length) {
+                tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No unassigned devices</td></tr>';
+                return;
+            }
+            const today = new Date();
+            tbody.innerHTML = devices.map(d => {
+                const warrantyExpiry = d.warrantyExpiryDate ? new Date(d.warrantyExpiryDate) : null;
+                const warrantyDisplay = warrantyExpiry
+                    ? (warrantyExpiry > today
+                        ? `<span style="color:var(--green);font-size:11px">✓ ${d.warrantyExpiryDate}</span>`
+                        : `<span style="color:var(--red);font-size:11px">✗ ${d.warrantyExpiryDate}</span>`)
+                    : '<span style="color:var(--text3);font-size:11px">—</span>';
+                return `<tr>
+                    <td>#${d.id}</td>
+                    <td><strong>${d.deviceName || '—'}</strong></td>
+                    <td>${d.brand || '—'}</td>
+                    <td><span class="chip">${d.deviceType || '—'}</span></td>
+                    <td>${warrantyDisplay}</td>
+                    <td>${d.vendorName || '—'}</td>
+                    <td><button class="btn btn-primary btn-sm" onclick="openAssignModal(${d.id}, '${d.deviceName}')">Assign</button></td>
+                </tr>`;
+            }).join('');
+        } catch (e) { console.error(e); }
+    }
+
+    async function openAssignModal(deviceId, deviceName) {
+        document.getElementById('assign-device-id').value = deviceId;
+        document.getElementById('assign-device-name').value = deviceName;
+        try {
+            const employees = await apiFetch('/employee');
+            const select = document.getElementById('assign-employee-select');
+            select.innerHTML = '<option value="">-- Select Employee --</option>';
+            employees.filter(e => e.status === 'ACTIVE').forEach(e => {
+                const opt = document.createElement('option');
+                opt.value = e.employeeId;
+                opt.textContent = `${e.name} (${e.email}) — ${e.dept || 'N/A'}`;
+                select.appendChild(opt);
+            });
+        } catch (e) { showAlert('Failed to load employees', 'error'); return; }
+        document.getElementById('assign-modal').classList.add('open');
+    }
+
+    async function confirmAssign() {
+        const deviceId = document.getElementById('assign-device-id').value;
+        const employeeId = document.getElementById('assign-employee-select').value;
+        if (!employeeId) { showAlert('Please select an employee', 'error'); return; }
+        try {
+            const message = await apiFetch(`/devices/${deviceId}/assign`, {
+                method: 'POST',
+                body: JSON.stringify({ employeeId: parseInt(employeeId) })
+            });
+            showAlert(message || 'Device assigned successfully!', 'success');
+            closeAssignModal();
+            loadUnassignedDevices();
+        } catch (e) { showAlert('Failed: ' + e.message, 'error'); }
+    }
+
+    function closeAssignModal() {
+        document.getElementById('assign-modal').classList.remove('open');
+        document.getElementById('assign-employee-select').value = '';
+        document.getElementById('assign-device-id').value = '';
+        document.getElementById('assign-device-name').value = '';
+    }
+
+    // ============ MY DEVICES ============
+    async function loadMyAssignedDevices() {
+        try {
+            const devices = await apiFetch('/devices/my');
+            const tbody = document.getElementById('my-devices-list');
+            if (!devices || !devices.length) {
+                tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No devices assigned to you</td></tr>';
+                return;
+            }
+            const today = new Date();
+            tbody.innerHTML = devices.map(d => {
+                const warrantyExpiry = d.warrantyExpiryDate ? new Date(d.warrantyExpiryDate) : null;
+                const warrantyDisplay = warrantyExpiry
+                    ? (warrantyExpiry > today
+                        ? `<span style="color:var(--green);font-size:11px">✓ ${d.warrantyExpiryDate}</span>`
+                        : `<span style="color:var(--red);font-size:11px">✗ Expired ${d.warrantyExpiryDate}</span>`)
+                    : '<span style="color:var(--text3);font-size:11px">—</span>';
+                return `<tr>
+                    <td>#${d.id}</td>
+                    <td><strong>${d.deviceName || '—'}</strong></td>
+                    <td>${d.brand || '—'}</td>
+                    <td><span class="chip">${(d.deviceType || '').toLowerCase()}</span></td>
+                    <td>${warrantyDisplay}</td>
+                    <td style="font-size:12px;color:var(--text2)">${d.assignedDate || '—'}</td>
+                    <td><span class="chip active">ASSIGNED</span></td>
+                </tr>`;
+            }).join('');
+        } catch (e) { console.error(e); }
+    }
+
+    // ============ MY SERVICE REQUESTS ============
+    async function loadServiceRequests() {
+        await Promise.all([loadServiceRequestsList(), loadMyDevicesForSR()]);
+    }
+
+    async function loadServiceRequestsList() {
+        try {
+            const requests = await apiFetch('/service-requests/my');
+            const tbody = document.getElementById('service-requests-list');
+            if (!requests || !requests.length) {
+                tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No service requests yet</td></tr>';
+                return;
+            }
+            tbody.innerHTML = requests.map(r => `<tr>
+                <td>#${r.id}</td>
+                <td>${r.deviceName || '—'}</td>
+                <td><span class="chip">${r.requestType}</span></td>
+                <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.issueDescription || '-'}</td>
+                <td>${r.urgent ? '<span class="chip pending">YES</span>' : '<span style="color:var(--text2)">No</span>'}</td>
+                <td><span class="chip ${r.status?.toLowerCase()}">${r.status}</span></td>
+                <td style="font-size:12px;color:var(--text2)">${r.raisedAt ? new Date(r.raisedAt).toLocaleDateString() : '—'}</td>
+            </tr>`).join('');
+        } catch (e) { console.error(e); }
+    }
+
+    async function loadMyDevicesForSR() {
+        try {
+            const devices = await apiFetch('/devices/my');
+            const select = document.getElementById('sr-device-select');
+            select.innerHTML = '<option value="">-- Select your device --</option>';
+            (devices || []).forEach(d => {
+                const opt = document.createElement('option');
+                opt.value = d.id;
+                opt.textContent = `${d.deviceName} (${d.brand || d.deviceType || 'Device'})`;
+                select.appendChild(opt);
+            });
+        } catch (e) { console.error('Failed to load devices for SR', e); }
+    }
+
+    async function submitServiceRequest() {
+        const deviceId = parseInt(document.getElementById('sr-device-select').value);
+        const requestType = document.getElementById('sr-type').value;
+        const issueDescription = document.getElementById('sr-description').value.trim();
+        const urgent = document.getElementById('sr-urgent').checked;
+        if (!deviceId) { showAlert('Please select a device', 'error'); return; }
+        if (!issueDescription) { showAlert('Please describe the issue', 'error'); return; }
+        try {
+            await apiFetch('/service-requests', {
+                method: 'POST',
+                body: JSON.stringify({ deviceId, requestType, issueDescription, urgent })
+            });
+            showAlert('Service request submitted!', 'success');
+            clearServiceRequestForm();
+            loadServiceRequestsList();
+        } catch (e) { showAlert('Failed: ' + e.message, 'error'); }
+    }
+
+    function clearServiceRequestForm() {
+        document.getElementById('sr-device-select').value = '';
+        document.getElementById('sr-type').value = 'REPAIR';
+        document.getElementById('sr-description').value = '';
+        document.getElementById('sr-urgent').checked = false;
+    }
+
+    // ============ ADMIN SERVICE REQUESTS ============
+    async function loadAdminServiceRequests() {
+        try {
+            const requests = await apiFetch('/service-requests/open');
+            const tbody = document.getElementById('admin-service-requests-list');
+            if (!requests || !requests.length) {
+                tbody.innerHTML = '<tr><td colspan="9" class="empty-state">No open service requests</td></tr>';
+                return;
+            }
+            tbody.innerHTML = requests.map(r => `<tr>
+                <td>#${r.id}</td>
+                <td style="font-size:12px;color:var(--text2)">${r.raisedByName || r.employeeId || '—'}</td>
+                <td><strong>${r.deviceName || '—'}</strong></td>
+                <td><span class="chip">${r.requestType}</span></td>
+                <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:var(--text2)" title="${r.issueDescription || ''}">${r.issueDescription || '-'}</td>
+                <td>${r.urgent ? '<span class="chip pending">YES</span>' : '<span style="color:var(--text2);font-size:12px">No</span>'}</td>
+                <td><span class="chip ${r.status?.toLowerCase()}">${r.status}</span></td>
+                <td style="font-size:12px;color:var(--text2)">${r.raisedAt ? new Date(r.raisedAt).toLocaleDateString() : '—'}</td>
+                <td>
+                    <button class="btn btn-primary btn-sm" onclick="openAdminSRModal(${r.id}, '${(r.deviceName || '').replace(/'/g, "\\'")}', '${(r.raisedByName || r.employeeId || '').replace(/'/g, "\\'")}')">
+                        Update
+                    </button>
+                </td>
+            </tr>`).join('');
+        } catch (e) { console.error(e); }
+    }
+
+    function openAdminSRModal(requestId, deviceName, employeeName) {
+        document.getElementById('admin-sr-id').value = requestId;
+        document.getElementById('admin-sr-modal-id').textContent = `#${requestId}`;
+        document.getElementById('admin-sr-device-display').value = deviceName;
+        document.getElementById('admin-sr-employee-display').value = employeeName;
+        document.getElementById('admin-sr-status').value = 'SENT_FOR_REPAIR';
+        document.getElementById('admin-sr-remarks').value = '';
+        // Show hint for default selection
+        document.getElementById('admin-sr-repair-hint').style.display = 'block';
+        document.getElementById('admin-sr-modal').classList.add('open');
+    }
+
+    // Show/hide the repair hint based on status selection
+    document.getElementById('admin-sr-status')?.addEventListener('change', function () {
+        document.getElementById('admin-sr-repair-hint').style.display =
+            this.value === 'SENT_FOR_REPAIR' ? 'block' : 'none';
+    });
+
+    async function submitAdminSRUpdate() {
+        const serviceRequestId = parseInt(document.getElementById('admin-sr-id').value);
+        const status = document.getElementById('admin-sr-status').value;
+        const adminRemarks = document.getElementById('admin-sr-remarks').value.trim();
+
+        if (!adminRemarks) {
+            showAlert('Please add remarks before updating', 'error');
+            return;
+        }
+
+        try {
+            await apiFetch('/service-requests/admin', {
+                method: 'PUT',
+                body: JSON.stringify({ serviceRequestId, status, adminRemarks })
+            });
+            const statusLabel = status.replace(/_/g, ' ').toLowerCase();
+            showAlert(`Service request marked as "${statusLabel}" successfully!`, 'success');
+            closeAdminSRModal();
+            loadAdminServiceRequests();
+        } catch (e) { showAlert('Failed: ' + e.message, 'error'); }
+    }
+
+    function closeAdminSRModal() {
+        document.getElementById('admin-sr-modal').classList.remove('open');
+        document.getElementById('admin-sr-id').value = '';
+        document.getElementById('admin-sr-remarks').value = '';
+        document.getElementById('admin-sr-repair-hint').style.display = 'none';
+    }
+
+    // ============ LOGOUT ============
+    function logout() {
         localStorage.removeItem('jwt_token');
         localStorage.removeItem('refresh_token');
         localStorage.removeItem('auth_type');
         localStorage.removeItem('last_role');
-
-        // Call server logout to invalidate session
-        fetch(`${API}/session/logout`, {
-            method: 'POST',
-            credentials: 'include'
-        }).finally(() => {
-            // Force expire the session cookie on client side
-            document.cookie = 'JSESSIONID=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-            window.location.href = '/google.html';
-        });
+        fetch(`${API}/session/logout`, { method: 'POST', credentials: 'include' })
+            .finally(() => {
+                document.cookie = 'JSESSIONID=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+                window.location.href = '/google.html';
+            });
     }
 
     // Set today's date as default for leave form
     document.getElementById('leave-start').valueAsDate = new Date();
     document.getElementById('leave-end').valueAsDate = new Date();
-
 </script>
 </body>
 </html>

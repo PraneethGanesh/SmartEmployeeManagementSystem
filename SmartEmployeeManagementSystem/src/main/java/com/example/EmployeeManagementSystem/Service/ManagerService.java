@@ -39,6 +39,7 @@ public class ManagerService {
         employee.setName(employeeDetails.getName());
         employee.setEmail(employeeDetails.getEmail());
         employee.setPassword(passwordEncoder.encode(employeeDetails.getPassword()));
+        employee.setGender(employeeDetails.getGender());
         employee.setDept(manager.getDept());
         employee.setRole(Role.EMPLOYEE);
         employee.setManager(manager);

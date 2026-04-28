@@ -64,6 +64,7 @@ public class EmployeeService {
             throw new RuntimeException("Password is required");
         }
         employee.setPassword(passwordEncoder.encode(employeeDTO.getPassword()));
+        employee.setGender(employeeDTO.getGender());
         return employeeRepo.save(employee);
     }
 
@@ -83,6 +84,7 @@ public class EmployeeService {
             throw new RuntimeException("Password is required");
         }
         employee.setPassword(passwordEncoder.encode(employeeDTO.getPassword()));
+        employee.setGender(employeeDTO.getGender());
         return employeeRepo.save(employee);
     }
 

@@ -1,0 +1,14 @@
+# Maven build
+target/
+
+# Compiled files
+*.class
+
+# Logs
+*.log
+
+# IntelliJ
+*.iml
+
+# Node
+node_modules/

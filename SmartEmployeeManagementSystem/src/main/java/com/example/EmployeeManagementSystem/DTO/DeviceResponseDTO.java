@@ -13,8 +13,8 @@ public class DeviceResponseDTO {
     private String brand;
     private DeviceType deviceType;
     private DeviceStatus deviceStatus;
-    private Vendor vendor;
-    private Employee assignedEmployee;
+    private String vendorName;
+    private long assignedEmployeeId;
     private String assignedEmployeeName;
     private LocalDate assignedDate;
 
@@ -60,20 +60,20 @@ public class DeviceResponseDTO {
         this.deviceStatus = deviceStatus;
     }
 
-    public Vendor getVendor() {
-        return vendor;
+    public String getVendorName() {
+        return vendorName;
     }
 
-    public void setVendor(Vendor vendor) {
-        this.vendor = vendor;
+    public void setVendorName(String vendorName) {
+        this.vendorName = vendorName;
     }
 
-    public Employee getAssignedEmployee() {
-        return assignedEmployee;
+    public long getAssignedEmployeeId() {
+        return assignedEmployeeId;
     }
 
-    public void setAssignedEmployee(Employee assignedEmployee) {
-        this.assignedEmployee = assignedEmployee;
+    public void setAssignedEmployeeId(long assignedEmployeeId) {
+        this.assignedEmployeeId = assignedEmployeeId;
     }
 
     public String getAssignedEmployeeName() {
