@@ -1,5 +1,6 @@
 package com.example.EmployeeManagementSystem.Entity;
 
+import com.example.EmployeeManagementSystem.Enum.Gender;
 import com.example.EmployeeManagementSystem.Enum.Role;
 import com.example.EmployeeManagementSystem.Enum.Status;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -47,6 +48,9 @@ public class Employee implements UserDetails {
     /** IANA timezone id, e.g. "Asia/Kolkata", "America/New_York". Defaults to UTC. */
     @Column(nullable = false)
     private String timezone = "UTC";
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Gender gender;
 
     public String getTimezone() {
         return timezone;
@@ -111,6 +115,9 @@ public class Employee implements UserDetails {
     public void setJoined_at(LocalDate joined_at) {
         this.joined_at = joined_at;
     }
+
+    public Gender getGender() { return gender; }
+    public void setGender(Gender gender) { this.gender = gender; }
 
     @PrePersist
     public void initialSetup() {
