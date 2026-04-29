@@ -51,7 +51,7 @@ public class ServiceRequestController {
 
     @PutMapping("/admin")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ServiceRequest> updateServiceRequestByAdmin(
+    public ResponseEntity<ServiceRequestResponseDTO> updateServiceRequestByAdmin(
             Authentication authentication,
             @RequestBody AdminActionDTO actionDTO) {
         return ResponseEntity.ok(serviceRequestService.updateServiceRequestByAdmin(authentication, actionDTO));
@@ -59,13 +59,13 @@ public class ServiceRequestController {
 
     @GetMapping("/vendor/me")
     @PreAuthorize("hasRole('TECH_VENDOR')")
-    public ResponseEntity<List<ServiceRequest>> getAllServiceRequestByVendor(Authentication authentication) {
+    public ResponseEntity<List<ServiceRequestResponseDTO>> getAllServiceRequestByVendor(Authentication authentication) {
         return ResponseEntity.ok(serviceRequestService.getAllServiceRequestByVendor(authentication));
     }
 
     @PutMapping("/vendor")
     @PreAuthorize("hasRole('TECH_VENDOR')")
-    public ResponseEntity<ServiceRequest> updateServiceRequestByVendor(
+    public ResponseEntity<ServiceRequestResponseDTO> updateServiceRequestByVendor(
             Authentication authentication,
             @RequestBody RepairDTO repairDTO) {
         return ResponseEntity.ok(serviceRequestService.updateServiceRequestByVendor(authentication, repairDTO));

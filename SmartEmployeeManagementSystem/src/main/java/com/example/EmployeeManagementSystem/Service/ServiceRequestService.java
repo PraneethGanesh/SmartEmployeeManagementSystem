@@ -19,6 +19,7 @@ import com.example.EmployeeManagementSystem.Repository.VendorRepo;
 import com.example.EmployeeManagementSystem.Util.AuthUtil;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.w3c.dom.stylesheets.LinkStyle;
 
 import java.time.LocalDateTime;
@@ -122,7 +123,9 @@ public class ServiceRequestService {
         return responseDTO;
     }
 
-    public ServiceRequest updateServiceRequestByAdmin(Authentication authentication, AdminActionDTO actionDTO){
+
+    @Transactional
+    public ServiceRequestResponseDTO updateServiceRequestByAdmin(Authentication authentication, AdminActionDTO actionDTO){
         ServiceRequest serviceRequest=serviceRequestRepository.findById(actionDTO.getServiceRequestId()).orElseThrow(
                 ()->new RuntimeException("Service Request Not Found")
         );
@@ -131,26 +134,32 @@ public class ServiceRequestService {
                 ()->new EmployeeNotFound("Admin not found:"+email)
         );
         Device device=serviceRequest.getDevice();
-        if(actionDTO.getStatus()==ServiceRequestStatus.SENT_FOR_REPAIR){
+        if (actionDTO.getStatus() == ServiceRequestStatus.SENT_FOR_REPAIR) {
             device.setDeviceStatus(DeviceStatus.UNDER_REPAIR);
             deviceRepository.save(device);
+        } else if (actionDTO.getStatus() == ServiceRequestStatus.REJECTED) {
+            device.setDeviceStatus(DeviceStatus.ASSIGNED);
         }
         serviceRequest.setReviewedBy(admin);
         serviceRequest.setAdminRemarks(actionDTO.getAdminRemarks());
         serviceRequest.setStatus(actionDTO.getStatus());
-        return serviceRequestRepository.save(serviceRequest);
+        ServiceRequest saved=serviceRequestRepository.save(serviceRequest);
+        return toServiceRequestResponseDTO(saved);
     }
 
-    public List<ServiceRequest> getAllServiceRequestByVendor(Authentication authentication){
+    public List<ServiceRequestResponseDTO> getAllServiceRequestByVendor(Authentication authentication){
         String email=AuthUtil.extractEmail(authentication);
         Vendor vendor=vendorRepo.findByEmail(email).orElseThrow(
                 ()->new VendorNotFoundException("Vendor not found: "+email)
         );
 
-        return serviceRequestRepository.findByDeviceTechVendorAndStatus(vendor,ServiceRequestStatus.SENT_FOR_REPAIR);
+        List<ServiceRequest> serviceRequestList=serviceRequestRepository.findByDeviceTechVendorAndStatus(vendor,ServiceRequestStatus.SENT_FOR_REPAIR);
+        return serviceRequestList.stream()
+                .map(serviceRequest -> toServiceRequestResponseDTO(serviceRequest))
+                .toList();
     }
 
-    public ServiceRequest updateServiceRequestByVendor(
+    public ServiceRequestResponseDTO updateServiceRequestByVendor(
             Authentication authentication, RepairDTO repairDTO
             ) {
 
@@ -191,7 +200,8 @@ public class ServiceRequestService {
         request.setResolvedAt(LocalDateTime.now());
 
         deviceRepository.save(device);
-        return serviceRequestRepository.save(request);
+        ServiceRequest serviceRequest=serviceRequestRepository.save(request);
+        return toServiceRequestResponseDTO(serviceRequest);
     }
 }
 
