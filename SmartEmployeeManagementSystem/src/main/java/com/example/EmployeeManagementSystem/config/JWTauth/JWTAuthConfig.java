@@ -137,7 +137,8 @@ public class JWTAuthConfig {
                                 "/employee-dashboard.html",
                                 "/manager-dashboard.html",
                                 "/dashboard.html",
-                                "/pending.html").permitAll()
+                                "/pending.html",
+                                "/leave_management.html").permitAll()
 
                         // Vendor pages
                         .requestMatchers("/vendor-login.html").permitAll()
