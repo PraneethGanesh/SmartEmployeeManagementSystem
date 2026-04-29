@@ -60,6 +60,12 @@ public class ManagerController {
         return ResponseEntity.ok(manangerService.getAllThePendingLeaveRequests(authentication));
     }
 
+    @GetMapping("/employees/search")
+    @PreAuthorize("hasAnyRole('MANAGER')")
+    public ResponseEntity<ManagerEmployeeDetailsDTO> getEmployeeDetails( @RequestParam String name){
+        return ResponseEntity.ok(manangerService.getEmployeeDetailsByName(name));
+    }
+
 
 
 }
