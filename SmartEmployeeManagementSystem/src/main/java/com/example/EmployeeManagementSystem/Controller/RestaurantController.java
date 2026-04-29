@@ -47,7 +47,7 @@ public class RestaurantController {
      * Request body must include vendorId — the service validates the vendor exists.
      */
     @PostMapping
-    @PreAuthorize("hasRole('VENDOR')")
+    @PreAuthorize("hasRole('FOOD_VENDOR')")
     public ResponseEntity<RestaurantDTO> createRestaurant(@RequestBody RestaurantRequest request,Authentication authentication) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(restaurantService.createRestaurant(request,authentication));
@@ -58,7 +58,7 @@ public class RestaurantController {
      * vendorId in the request body is used to verify ownership before any change is made.
      */
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('VENDOR')")
+    @PreAuthorize("hasRole('FOOD_VENDOR')")
     public ResponseEntity<RestaurantDTO> updateRestaurant(@PathVariable Long id,
                                                           @RequestBody RestaurantRequest request,
                                                           Authentication authentication) {
@@ -71,7 +71,7 @@ public class RestaurantController {
      * Pass vendorId as a query param so ownership can be verified.
      */
     @PutMapping("/{id}/deactivate")
-    @PreAuthorize("hasRole('VENDOR')")
+    @PreAuthorize("hasRole('FOOD_VENDOR')")
     public ResponseEntity<String> deactivateRestaurant(@PathVariable Long id,
                                                        Authentication authentication) {
         restaurantService.deactivateRestaurant(id, authentication);
@@ -83,7 +83,7 @@ public class RestaurantController {
      * Only the vendor themselves should call this to see their portfolio.
      */
     @GetMapping("/vendor")
-    @PreAuthorize("hasRole('VENDOR')")
+    @PreAuthorize("hasRole('FOOD_VENDOR')")
     public ResponseEntity<List<RestaurantDTO>> getRestaurantsByVendor(Authentication authentication) {
         return ResponseEntity.ok(restaurantService.getRestaurantsByVendor(authentication));
     }
