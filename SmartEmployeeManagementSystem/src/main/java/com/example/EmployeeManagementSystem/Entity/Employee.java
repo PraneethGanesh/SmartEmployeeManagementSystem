@@ -49,7 +49,7 @@ public class Employee implements UserDetails {
     @Column(nullable = false)
     private String timezone = "UTC";
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = true)
     private Gender gender;
 
     public String getTimezone() {
