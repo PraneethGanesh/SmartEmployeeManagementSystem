@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EMS — Two-Factor Authentication Setup</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <!-- qrcode.js for QR rendering -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        :root{
+            --bg:#070910;--panel:#0e1118;--panel2:#131821;
+            --border:rgba(255,255,255,0.07);--border-lit:rgba(255,255,255,0.16);
+            --text:#dde4f0;--text2:#6b7591;--text3:#3d4560;
+            --blue:#4f8cff;--blue-dim:rgba(79,140,255,0.13);
+            --green:#34d399;--green-dim:rgba(52,211,153,0.12);
+            --red:#f87171;--red-dim:rgba(248,113,113,0.12);
+            --amber:#f9c74f;
+            --font:'Outfit',sans-serif;--mono:'JetBrains Mono',monospace;
+        }
+        body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;}
+
+        .bg-layer{position:fixed;inset:0;z-index:0;
+            background:
+                    radial-gradient(ellipse 50% 50% at 20% 30%, rgba(79,140,255,0.06) 0%,transparent 70%),
+                    radial-gradient(ellipse 40% 40% at 80% 70%, rgba(52,211,153,0.04) 0%,transparent 60%);
+        }
+        .grid-overlay{position:fixed;inset:0;z-index:0;
+            background-image:linear-gradient(rgba(255,255,255,0.015) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.015) 1px,transparent 1px);
+            background-size:40px 40px;
+        }
+
+        /* Nav */
+        .nav{position:relative;z-index:10;display:flex;align-items:center;justify-content:space-between;padding:18px 40px;border-bottom:1px solid var(--border);}
+        .nav-brand{display:flex;align-items:center;gap:10px;}
+        .nav-icon{width:36px;height:36px;background:linear-gradient(135deg,#4f8cff,#818cf8);border-radius:9px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:#fff;}
+        .nav-name{font-size:16px;font-weight:700;}
+        .nav-back{font-size:13px;color:var(--text2);text-decoration:none;display:flex;align-items:center;gap:6px;transition:color .2s;}
+        .nav-back:hover{color:var(--blue);}
+
+        /* Page */
+        .page{position:relative;z-index:1;max-width:680px;margin:0 auto;padding:48px 24px 80px;}
+
+        .page-header{margin-bottom:36px;}
+        .page-header h1{font-size:28px;font-weight:700;letter-spacing:-.4px;margin-bottom:6px;}
+        .page-header p{font-size:14px;color:var(--text2);line-height:1.6;}
+
+        /* Status badge */
+        .status-bar{display:flex;align-items:center;justify-content:space-between;background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:18px 22px;margin-bottom:28px;}
+        .status-left{display:flex;align-items:center;gap:14px;}
+        .status-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+        .status-icon.on{background:var(--green-dim);}
+        .status-icon.off{background:var(--border);}
+        .status-title{font-size:15px;font-weight:600;margin-bottom:2px;}
+        .status-desc{font-size:12px;color:var(--text2);}
+        .badge{font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;letter-spacing:.04em;text-transform:uppercase;}
+        .badge-on{background:var(--green-dim);color:var(--green);border:1px solid rgba(52,211,153,0.25);}
+        .badge-off{background:var(--border);color:var(--text2);border:1px solid var(--border-lit);}
+
+        /* Cards */
+        .card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:20px;}
+        .card-title{font-size:15px;font-weight:600;margin-bottom:4px;display:flex;align-items:center;gap:8px;}
+        .card-subtitle{font-size:13px;color:var(--text2);margin-bottom:20px;}
+
+        /* Steps list */
+        .steps-list{display:flex;flex-direction:column;gap:16px;margin-bottom:24px;}
+        .step-row{display:flex;gap:14px;align-items:flex-start;}
+        .step-num{width:28px;height:28px;border-radius:50%;background:var(--blue-dim);border:1px solid rgba(79,140,255,0.3);color:var(--blue);font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
+        .step-text strong{font-size:13px;color:var(--text);display:block;margin-bottom:2px;}
+        .step-text span{font-size:12px;color:var(--text2);line-height:1.5;}
+
+        /* QR area */
+        .qr-area{display:none;flex-direction:column;align-items:center;gap:20px;padding:24px;background:var(--panel2);border:1px solid var(--border);border-radius:12px;margin-bottom:20px;}
+        .qr-area.show{display:flex;}
+        #qr-container{background:#fff;padding:14px;border-radius:10px;display:inline-block;}
+        .qr-container canvas, .qr-container img{display:block;}
+        .secret-box{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:9px;padding:12px 16px;text-align:center;}
+        .secret-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;}
+        .secret-val{font-family:var(--mono);font-size:14px;color:var(--amber);letter-spacing:.12em;word-break:break-all;}
+        .copy-btn{font-size:11px;color:var(--blue);background:none;border:none;cursor:pointer;font-family:var(--font);padding:0;margin-top:4px;}
+        .copy-btn:hover{text-decoration:underline;}
+
+        /* OTP row */
+        .otp-row{display:flex;gap:10px;justify-content:center;margin:0 0 8px;}
+        .otp-digit{width:48px;height:58px;text-align:center;font-size:24px;font-family:var(--mono);font-weight:500;background:var(--panel2);border:1px solid var(--border);border-radius:10px;color:var(--text);outline:none;transition:border .2s,box-shadow .2s;}
+        .otp-digit:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-dim);}
+        .otp-digit.filled{border-color:rgba(79,140,255,0.4);}
+
+        /* Alerts */
+        .alert{border-radius:9px;padding:11px 14px;font-size:13px;margin-bottom:14px;display:none;align-items:flex-start;gap:9px;}
+        .alert.show{display:flex;}
+        .alert-err{background:var(--red-dim);border:1px solid rgba(248,113,113,0.25);color:var(--red);}
+        .alert-ok{background:var(--green-dim);border:1px solid rgba(52,211,153,0.25);color:var(--green);}
+        .alert-icon{font-size:15px;flex-shrink:0;}
+
+        /* Buttons */
+        .btn{padding:12px 22px;border-radius:10px;border:none;font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;}
+        .btn-primary{background:var(--blue);color:#fff;}
+        .btn-primary:hover{background:#6ba1ff;box-shadow:0 4px 16px rgba(79,140,255,0.3);}
+        .btn-primary:disabled{opacity:.5;cursor:not-allowed;box-shadow:none;}
+        .btn-danger{background:var(--red-dim);color:var(--red);border:1px solid rgba(248,113,113,0.25);}
+        .btn-danger:hover{background:rgba(248,113,113,0.2);}
+        .btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border);}
+        .btn-ghost:hover{border-color:var(--border-lit);color:var(--text);}
+
+        .btn-row{display:flex;gap:10px;flex-wrap:wrap;}
+
+        .spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,0.2);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;margin-right:6px;}
+        @keyframes spin{to{transform:rotate(360deg)}}
+
+        /* Danger zone */
+        .danger-card{background:var(--red-dim);border:1px solid rgba(248,113,113,0.2);border-radius:14px;padding:20px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;}
+        .danger-text strong{font-size:14px;color:var(--red);display:block;margin-bottom:3px;}
+        .danger-text span{font-size:12px;color:rgba(248,113,113,0.7);}
+
+        .loading{text-align:center;padding:60px 0;color:var(--text2);}
+        .loading .spinner{border-top-color:var(--blue);border-color:var(--border-lit);width:24px;height:24px;}
+    </style>
+</head>
+<body>
+<div class="bg-layer"></div>
+<div class="grid-overlay"></div>
+
+<nav class="nav">
+    <div class="nav-brand">
+        <div class="nav-icon">EMS</div>
+        <div class="nav-name">EmployeeMS</div>
+    </div>
+    <a class="nav-back" href="javascript:history.back()">← Back to dashboard</a>
+</nav>
+
+<div class="page">
+    <div class="page-header">
+        <h1>Two-Factor Authentication</h1>
+        <p>Add an extra layer of security to your account. Once enabled, you'll need to provide a 6-digit code from your authenticator app every time you sign in.</p>
+    </div>
+
+    <!-- Loading state -->
+    <div class="loading" id="loading">
+        <span class="spinner"></span>
+    </div>
+
+    <!-- Main content (shown after status loads) -->
+    <div id="main-content" style="display:none;">
+
+        <!-- Status bar -->
+        <div class="status-bar">
+            <div class="status-left">
+                <div class="status-icon" id="status-icon">🔒</div>
+                <div>
+                    <div class="status-title">Two-Factor Authentication</div>
+                    <div class="status-desc" id="status-desc">Loading…</div>
+                </div>
+            </div>
+            <span class="badge" id="status-badge">—</span>
+        </div>
+
+        <!-- ======= SETUP SECTION (shown when disabled) ======= -->
+        <div id="setup-section">
+            <div class="card">
+                <div class="card-title">🛡️ Enable 2FA</div>
+                <div class="card-subtitle">Follow these steps to add two-factor authentication to your account.</div>
+
+                <div class="steps-list">
+                    <div class="step-row">
+                        <div class="step-num">1</div>
+                        <div class="step-text">
+                            <strong>Install an authenticator app</strong>
+                            <span>Download <a href="https://support.google.com/accounts/answer/1066447" target="_blank" style="color:var(--blue)">Google Authenticator</a> or <a href="https://authy.com/download/" target="_blank" style="color:var(--blue)">Authy</a> on your phone.</span>
+                        </div>
+                    </div>
+                    <div class="step-row">
+                        <div class="step-num">2</div>
+                        <div class="step-text">
+                            <strong>Scan the QR code</strong>
+                            <span>Click "Generate QR Code" below, then scan it with your authenticator app. You can also enter the secret key manually.</span>
+                        </div>
+                    </div>
+                    <div class="step-row">
+                        <div class="step-num">3</div>
+                        <div class="step-text">
+                            <strong>Verify the setup</strong>
+                            <span>Enter the 6-digit code shown in your app to confirm everything is working correctly.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- QR area -->
+                <div class="qr-area" id="qr-area">
+                    <div id="qr-container"></div>
+                    <div class="secret-box">
+                        <div class="secret-label">Manual entry key (backup)</div>
+                        <div class="secret-val" id="secret-display">—</div>
+                        <button class="copy-btn" onclick="copySecret()">Copy key</button>
+                    </div>
+                </div>
+
+                <!-- Alerts -->
+                <div class="alert alert-err" id="setup-err"><span class="alert-icon">⚠</span><span id="setup-err-msg"></span></div>
+                <div class="alert alert-ok" id="setup-ok"><span class="alert-icon">✓</span><span id="setup-ok-msg"></span></div>
+
+                <!-- Verify code input (shown after QR generated) -->
+                <div id="verify-area" style="display:none;">
+                    <p style="font-size:13px;color:var(--text2);margin-bottom:16px;">Enter the code shown in your authenticator app to activate 2FA:</p>
+                    <div class="otp-row" id="setup-otp-row">
+                        <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" id="s0">
+                        <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" id="s1">
+                        <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" id="s2">
+                        <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" id="s3">
+                        <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" id="s4">
+                        <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" id="s5">
+                    </div>
+                </div>
+
+                <div class="btn-row" style="margin-top:8px;">
+                    <button class="btn btn-ghost" id="btn-generate" onclick="generateQr()">📱 Generate QR Code</button>
+                    <button class="btn btn-primary" id="btn-verify" style="display:none;" disabled onclick="verifySetup()">Activate 2FA</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ======= ACTIVE SECTION (shown when enabled) ======= -->
+        <div id="active-section" style="display:none;">
+            <div class="card">
+                <div class="card-title">✅ 2FA is active</div>
+                <div class="card-subtitle">Your account is protected. Every sign-in requires your authenticator app code.</div>
+                <p style="font-size:13px;color:var(--text2);line-height:1.6;">
+                    If you lose access to your authenticator app, contact your admin to reset 2FA. We recommend also saving backup codes.
+                </p>
+            </div>
+
+            <div class="danger-card">
+                <div class="danger-text">
+                    <strong>Disable Two-Factor Authentication</strong>
+                    <span>This will remove the extra protection from your account.</span>
+                </div>
+                <button class="btn btn-danger" onclick="disableTotp()">Disable 2FA</button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    const token = () => localStorage.getItem('accessToken');
+    const authHeader = () => ({ 'Authorization': 'Bearer ' + token(), 'Content-Type': 'application/json' });
+
+    // ---- Load status on page open ----
+    async function loadStatus() {
+        try {
+            const res = await fetch('/totp/status', { headers: authHeader() });
+            if (res.status === 401) { window.location.href = '/login.html'; return; }
+            const data = await res.json();
+            renderStatus(data.totpEnabled);
+        } catch (e) {
+            console.error(e);
+        } finally {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('main-content').style.display = 'block';
+        }
+    }
+
+    function renderStatus(enabled) {
+        const icon = document.getElementById('status-icon');
+        const desc = document.getElementById('status-desc');
+        const badge = document.getElementById('status-badge');
+        const setup = document.getElementById('setup-section');
+        const active = document.getElementById('active-section');
+
+        if (enabled) {
+            icon.textContent = '🔐';
+            icon.className = 'status-icon on';
+            desc.textContent = 'Your account requires a 6-digit code on every sign-in.';
+            badge.textContent = 'Enabled';
+            badge.className = 'badge badge-on';
+            setup.style.display = 'none';
+            active.style.display = 'block';
+        } else {
+            icon.textContent = '🔓';
+            icon.className = 'status-icon off';
+            desc.textContent = 'Not enabled — only your password protects your account.';
+            badge.textContent = 'Disabled';
+            badge.className = 'badge badge-off';
+            setup.style.display = 'block';
+            active.style.display = 'none';
+        }
+    }
+
+    // ---- Generate QR ----
+    let currentSecret = null;
+
+    async function generateQr() {
+        const btn = document.getElementById('btn-generate');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span>Generating…';
+        clearAlerts();
+
+        try {
+            const res = await fetch('/totp/setup', { method: 'POST', headers: authHeader() });
+            const data = await res.json();
+            if (!res.ok) { showAlert('setup-err', data.error || 'Failed to generate QR code'); return; }
+
+            currentSecret = data.secret;
+
+            // Render QR code
+            const qrContainer = document.getElementById('qr-container');
+            qrContainer.innerHTML = '';
+            new QRCode(qrContainer, {
+                text: data.qrCodeUri,
+                width: 180,
+                height: 180,
+                colorDark: '#000000',
+                colorLight: '#ffffff',
+                correctLevel: QRCode.CorrectLevel.M
+            });
+
+            document.getElementById('secret-display').textContent = formatSecret(data.secret);
+            document.getElementById('qr-area').classList.add('show');
+            document.getElementById('verify-area').style.display = 'block';
+            document.getElementById('btn-verify').style.display = 'inline-block';
+            btn.textContent = '🔄 Regenerate';
+
+            // Focus first digit
+            setTimeout(() => document.getElementById('s0').focus(), 200);
+        } catch (e) {
+            showAlert('setup-err', 'Network error. Please try again.');
+        } finally {
+            btn.disabled = false;
+            if (btn.innerHTML.includes('spinner')) btn.textContent = '📱 Generate QR Code';
+        }
+    }
+
+    function formatSecret(s) {
+        // Format as XXXX XXXX XXXX... for readability
+        return s.match(/.{1,4}/g)?.join(' ') || s;
+    }
+
+    function copySecret() {
+        navigator.clipboard.writeText(currentSecret || '');
+        const btn = document.querySelector('.copy-btn');
+        btn.textContent = 'Copied!';
+        setTimeout(() => btn.textContent = 'Copy key', 1500);
+    }
+
+    // ---- OTP inputs for setup ----
+    const setupDigits = Array.from({ length: 6 }, (_, i) => document.getElementById('s' + i));
+    const btnVerify = document.getElementById('btn-verify');
+
+    setupDigits.forEach((d, i) => {
+        d.addEventListener('input', () => {
+            const val = d.value.replace(/\D/g, '');
+            d.value = val;
+            d.classList.toggle('filled', val.length > 0);
+            if (val && i < 5) setupDigits[i + 1].focus();
+            btnVerify.disabled = setupDigits.map(x => x.value).join('').length < 6;
+        });
+        d.addEventListener('keydown', e => {
+            if (e.key === 'Backspace' && !d.value && i > 0) {
+                setupDigits[i - 1].focus();
+                setupDigits[i - 1].value = '';
+                setupDigits[i - 1].classList.remove('filled');
+                btnVerify.disabled = true;
+            }
+            if (e.key === 'Enter' && !btnVerify.disabled) verifySetup();
+        });
+        d.addEventListener('paste', e => {
+            const pasted = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 6);
+            if (pasted.length === 6) {
+                pasted.split('').forEach((ch, idx) => { setupDigits[idx].value = ch; setupDigits[idx].classList.add('filled'); });
+                setupDigits[5].focus();
+                btnVerify.disabled = false;
+                e.preventDefault();
+            }
+        });
+    });
+
+    // ---- Verify setup ----
+    async function verifySetup() {
+        clearAlerts();
+        const code = setupDigits.map(d => d.value).join('');
+        if (code.length < 6) return;
+
+        btnVerify.disabled = true;
+        btnVerify.innerHTML = '<span class="spinner"></span>Activating…';
+
+        try {
+            const res = await fetch('/totp/verify-setup', {
+                method: 'POST',
+                headers: authHeader(),
+                body: JSON.stringify({ code })
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                showAlert('setup-err', data.error || 'Invalid code. Try again.');
+                setupDigits.forEach(d => { d.value = ''; d.classList.remove('filled'); });
+                setupDigits[0].focus();
+                btnVerify.disabled = true;
+                return;
+            }
+            showAlert('setup-ok', '2FA activated! Your account is now protected.');
+            setTimeout(() => renderStatus(true), 1200);
+        } catch (e) {
+            showAlert('setup-err', 'Network error. Please try again.');
+        } finally {
+            btnVerify.disabled = false;
+            btnVerify.textContent = 'Activate 2FA';
+        }
+    }
+
+    // ---- Disable TOTP ----
+    async function disableTotp() {
+        if (!confirm('Are you sure you want to disable two-factor authentication? This will make your account less secure.')) return;
+
+        try {
+            const res = await fetch('/totp/disable', { method: 'DELETE', headers: authHeader() });
+            if (!res.ok) { alert('Failed to disable 2FA.'); return; }
+            renderStatus(false);
+        } catch (e) {
+            alert('Network error.');
+        }
+    }
+
+    // ---- Alerts ----
+    function showAlert(id, msg) {
+        const el = document.getElementById(id);
+        el.classList.add('show');
+        document.getElementById(id + '-msg').textContent = msg;
+    }
+    function clearAlerts() {
+        ['setup-err', 'setup-ok'].forEach(id => document.getElementById(id).classList.remove('show'));
+    }
+
+    // ---- Boot ----
+    if (!localStorage.getItem('accessToken')) {
+        window.location.href = '/login.html';
+    } else {
+        loadStatus();
+    }
+</script>
+</body>
+</html>
