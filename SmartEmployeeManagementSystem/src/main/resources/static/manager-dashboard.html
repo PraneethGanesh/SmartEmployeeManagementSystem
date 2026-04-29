@@ -93,6 +93,9 @@
         .chip.rejected{background:var(--red-dim);color:var(--red);border:1px solid rgba(248,113,113,0.2)}
         .chip.active{background:var(--green-dim);color:var(--green);border:1px solid rgba(52,211,153,0.2)}
         .chip.open { background: var(--accent-dim); color: var(--accent); }
+        .chip.sick{background:var(--red-dim);color:var(--red)}
+        .chip.casual{background:var(--amber-dim);color:var(--amber)}
+        .chip.maternity{background:var(--accent-dim);color:var(--accent)}
         .chip.employee{background:var(--blue-dim);color:var(--blue)}
         .chip.manager{background:var(--accent-dim);color:var(--accent)}
 
@@ -370,6 +373,7 @@
                                 <select id="leave-type">
                                     <option value="SICK">Sick Leave</option>
                                     <option value="CASUAL">Casual Leave</option>
+                                    <option value="MATERNITY">Maternity Leave</option>
                                 </select>
                             </div>
                             <div class="form-group">
@@ -610,6 +614,7 @@
                     ? rawRole.map(v => String(v).replace(/^ROLE_/, ''))
                     : [String(rawRole).replace(/^ROLE_/, '')];
                 if(normalizedRoles.includes('MANAGER')) { initUser(); return; }
+                if(normalizedRoles.includes('ADMIN')){window.location.href='/dashboard.html';return;}
                 if(normalizedRoles.includes('EMPLOYEE')){window.location.href='/employee-dashboard.html';return;}
                 if(normalizedRoles.includes('VENDOR')){window.location.href='/vendor-dashboard.html';return;}
             }catch(e){}
@@ -635,10 +640,24 @@
         throw new Error('Unauthorized');
     }
     const text = await res.text();
+    if(!res.ok){
+        let message = res.statusText || `Error ${res.status}`;
+        try {
+            const body = text ? JSON.parse(text) : null;
+            message = body?.message || body?.error || message;
+        } catch {
+            message = text || message;
+        }
+        throw new Error(message);
+    }
     if(!text) return null;
     try { return JSON.parse(text); }  // try JSON first
     catch { return text; }            // fall back to plain string
 }
+
+    function asArray(value){
+        return Array.isArray(value) ? value : [];
+    }
 
     async function initUser(){
         const token=localStorage.getItem('jwt_token');
@@ -662,33 +681,47 @@
     }
 
     async function loadDashboard(){
-    try{
-        const [emps, leaves] = await Promise.all([
-            apiFetch('/manager/employees'),
-            apiFetch('/manager/pending')
-        ]);
+    const [empsResult, leavesResult] = await Promise.allSettled([
+        apiFetch('/manager/employees'),
+        apiFetch('/manager/pending')
+    ]);
+
+    const emps = asArray(empsResult.status === 'fulfilled' ? empsResult.value : []);
+    const leaves = asArray(leavesResult.status === 'fulfilled' ? leavesResult.value : []);
+
+    if (empsResult.status === 'rejected') {
+        console.error('Failed to load manager employees:', empsResult.reason);
+        document.getElementById('dash-employees').innerHTML =
+            '<tr><td colspan="3" class="empty-state">Could not load employees</td></tr>';
+    }
+    if (leavesResult.status === 'rejected') {
+        console.error('Failed to load pending leaves:', leavesResult.reason);
+        document.getElementById('dash-pending').innerHTML =
+            '<tr><td colspan="4" class="empty-state">Could not load pending requests</td></tr>';
+    }
 
         // Stats
-        document.getElementById('stat-total').textContent = emps?.length || 0;
-        document.getElementById('stat-active').textContent = emps?.filter(e => e.status === 'ACTIVE').length || 0;
-        document.getElementById('stat-on-leave').textContent = emps?.filter(e => e.status === 'ON_LEAVE').length || 0;
-        const pending = (leaves || []).filter(l => l.status === 'PENDING');
+        document.getElementById('stat-total').textContent = emps.length;
+        document.getElementById('stat-active').textContent = emps.filter(e => e.status === 'ACTIVE').length;
+        document.getElementById('stat-on-leave').textContent = emps.filter(e => e.status === 'ON_LEAVE').length;
+        const pending = leaves.filter(l => l.status === 'PENDING');
         document.getElementById('stat-pending').textContent = pending.length;
         document.getElementById('pending-badge').textContent = pending.length;
         document.getElementById('pending-badge').classList.toggle('hidden', pending.length === 0);
 
         // Build employeeId → name lookup from employees list
         const empMap = {};
-        (emps || []).forEach(e => { empMap[e.employeeId] = e.name || '—'; });
+        emps.forEach(e => { empMap[e.employeeId] = e.name || '—'; });
 
         // Dash pending
-        document.getElementById('dash-pending').innerHTML = pending.length
+        if (leavesResult.status === 'fulfilled') {
+            document.getElementById('dash-pending').innerHTML = pending.length
             ? pending.slice(0, 5).map(l => {
                 const leaveId = l.leaveRequestId || 0;
                 const empName = empMap[l.employeeId] || `#${l.employeeId}`;
                 return `<tr>
                     <td>${empName}</td>
-                    <td><span class="chip pending">${l.leaveType}</span></td>
+                    <td><span class="chip ${(l.leaveType||'').toLowerCase()}">${l.leaveType}</span></td>
                     <td>${l.startDate} → ${l.endDate}</td>
                     <td><div class="action-row">
                         <button class="btn btn-approve btn-sm" onclick="approveLeave(${leaveId})">✓</button>
@@ -697,17 +730,18 @@
                 </tr>`;
             }).join('')
             : '<tr><td colspan="4" class="empty-state">No pending requests 🎉</td></tr>';
+        }
 
         // Dash employees
-        document.getElementById('dash-employees').innerHTML = emps?.length
+        if (empsResult.status === 'fulfilled') {
+            document.getElementById('dash-employees').innerHTML = emps.length
             ? emps.slice(0, 6).map(e => `<tr>
                 <td>${e.name || '—'}</td>
                 <td>${e.dept || '—'}</td>
                 <td><span class="chip ${(e.status || '').toLowerCase()}">${e.status || '—'}</span></td>
             </tr>`).join('')
             : '<tr><td colspan="3" class="empty-state">No employees</td></tr>';
-
-    } catch(e) { console.error(e); }
+        }
 }
 
     async function loadEmployees(){
@@ -775,7 +809,7 @@
                 const leaveId = l.leaveRequestId || l.leaveId || l.id || 0;
                 return `<tr>
                     <td>${l.employeeName||l.employeeId||'—'}</td>
-                    <td><span class="chip pending">${l.leaveType}</span></td>
+                    <td><span class="chip ${(l.leaveType||'').toLowerCase()}">${l.leaveType}</span></td>
                     <td>${l.startDate}</td>
                     <td>${l.endDate}</td>
                     <td>${l.numberOfDays||'—'}</td>

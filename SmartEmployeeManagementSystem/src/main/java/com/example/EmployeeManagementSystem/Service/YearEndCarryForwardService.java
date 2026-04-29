@@ -16,6 +16,7 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -23,6 +24,7 @@ public class YearEndCarryForwardService {
 
     private static final Logger log = LoggerFactory.getLogger(YearEndCarryForwardService.class);
     private static final BigDecimal CAP = BigDecimal.valueOf(30);
+    private static final Set<String> SUPPORTED_LEAVE_TYPES = Set.of("SICK", "CASUAL", "MATERNITY");
 
     private final EmployeeRepo employeeRepository;
     private final LeaveEntitlementRepository entitlementRepository;
@@ -74,6 +76,7 @@ public class YearEndCarryForwardService {
 
         // Separate carry-forwardable from non-carry-forwardable
         List<LeaveEntitlement> carryForwardable = entitlements.stream()
+                .filter(e -> SUPPORTED_LEAVE_TYPES.contains(e.getLeaveType().getName()))
                 .filter(e -> e.getLeaveType().isCarriesForward())
                 .collect(Collectors.toList());
 
@@ -128,6 +131,7 @@ public class YearEndCarryForwardService {
 
         // Step 5 — zero out sick leave closing balance (it never carries)
         entitlements.stream()
+                .filter(e -> SUPPORTED_LEAVE_TYPES.contains(e.getLeaveType().getName()))
                 .filter(e -> !e.getLeaveType().isCarriesForward())
                 .forEach(e -> {
                     e.setClosingBalance(BigDecimal.ZERO);

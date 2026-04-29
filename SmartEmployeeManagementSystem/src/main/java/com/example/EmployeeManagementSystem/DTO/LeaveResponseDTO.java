@@ -11,6 +11,7 @@ public class LeaveResponseDTO {
     private LeaveType leaveType;
     private LocalDate startDate;
     private LocalDate endDate;
+    private long numberOfDays;
     private String reason;
     private LeaveStatus status;
 
@@ -52,6 +53,14 @@ public class LeaveResponseDTO {
 
     public void setEndDate(LocalDate endDate) {
         this.endDate = endDate;
+    }
+
+    public long getNumberOfDays() {
+        return numberOfDays;
+    }
+
+    public void setNumberOfDays(long numberOfDays) {
+        this.numberOfDays = numberOfDays;
     }
 
     public String getReason() {

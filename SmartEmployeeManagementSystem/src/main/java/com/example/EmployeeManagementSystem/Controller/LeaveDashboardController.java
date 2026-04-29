@@ -4,12 +4,15 @@ import com.example.EmployeeManagementSystem.DTO.LeaveDashboardResponse;
 import com.example.EmployeeManagementSystem.Repository.EmployeeRepo;
 import com.example.EmployeeManagementSystem.Service.LeaveDashboardService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+
+import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 
 @RestController
 @RequestMapping("/api")
@@ -28,11 +31,11 @@ public class LeaveDashboardController {
     // GET /api/employees/me/leave-dashboard
     @GetMapping("/employees/me/leave-dashboard")
     public ResponseEntity<LeaveDashboardResponse> getMyDashboard(
-            @AuthenticationPrincipal UserDetails caller) {
+            Authentication authentication) {
 
-        Long callerId = resolveEmployeeId(caller);
+        Long callerId = resolveEmployeeId(authentication);
         return ResponseEntity.ok(
-                dashboardService.getDashboard(callerId, callerId, resolveRole(caller)));
+                dashboardService.getDashboard(callerId, callerId, resolveRole(authentication)));
     }
 
     // ── GET any employee's dashboard (manager/admin only) ────
@@ -40,10 +43,10 @@ public class LeaveDashboardController {
     @GetMapping("/employees/{id}/leave-dashboard")
     public ResponseEntity<LeaveDashboardResponse> getEmployeeDashboard(
             @PathVariable Long id,
-            @AuthenticationPrincipal UserDetails caller) {
+            Authentication authentication) {
 
-        Long   callerId   = resolveEmployeeId(caller);
-        String callerRole = resolveRole(caller);
+        Long   callerId   = resolveEmployeeId(authentication);
+        String callerRole = resolveRole(authentication);
         return ResponseEntity.ok(
                 dashboardService.getDashboard(id, callerId, callerRole));
     }
@@ -52,10 +55,10 @@ public class LeaveDashboardController {
     // GET /api/employees/me/team-dashboard
     @GetMapping("/employees/me/team-dashboard")
     public ResponseEntity<List<LeaveDashboardResponse>> getTeamDashboard(
-            @AuthenticationPrincipal UserDetails caller) {
+            Authentication authentication) {
 
-        Long   callerId   = resolveEmployeeId(caller);
-        String callerRole = resolveRole(caller);
+        Long   callerId   = resolveEmployeeId(authentication);
+        String callerRole = resolveRole(authentication);
         return ResponseEntity.ok(
                 dashboardService.getTeamDashboard(callerId, callerRole));
     }
@@ -65,28 +68,51 @@ public class LeaveDashboardController {
     @PatchMapping("/warnings/{warningId}/read")
     public ResponseEntity<Void> markWarningRead(
             @PathVariable Long warningId,
-            @AuthenticationPrincipal UserDetails caller) {
+            Authentication authentication) {
 
-        Long   callerId   = resolveEmployeeId(caller);
-        String callerRole = resolveRole(caller);
+        Long   callerId   = resolveEmployeeId(authentication);
+        String callerRole = resolveRole(authentication);
         dashboardService.markWarningRead(warningId, callerId, callerRole);
         return ResponseEntity.noContent().build();
     }
 
-    // ── Resolve caller from Spring Security context ───────────
-    // Adapt these two methods to however your UserDetails stores
-    // the employee ID and role (e.g. a custom UserDetails impl)
-    private Long resolveEmployeeId(UserDetails caller) {
+    // Supports both JWT/session UserDetails and Google OAuth2 principals.
+    private Long resolveEmployeeId(Authentication authentication) {
+        String email = resolveEmail(authentication);
         return employeeRepository
-                .findByEmail(caller.getUsername())
+                .findByEmail(email)
                 .orElseThrow(() -> new IllegalStateException("Authenticated user not found"))
                 .getEmployeeId();
     }
 
-    private String resolveRole(UserDetails caller) {
-        return caller.getAuthorities().stream()
+    private String resolveRole(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new ResponseStatusException(UNAUTHORIZED, "Authentication required");
+        }
+        return authentication.getAuthorities().stream()
+                .map(a -> a.getAuthority())
+                .filter(authority -> authority.startsWith("ROLE_"))
                 .findFirst()
-                .map(a -> a.getAuthority().replace("ROLE_", ""))
+                .map(authority -> authority.replace("ROLE_", ""))
                 .orElse("EMPLOYEE");
+    }
+
+    private String resolveEmail(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new ResponseStatusException(UNAUTHORIZED, "Authentication required");
+        }
+
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof UserDetails userDetails) {
+            return userDetails.getUsername();
+        }
+        if (principal instanceof OAuth2User oAuth2User) {
+            String email = oAuth2User.getAttribute("email");
+            if (email != null && !email.isBlank()) {
+                return email;
+            }
+        }
+
+        throw new ResponseStatusException(UNAUTHORIZED, "Authenticated email not found");
     }
 }

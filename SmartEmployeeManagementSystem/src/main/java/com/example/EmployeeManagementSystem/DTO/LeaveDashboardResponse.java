@@ -2,6 +2,7 @@ package com.example.EmployeeManagementSystem.DTO;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 public class LeaveDashboardResponse {
 
@@ -16,6 +17,9 @@ public class LeaveDashboardResponse {
 
     // Carry-forward meter (casual + maternity combined)
     private CarryForwardMeterDto carryForwardMeter;
+
+    // Generic balances keyed by leave type name, e.g. SICK, CASUAL, MATERNITY.
+    private Map<String, LeaveBalanceDto> leaveBalances;
 
     // Active warnings (unread)
     private List<WarningDto> warnings;
@@ -102,6 +106,7 @@ public class LeaveDashboardResponse {
     public LeaveBalanceDto     getCasual()           { return casual; }
     public LeaveBalanceDto     getMaternity()        { return maternity; }
     public CarryForwardMeterDto getCarryForwardMeter(){ return carryForwardMeter; }
+    public Map<String, LeaveBalanceDto> getLeaveBalances() { return leaveBalances; }
     public List<WarningDto>    getWarnings()         { return warnings; }
 
     public void setEmployeeId(Long id)                        { this.employeeId = id; }
@@ -111,5 +116,6 @@ public class LeaveDashboardResponse {
     public void setCasual(LeaveBalanceDto b)                  { this.casual = b; }
     public void setMaternity(LeaveBalanceDto b)               { this.maternity = b; }
     public void setCarryForwardMeter(CarryForwardMeterDto m)  { this.carryForwardMeter = m; }
+    public void setLeaveBalances(Map<String, LeaveBalanceDto> b) { this.leaveBalances = b; }
     public void setWarnings(List<WarningDto> w)               { this.warnings = w; }
 }

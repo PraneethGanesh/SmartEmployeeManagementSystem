@@ -95,7 +95,7 @@
         .chip.active{background:var(--green-dim);color:var(--green);border:1px solid rgba(52,211,153,0.2)}
         .chip.sick{background:var(--red-dim);color:var(--red)}
         .chip.casual{background:var(--amber-dim);color:var(--amber)}
-        .chip.earned{background:var(--accent-dim);color:var(--accent)}
+        .chip.maternity{background:var(--accent-dim);color:var(--accent)}
 
         /* FORM */
         .form-card{padding:24px}
@@ -254,7 +254,7 @@
                                 <select id="leave-type">
                                     <option value="SICK">Sick Leave</option>
                                     <option value="CASUAL">Casual Leave</option>
-                                    <option value="EARNED">Earned Leave</option>
+                                    <option value="MATERNITY">Maternity Leave</option>
                                 </select>
                             </div>
                             <div class="form-group">
@@ -538,8 +538,8 @@
     }
 
     async function apiFetch(path, opts={}){
-        const token = localStorage.getItem('jwt_token');      // ← add this
-        const authType = localStorage.getItem('auth_type');   // ← add this
+        const token = localStorage.getItem('jwt_token');
+        const authType = localStorage.getItem('auth_type');
         const res = await fetch(`${API}${path}`,{
             ...opts,
             headers:{'Content-Type':'application/json',...getAuthHeader(),...(opts.headers||{})},
@@ -559,6 +559,16 @@
     const text = await res.text();
     try { return text ? JSON.parse(text) : null; }
     catch { return text; } // plain string response
+    }
+
+    function asArray(value){
+        return Array.isArray(value) ? value : [];
+    }
+
+    function daysBetween(start, end){
+        if(!start || !end) return '—';
+        const days = (new Date(end) - new Date(start)) / 86400000 + 1;
+        return days > 0 ? days : '—';
     }
 
     async function initUser(){
@@ -608,23 +618,39 @@
     }
 
     async function loadDashboard(){
-        try{
-            const leaves = await apiFetch('/leave_requests/employee');
-            const arr = leaves?.requests || leaves || [];
+        const [leavesResult, dashboardResult] = await Promise.allSettled([
+            apiFetch('/leave_requests/employee'),
+            apiFetch('/api/employees/me/leave-dashboard')
+        ]);
+
+        const leavesPayload = leavesResult.status === 'fulfilled' ? leavesResult.value : null;
+        const dashboard = dashboardResult.status === 'fulfilled' ? dashboardResult.value : null;
+        const arr = asArray(leavesPayload?.requests || leavesPayload);
+
+        if(leavesResult.status === 'rejected'){
+            console.error('Failed to load employee leaves:', leavesResult.reason);
+        }
+        if(dashboardResult.status === 'rejected'){
+            console.error('Failed to load employee leave dashboard:', dashboardResult.reason);
+        }
+
             const pending=arr.filter(l=>l.status==='PENDING').length;
             const approved=arr.filter(l=>l.status==='APPROVED').length;
             const rejected=arr.filter(l=>l.status==='REJECTED').length;
             document.getElementById('stat-pending').textContent=pending;
             document.getElementById('stat-approved').textContent=approved;
             document.getElementById('stat-rejected').textContent=rejected;
-            document.getElementById('stat-balance').textContent=Math.max(0,20-approved);
+            const balances = dashboard?.leaveBalances ? Object.values(dashboard.leaveBalances) : [];
+            const available = balances.reduce((total, balance) => total + Number(balance.available || 0), 0);
+            document.getElementById('stat-balance').textContent=available;
             const recent=arr.slice(-5).reverse();
             document.getElementById('recent-leaves').innerHTML=recent.length
                 ? recent.map(l=>`<tr><td><span class="chip ${(l.leaveType||'').toLowerCase()}">${l.leaveType||'N/A'}</span></td><td>${l.startDate||'—'}</td><td>${l.endDate||'—'}</td><td>${(l.reason||'—').substring(0,30)}</td><td><span class="chip ${(l.status||'').toLowerCase()}">${l.status||'—'}</span></td></tr>`).join('')
-                : '<tr><td colspan="5" class="empty-state">No leave requests yet</td></tr>';
-        }catch(e){document.getElementById('recent-leaves').innerHTML='<tr><td colspan="5" class="empty-state">Could not load leave data</td></tr>';}
+                : leavesResult.status === 'rejected'
+                    ? '<tr><td colspan="5" class="empty-state">Could not load leave data</td></tr>'
+                    : '<tr><td colspan="5" class="empty-state">No leave requests yet</td></tr>';
         try{
-    const subs = await apiFetch('/subscription/user'); // ← fix endpoint
+    const subs = await apiFetch('/subscription/user');
     const arr = subs || [];
     document.getElementById('dashboard-subs').innerHTML = arr.length
         ? arr.filter(s => s.status === 'ACTIVE').slice(0,4).map(s => `
@@ -650,7 +676,7 @@
             const data=await apiFetch('/leave_requests/employee');
             const leaves=data?.requests||data||[];
             document.getElementById('my-leaves-list').innerHTML=leaves.length
-                ? leaves.map(l=>`<tr><td><span class="chip ${(l.leaveType||'').toLowerCase()}">${l.leaveType||'N/A'}</span></td><td>${l.startDate||'—'}</td><td>${l.endDate||'—'}</td><td>${l.numberOfDays||'—'}</td><td>${(l.reason||'—').substring(0,30)}</td><td><span class="chip ${(l.status||'').toLowerCase()}">${l.status}</span></td><td>${l.status==='PENDING' ? `<button class="btn btn-danger btn-sm" onclick="cancelLeave(${l.leaveRequestId})">Cancel</button>` : '—'}</td></tr>`).join('')
+                ? leaves.map(l=>`<tr><td><span class="chip ${(l.leaveType||'').toLowerCase()}">${l.leaveType||'N/A'}</span></td><td>${l.startDate||'—'}</td><td>${l.endDate||'—'}</td><td>${l.numberOfDays||daysBetween(l.startDate,l.endDate)}</td><td>${(l.reason||'—').substring(0,30)}</td><td><span class="chip ${(l.status||'').toLowerCase()}">${l.status}</span></td><td>${l.status==='PENDING' ? `<button class="btn btn-danger btn-sm" onclick="cancelLeave(${l.leaveRequestId})">Cancel</button>` : '—'}</td></tr>`).join('')
                 : '<tr><td colspan="7" class="empty-state">No leave requests found</td></tr>';
         }catch(e){document.getElementById('my-leaves-list').innerHTML='<tr><td colspan="7" class="empty-state">Could not load leave requests</td></tr>';}
     }

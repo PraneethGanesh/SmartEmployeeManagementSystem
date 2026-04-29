@@ -12,7 +12,9 @@ import com.example.EmployeeManagementSystem.Enum.Role;
 import com.example.EmployeeManagementSystem.Enum.Status;
 import com.example.EmployeeManagementSystem.Exception.*;
 import com.example.EmployeeManagementSystem.Repository.EmployeeRepo;
+import com.example.EmployeeManagementSystem.Repository.LeaveEntitlementRepository;
 import com.example.EmployeeManagementSystem.Repository.LeaveRequestRepo;
+import com.example.EmployeeManagementSystem.Repository.LeaveTypeRepository;
 import com.example.EmployeeManagementSystem.Util.AuthUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +22,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
@@ -33,10 +37,18 @@ import java.util.stream.Collectors;
 public class LeaveRequestService {
     private final LeaveRequestRepo leaveRequestRepo;
     private final EmployeeRepo employeeRepo;
+    private final LeaveTypeRepository leaveTypeRepository;
+    private final LeaveEntitlementRepository leaveEntitlementRepository;
     private static final Logger log = LoggerFactory.getLogger(LeaveRequestService.class);
-    public LeaveRequestService(LeaveRequestRepo leaveRequestRepo, EmployeeRepo employeeRepo) {
+
+    public LeaveRequestService(LeaveRequestRepo leaveRequestRepo,
+                               EmployeeRepo employeeRepo,
+                               LeaveTypeRepository leaveTypeRepository,
+                               LeaveEntitlementRepository leaveEntitlementRepository) {
         this.leaveRequestRepo = leaveRequestRepo;
         this.employeeRepo = employeeRepo;
+        this.leaveTypeRepository = leaveTypeRepository;
+        this.leaveEntitlementRepository = leaveEntitlementRepository;
     }
 
     public List<LeaveResponseDTO> getAllTheLeaveRequest(){
@@ -135,6 +147,7 @@ public class LeaveRequestService {
         return responseDTOS;
     }
 
+    @Transactional
     public ResponseEntity<?> updateLeaveRequestStatus(ActionDTO actionDTO,Authentication authentication){
         String email= AuthUtil.extractEmail(authentication);
         Employee manager=employeeRepo.findByEmail(email).orElseThrow(
@@ -157,6 +170,7 @@ public class LeaveRequestService {
 
          if(actionDTO.getAction().equalsIgnoreCase("approved")){
              leaveRequest.setStatus(LeaveStatus.APPROVED);
+             applyApprovedLeaveToEntitlement(leaveRequest);
          }
          else if(actionDTO.getAction().equalsIgnoreCase("rejected")){
              leaveRequest.setStatus(LeaveStatus.REJECTED);
@@ -171,6 +185,7 @@ public class LeaveRequestService {
          return ResponseEntity.ok(leaveRequestRepo.save(leaveRequest));
     }
 
+    @Transactional
     public ResponseEntity<?> cancelLeaveRequest(Authentication authentication,long leaveId){
         String email= AuthUtil.extractEmail(authentication);
         var employee=employeeRepo.findByEmail(email).orElseThrow(
@@ -190,7 +205,11 @@ public class LeaveRequestService {
         if(leaveRequest.getStartDate().isEqual(today)||leaveRequest.getStartDate().isBefore(today)){
             return ResponseEntity.badRequest().body("You cannot cancel leave request after the leave has started");
         }
+        LeaveStatus previousStatus = leaveRequest.getStatus();
         leaveRequest.setStatus(LeaveStatus.CANCELLED);
+        if (previousStatus == LeaveStatus.APPROVED) {
+            reverseApprovedLeaveFromEntitlement(leaveRequest);
+        }
         leaveRequestRepo.save(leaveRequest);
         return ResponseEntity.ok("Leave Request with id:"+ leaveId+" Successfully cancelled");
     }
@@ -202,6 +221,7 @@ public class LeaveRequestService {
         responseDTO.setLeaveType(request.getLeaveType());
         responseDTO.setStartDate(request.getStartDate());
         responseDTO.setEndDate(request.getEndDate());
+        responseDTO.setNumberOfDays(requestedDays(request).longValue());
         responseDTO.setReason(request.getReason());
         responseDTO.setStatus(request.getStatus());
         return responseDTO;
@@ -236,6 +256,7 @@ public class LeaveRequestService {
      * Approve a leave request by ID (simplified version for AdminController).
      * Returns LeaveResponseDTO directly.
      */
+    @Transactional
     public LeaveResponseDTO approveLeave(Long id) {
         LeaveRequest leaveRequest = leaveRequestRepo.findById(id)
                 .orElseThrow(() -> new LeaveRequestNotFoundException("Leave request with id: " + id + " not found"));
@@ -246,6 +267,7 @@ public class LeaveRequestService {
 
         leaveRequest.setStatus(LeaveStatus.APPROVED);
         leaveRequest.setManager("ADMIN"); // Or get from security context if needed
+        applyApprovedLeaveToEntitlement(leaveRequest);
 
         LeaveRequest saved = leaveRequestRepo.save(leaveRequest);
         return convertToDTO(saved);
@@ -255,6 +277,7 @@ public class LeaveRequestService {
      * Reject a leave request by ID (simplified version for AdminController).
      * Returns LeaveResponseDTO directly.
      */
+    @Transactional
     public LeaveResponseDTO rejectLeave(Long id) {
         LeaveRequest leaveRequest = leaveRequestRepo.findById(id)
                 .orElseThrow(() -> new LeaveRequestNotFoundException("Leave request with id: " + id + " not found"));
@@ -268,5 +291,57 @@ public class LeaveRequestService {
 
         LeaveRequest saved = leaveRequestRepo.save(leaveRequest);
         return convertToDTO(saved);
+    }
+
+    private void applyApprovedLeaveToEntitlement(LeaveRequest leaveRequest) {
+        updateUsedLeave(leaveRequest, requestedDays(leaveRequest));
+    }
+
+    private void reverseApprovedLeaveFromEntitlement(LeaveRequest leaveRequest) {
+        updateUsedLeave(leaveRequest, requestedDays(leaveRequest).negate());
+    }
+
+    private void updateUsedLeave(LeaveRequest leaveRequest, BigDecimal delta) {
+        int year = leaveRequest.getStartDate().getYear();
+        String leaveTypeName = leaveRequest.getLeaveType().name();
+        com.example.EmployeeManagementSystem.Entity.LeaveType leaveType = leaveTypeRepository
+                .findByName(leaveTypeName)
+                .orElseThrow(() -> new IllegalStateException(
+                        "Leave type not configured: " + leaveTypeName));
+
+        var entitlement = leaveEntitlementRepository
+                .findByEmployeeEmployeeIdAndLeaveTypeIdAndYear(
+                        leaveRequest.getEmployee().getEmployeeId(), leaveType.getId(), year)
+                .orElseGet(() -> createEntitlement(leaveRequest.getEmployee(), leaveType, year));
+
+        BigDecimal used = entitlement.getUsedThisYear().add(delta);
+        entitlement.setUsedThisYear(used.max(BigDecimal.ZERO));
+        leaveEntitlementRepository.save(entitlement);
+    }
+
+    private com.example.EmployeeManagementSystem.Entity.LeaveEntitlement createEntitlement(
+            Employee employee,
+            com.example.EmployeeManagementSystem.Entity.LeaveType leaveType,
+            int year) {
+        var entitlement = new com.example.EmployeeManagementSystem.Entity.LeaveEntitlement();
+        entitlement.setEmployee(employee);
+        entitlement.setLeaveType(leaveType);
+        entitlement.setYear(year);
+
+        if (leaveType.isCarriesForward()) {
+            BigDecimal lastYearClosing = leaveEntitlementRepository
+                    .findByEmployeeEmployeeIdAndLeaveTypeIdAndYear(
+                            employee.getEmployeeId(), leaveType.getId(), year - 1)
+                    .map(com.example.EmployeeManagementSystem.Entity.LeaveEntitlement::getClosingBalance)
+                    .orElse(BigDecimal.ZERO);
+            entitlement.setOpeningBalance(lastYearClosing);
+        }
+
+        return leaveEntitlementRepository.save(entitlement);
+    }
+
+    private BigDecimal requestedDays(LeaveRequest leaveRequest) {
+        long days = ChronoUnit.DAYS.between(leaveRequest.getStartDate(), leaveRequest.getEndDate()) + 1;
+        return BigDecimal.valueOf(days);
     }
 }

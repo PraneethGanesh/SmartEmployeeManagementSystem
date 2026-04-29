@@ -87,9 +87,7 @@
         .chip.cancelled, .chip.CANCELLED { background: rgba(139,146,168,0.12); color: var(--text2); }
         .chip.sick, .chip.SICK         { background: var(--red-dim);    color: var(--red); }
         .chip.casual, .chip.CASUAL     { background: var(--accent-dim); color: var(--accent); }
-        .chip.annual, .chip.ANNUAL, .chip.EARNED { background: var(--green-dim); color: var(--green); }
-        .chip.maternity, .chip.MATERNITY, .chip.paternity, .chip.PATERNITY { background: var(--violet-dim); color: var(--violet); }
-        .chip.unpaid, .chip.UNPAID     { background: rgba(139,146,168,0.12); color: var(--text2); }
+        .chip.maternity, .chip.MATERNITY { background: var(--violet-dim); color: var(--violet); }
 
         /* Buttons */
         .btn { padding: 8px 16px; border-radius: 6px; border: none; font-family: var(--font); font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
@@ -245,10 +243,7 @@
                             <select id="leave-type">
                                 <option value="SICK">Sick Leave</option>
                                 <option value="CASUAL">Casual Leave</option>
-                                <option value="EARNED">Earned / Annual Leave</option>
                                 <option value="MATERNITY">Maternity Leave</option>
-                                <option value="PATERNITY">Paternity Leave</option>
-                                <option value="UNPAID">Unpaid Leave</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -606,22 +601,45 @@
 
     // ─── Leave Balance ─────────────────────────────────────────────────────────
     const balanceColors = {
-        SICK: '#f87171', CASUAL: '#4f8cff', EARNED: '#36d399', ANNUAL: '#36d399',
-        MATERNITY: '#a78bfa', PATERNITY: '#a78bfa', UNPAID: '#8b92a8'
+        SICK: '#f87171', CASUAL: '#4f8cff', MATERNITY: '#a78bfa'
     };
+
+    function normalizeDashboardBalances(data) {
+        if (!data) return [];
+        if (data.leaveBalances) {
+            return Object.values(data.leaveBalances).map(balance => ({
+                type: balance.leaveType,
+                opening: Number(balance.opening ?? 0),
+                accrued: Number(balance.accrued ?? 0),
+                used: Number(balance.used ?? 0),
+                available: Number(balance.available ?? 0)
+            }));
+        }
+        return ['sick', 'casual', 'maternity']
+            .map(key => data[key])
+            .filter(Boolean)
+            .map(balance => ({
+                type: balance.leaveType,
+                opening: Number(balance.opening ?? 0),
+                accrued: Number(balance.accrued ?? 0),
+                used: Number(balance.used ?? 0),
+                available: Number(balance.available ?? 0)
+            }));
+    }
 
     async function loadBalance() {
         try {
-            const data = await apiFetch('/leave/dashboard').catch(() => null)
-                || await apiFetch('/leave_requests/employee').catch(() => null);
+            const data = await apiFetch('/api/employees/me/leave-dashboard');
             const grid = document.getElementById('balance-grid');
+            const balances = normalizeDashboardBalances(data);
 
-            if (data && data.leaveBalances) {
-                grid.innerHTML = Object.entries(data.leaveBalances).map(([type, info]) => {
-                    const used  = info.used  ?? 0;
-                    const total = info.total ?? 0;
-                    const left  = total - used;
-                    const pct   = total ? Math.round((used / total) * 100) : 0;
+            if (balances.length) {
+                grid.innerHTML = balances.map(info => {
+                    const type = info.type;
+                    const used = info.used;
+                    const total = info.opening + info.accrued;
+                    const left = info.available;
+                    const pct = total ? Math.min(100, Math.round((used / total) * 100)) : 0;
                     const color = balanceColors[type] || '#4f8cff';
                     return `<div class="balance-card">
           <div class="balance-name">${type.replace(/_/g,' ')}</div>
@@ -634,7 +652,7 @@
                 }).join('');
             } else {
                 grid.innerHTML = `<div class="balance-card" style="color:var(--text2);grid-column:1/-1;text-align:center;padding:32px;">
-        Leave balance data not available from the API. Check <code>/leave/dashboard</code> endpoint.
+        Leave balance data not available from the API. Check <code>/api/employees/me/leave-dashboard</code> endpoint.
       </div>`;
             }
 

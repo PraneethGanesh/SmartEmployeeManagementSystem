@@ -15,6 +15,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -140,6 +141,8 @@ public class ManagerService {
         managerLeaveResponseDTO.setLeaveType(leaveRequest.getLeaveType());
         managerLeaveResponseDTO.setStartDate(leaveRequest.getStartDate());
         managerLeaveResponseDTO.setEndDate(leaveRequest.getEndDate());
+        managerLeaveResponseDTO.setNumberOfDays(
+                ChronoUnit.DAYS.between(leaveRequest.getStartDate(), leaveRequest.getEndDate()) + 1);
         managerLeaveResponseDTO.setStatus(leaveRequest.getStatus());
         managerLeaveResponseDTO.setReason(leaveRequest.getReason());
         return managerLeaveResponseDTO;
