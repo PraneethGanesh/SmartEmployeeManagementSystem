@@ -24,10 +24,8 @@
         body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:14px;overflow:hidden;height:100vh}
         .app{display:flex;height:100vh}
 
-        /* SCANLINE OVERLAY */
         body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.03) 2px,rgba(0,0,0,0.03) 4px);pointer-events:none;z-index:9999}
 
-        /* SIDEBAR */
         .sidebar{width:var(--sidebar);background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;overflow:hidden;position:relative}
         .sidebar::after{content:'';position:absolute;bottom:0;left:0;right:0;height:300px;background:linear-gradient(to top,rgba(0,210,255,0.03),transparent);pointer-events:none}
 
@@ -59,7 +57,6 @@
         .user-name{font-size:12px;font-weight:600;color:var(--text)}
         .user-role{font-size:10px;color:var(--cyan);font-family:var(--mono);text-transform:uppercase;letter-spacing:0.8px}
 
-        /* MAIN */
         .main{flex:1;display:flex;flex-direction:column;overflow:hidden}
         .topbar{background:var(--bg2);padding:0 24px;height:56px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);flex-shrink:0}
         .page-title{font-size:15px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px}
@@ -76,7 +73,6 @@
         .view.active{display:block;animation:viewIn 0.25s ease}
         @keyframes viewIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 
-        /* STATS */
         .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
         .stat{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:18px 20px;position:relative;overflow:hidden;cursor:default;transition:border-color 0.2s}
         .stat:hover{border-color:var(--border2)}
@@ -88,7 +84,6 @@
         .stat-sub{font-size:11px;color:var(--text3);margin-top:5px}
         .stat-icon{position:absolute;right:16px;top:50%;transform:translateY(-50%);font-size:24px;opacity:0.12}
 
-        /* CARDS / SECTIONS */
         .card{background:var(--panel);border:1px solid var(--border);border-radius:10px;margin-bottom:18px;overflow:hidden}
         .card-head{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
         .card-title{font-size:13px;font-weight:700;color:var(--text);letter-spacing:0.2px}
@@ -96,7 +91,6 @@
         .card-body{padding:20px}
         .dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
 
-        /* TABLE */
         .tablewrap{overflow-x:auto}
         table{width:100%;border-collapse:collapse}
         th{padding:9px 16px;text-align:left;font-size:9px;color:var(--text3);font-weight:700;letter-spacing:1.5px;text-transform:uppercase;background:var(--bg3);border-bottom:1px solid var(--border);font-family:var(--mono)}
@@ -105,7 +99,6 @@
         tr:hover td{background:rgba(0,210,255,0.02);color:var(--text)}
         td.main-cell{font-family:var(--font);font-size:13px;color:var(--text);font-weight:500}
 
-        /* STATUS CHIPS */
         .chip{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;font-family:var(--mono)}
         .chip::before{content:'';width:4px;height:4px;border-radius:50%;flex-shrink:0}
         .chip.available{background:var(--green-dim);color:var(--green);border:1px solid rgba(16,212,142,0.2)} .chip.available::before{background:var(--green)}
@@ -129,8 +122,8 @@
         .chip.monitor,.chip.other,.chip.desktop,.chip.keyboard,.chip.mouse,.chip.headset{background:var(--amber-dim);color:var(--amber);border:1px solid rgba(245,158,11,0.2)} .chip.monitor::before,.chip.other::before,.chip.desktop::before,.chip.keyboard::before,.chip.mouse::before,.chip.headset::before{background:var(--amber)}
         .chip.active_assign{background:var(--green-dim);color:var(--green);border:1px solid rgba(16,212,142,0.2)} .chip.active_assign::before{background:var(--green)}
         .chip.returned{background:var(--text3);color:var(--text2);border:1px solid var(--border)} .chip.returned::before{background:var(--text2)}
+        .chip.not_fixable{background:var(--red-dim);color:var(--red);border:1px solid rgba(240,84,84,0.2)} .chip.not_fixable::before{background:var(--red)}
 
-        /* BUTTONS */
         .btn{padding:8px 16px;border-radius:6px;border:none;font-family:var(--font);font-size:12px;font-weight:700;cursor:pointer;transition:all 0.2s;letter-spacing:0.3px}
         .btn-primary{background:var(--cyan);color:#080b10}
         .btn-primary:hover{background:#33dbff;box-shadow:0 0 20px var(--cyan-glow)}
@@ -146,7 +139,6 @@
         .btn-xs{padding:3px 8px;font-size:10px}
         .action-row{display:flex;gap:6px;flex-wrap:wrap}
 
-        /* FORM */
         .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
         .form-group{display:flex;flex-direction:column;gap:6px}
         .form-group.full{grid-column:1/-1}
@@ -157,23 +149,19 @@
         select.form-input option{background:var(--bg2)}
         .form-actions{display:flex;gap:10px;margin-top:18px}
 
-        /* EMPTY */
         .empty{text-align:center;padding:40px 20px;color:var(--text3);font-family:var(--mono);font-size:12px}
         .empty-icon{font-size:32px;margin-bottom:10px;opacity:0.4}
 
-        /* ALERT */
         .alert{position:fixed;top:20px;right:20px;padding:12px 20px;border-radius:6px;z-index:2000;animation:alertIn 0.25s ease;font-size:12px;font-weight:600;font-family:var(--mono);display:flex;align-items:center;gap:8px}
         .alert-success{background:var(--green-dim);color:var(--green);border:1px solid rgba(16,212,142,0.3)}
         .alert-error{background:var(--red-dim);color:var(--red);border:1px solid rgba(240,84,84,0.3)}
         @keyframes alertIn{from{transform:translateX(120%);opacity:0}to{transform:translateX(0);opacity:1}}
 
-        /* SEARCH */
         .search-row{display:flex;gap:10px;padding:14px 16px;border-bottom:1px solid var(--border)}
         .search-input{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:8px 13px;color:var(--text);font-family:var(--mono);font-size:12px}
         .search-input:focus{outline:none;border-color:var(--cyan)}
         .search-input::placeholder{color:var(--text3)}
 
-        /* REPAIR TIMELINE */
         .timeline{padding:20px;display:flex;flex-direction:column;gap:0}
         .tl-item{display:flex;gap:14px;padding-bottom:20px;position:relative}
         .tl-item:last-child{padding-bottom:0}
@@ -187,7 +175,14 @@
         .tl-title{font-size:12px;font-weight:600;color:var(--text);margin-bottom:2px}
         .tl-meta{font-size:10px;color:var(--text3);font-family:var(--mono)}
 
-        /* DEVICE DETAIL MODAL */
+        /* Outcome hint box */
+        .outcome-hint{margin:12px 0 0;padding:10px 14px;border-radius:6px;font-size:11px;font-family:var(--mono);transition:all 0.2s}
+        .outcome-hint.success{background:var(--green-dim);color:var(--green);border:1px solid rgba(16,212,142,0.2)}
+        .outcome-hint.danger{background:var(--red-dim);color:var(--red);border:1px solid rgba(240,84,84,0.2)}
+
+        /* Inline repair panel */
+        .repair-inline{background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:18px 20px;margin:0 16px 16px;animation:viewIn 0.2s ease}
+
         .modal-overlay{display:none;position:fixed;inset:0;background:rgba(8,11,16,0.85);z-index:1500;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
         .modal-overlay.open{display:flex}
         .modal{background:var(--panel2);border:1px solid var(--border2);border-radius:12px;width:560px;max-width:95%;max-height:85vh;overflow-y:auto;animation:modalIn 0.2s ease}
@@ -241,10 +236,6 @@
                 <svg class="nav-icon" fill="none" viewBox="0 0 16 16"><path d="M8 1l1.5 4.5H14l-3.5 2.5 1.5 4.5L8 10l-4 2.5 1.5-4.5L2 5.5h4.5L8 1z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
                 Service Requests
                 <span class="nav-badge amber" id="sr-badge" style="display:none">0</span>
-            </div>
-            <div class="nav-item" onclick="showView('repair-logs',this)">
-                <svg class="nav-icon" fill="none" viewBox="0 0 16 16"><path d="M13 3l-6 6-3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 14h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-                Repair Logs
             </div>
 
             <div class="nav-section">Assignments</div>
@@ -302,15 +293,15 @@
                         <div class="stat-icon">◎</div>
                     </div>
                     <div class="stat a">
-                        <div class="stat-label">Under Repair</div>
+                        <div class="stat-label">Pending Repairs</div>
                         <div class="stat-val" id="stat-repair">--</div>
-                        <div class="stat-sub">in service</div>
+                        <div class="stat-sub">awaiting your update</div>
                         <div class="stat-icon">⚙</div>
                     </div>
                     <div class="stat r">
                         <div class="stat-label">Open Requests</div>
                         <div class="stat-val" id="stat-open">--</div>
-                        <div class="stat-sub">need attention</div>
+                        <div class="stat-sub">sent for repair</div>
                         <div class="stat-icon">!</div>
                     </div>
                 </div>
@@ -319,8 +310,8 @@
                     <div class="card">
                         <div class="card-head">
                             <div>
-                                <div class="card-title">Recent Service Requests</div>
-                                <div class="card-sub">employee-reported issues</div>
+                                <div class="card-title">Repair Queue</div>
+                                <div class="card-sub">devices sent to you for repair</div>
                             </div>
                             <button class="btn btn-ghost btn-sm" onclick="showView('service-requests',null)">View all →</button>
                         </div>
@@ -440,93 +431,78 @@
                 </div>
             </div>
 
-            <!-- SERVICE REQUESTS -->
+            <!-- ═══════════════════════════════════════════════════════
+                 SERVICE REQUESTS  —  vendor repair queue
+                 GET  /service-requests/vendor/me   → SENT_FOR_REPAIR list
+                 PUT  /service-requests/vendor       → RepairDTO { requestId, resolution, status }
+                 status=REPAIR_DONE  → device becomes ASSIGNED
+                 status=anything else → device becomes CONDEMNED
+            ════════════════════════════════════════════════════════ -->
             <div id="service-requests-view" class="view">
                 <div class="card">
                     <div class="card-head">
                         <div>
-                            <div class="card-title">Service Requests</div>
-                            <div class="card-sub">issues reported by employees for your devices</div>
+                            <div class="card-title">Repair Queue</div>
+                            <div class="card-sub">devices sent to you — mark as repaired or condemned</div>
                         </div>
-                        <div class="action-row">
-                            <select class="form-input btn-sm" id="sr-filter" onchange="filterServiceRequests()" style="width:140px;padding:5px 10px;font-size:11px">
-                                <option value="">All Status</option>
-                                <option value="OPEN">Open</option>
-                                <option value="ACKNOWLEDGED">Acknowledged</option>
-                                <option value="SENT_FOR_REPAIR">Sent for Repair</option>
-                                <option value="REPAIR_DONE">Repair Done</option>
-                                <option value="RESOLVED">Resolved</option>
-                                <option value="REJECTED">Rejected</option>
-                            </select>
-                            <button class="btn btn-ghost btn-sm" onclick="loadServiceRequests()">↺ Refresh</button>
-                        </div>
+                        <button class="btn btn-ghost btn-sm" onclick="loadServiceRequests()">↺ Refresh</button>
                     </div>
                     <div class="tablewrap">
                         <table>
-                            <thead><tr><th>ID</th><th>Device</th><th>Issue Type</th><th>Description</th><th>Urgent</th><th>Status</th><th>Raised</th><th>Actions</th></tr></thead>
+                            <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Device</th>
+                                <th>Issue Type</th>
+                                <th>Description</th>
+                                <th>Urgent</th>
+                                <th>Raised</th>
+                                <th>Actions</th>
+                            </tr>
+                            </thead>
                             <tbody id="sr-list"></tbody>
                         </table>
                     </div>
                 </div>
-            </div>
 
-            <!-- REPAIR LOGS -->
-            <div id="repair-logs-view" class="view">
-                <div class="card">
+                <!-- ── INLINE REPAIR UPDATE PANEL ── -->
+                <div class="card" id="vendor-repair-panel" style="max-width:640px;display:none">
                     <div class="card-head">
                         <div>
-                            <div class="card-title">Repair Logs</div>
-                            <div class="card-sub">devices sent to your service center</div>
+                            <div class="card-title">Update Repair Result</div>
+                            <div class="card-sub" id="vr-panel-subtitle">Request #—</div>
                         </div>
-                        <button class="btn btn-ghost btn-sm" onclick="loadRepairLogs()">↺ Refresh</button>
-                    </div>
-                    <div class="tablewrap">
-                        <table>
-                            <thead><tr><th>ID</th><th>Device</th><th>Issue</th><th>Technician</th><th>Sent</th><th>Expected Return</th><th>Cost</th><th>Status</th><th>Actions</th></tr></thead>
-                            <tbody id="repair-list"></tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- UPDATE REPAIR STATUS FORM -->
-                <div class="card" id="repair-update-form" style="max-width:600px;display:none">
-                    <div class="card-head">
-                        <div class="card-title">Update Repair Status</div>
+                        <button class="btn btn-ghost btn-sm" onclick="closeRepairPanel()">✕ Cancel</button>
                     </div>
                     <div class="card-body">
-                        <input type="hidden" id="repair-id">
+                        <input type="hidden" id="vr-request-id">
+
                         <div class="form-grid">
-                            <div class="form-group"><label class="form-label">Repair Status</label>
-                                <select class="form-input" id="repair-status-input">
-                                    <option value="SENT">Sent</option>
-                                    <option value="IN_PROGRESS">In Progress</option>
-                                    <option value="FIXED">Fixed</option>
-                                    <option value="IRREPARABLE">Irreparable</option>
+                            <!-- Outcome selector -->
+                            <div class="form-group full">
+                                <label class="form-label">Repair Outcome</label>
+                                <select class="form-input" id="vr-status" onchange="onOutcomeChange()">
+                                    <option value="REPAIR_DONE">✓ Repair Done — device returns to employee</option>
+                                    <option value="NOT_FIXABLE">✗ Could Not Repair — device will be condemned</option>
                                 </select>
                             </div>
-                            <div class="form-group"><label class="form-label">Technician Name</label><input class="form-input" id="repair-tech" placeholder="Technician name"></div>
-                            <div class="form-group"><label class="form-label">Repair Cost (₹)</label><input class="form-input" type="number" id="repair-cost" placeholder="0.00"></div>
-                            <div class="form-group"><label class="form-label">Invoice Number</label><input class="form-input" id="repair-invoice" placeholder="INV-2024-XXXX"></div>
-                            <div class="form-group"><label class="form-label">Actual Return Date</label><input class="form-input" type="date" id="repair-return-date"></div>
-                            <div class="form-group"><label class="form-label">Fixed Successfully</label>
-                                <select class="form-input" id="repair-fixed">
-                                    <option value="true">Yes</option>
-                                    <option value="false">No</option>
-                                </select>
-                            </div>
-                            <div class="form-group full"><label class="form-label">Repair Notes</label><input class="form-input" id="repair-notes" placeholder="What was repaired / replaced..."></div>
-                            <div class="form-group full"><label class="form-label">Post Repair Action</label>
-                                <select class="form-input" id="repair-action">
-                                    <option value="reassigned">Reassigned to employee</option>
-                                    <option value="returned to stock">Returned to stock (Available)</option>
-                                    <option value="condemned">Condemned (beyond repair)</option>
-                                    <option value="returned to vendor">Returned to vendor</option>
-                                </select>
+
+                            <!-- Resolution notes -->
+                            <div class="form-group full">
+                                <label class="form-label">Resolution Notes</label>
+                                <input class="form-input" id="vr-resolution"
+                                       placeholder="Describe what was repaired, parts replaced, or why it could not be fixed…">
                             </div>
                         </div>
+
+                        <!-- Dynamic outcome hint -->
+                        <div id="vr-outcome-hint" class="outcome-hint success">
+                            ✓ Device status → <strong>ASSIGNED</strong> — returned to the employee
+                        </div>
+
                         <div class="form-actions">
-                            <button class="btn btn-primary" onclick="updateRepair()">Update Repair</button>
-                            <button class="btn btn-ghost" onclick="document.getElementById('repair-update-form').style.display='none'">Cancel</button>
+                            <button class="btn btn-primary" onclick="submitRepairUpdate()">Submit Update</button>
+                            <button class="btn btn-ghost" onclick="closeRepairPanel()">Cancel</button>
                         </div>
                     </div>
                 </div>
@@ -676,68 +652,69 @@
     function loadDashboard(){
       document.getElementById('stat-total').textContent = devicesCache.length || 0;
       document.getElementById('stat-avail').textContent = devicesCache.filter(d=>d.deviceStatus==='AVAILABLE').length || 0;
-      document.getElementById('stat-repair').textContent = devicesCache.filter(d=>d.deviceStatus==='UNDER_REPAIR').length || 0;
-      const openSR = srCache.filter(s=>s.status==='OPEN'||s.status==='ACKNOWLEDGED');
-      document.getElementById('stat-open').textContent = openSR.length || 0;
+      document.getElementById('stat-repair').textContent = srCache.length || 0;
+      document.getElementById('stat-open').textContent = srCache.length || 0;
 
-      // update badge
       const badge = document.getElementById('sr-badge');
-      if(openSR.length){ badge.textContent=openSR.length; badge.style.display=''; }
+      if(srCache.length){ badge.textContent=srCache.length; badge.style.display=''; }
       else badge.style.display='none';
 
-      // dash SR table
       document.getElementById('dash-sr').innerHTML = srCache.slice(0,5).map(s=>`
-        <tr><td class="main-cell">${s.deviceName||'Device #'+s.deviceId}</td>
-        <td>${(s.requestType||'').toLowerCase()}</td>
-        <td>${chip(s.status)}</td></tr>`).join('') ||
-        `<tr><td colspan="3" class="empty">No service requests</td></tr>`;
+        <tr>
+          <td class="main-cell">${s.deviceName||'Device #'+s.deviceId}</td>
+          <td>${(s.requestType||'').toLowerCase().replace('_',' ')}</td>
+          <td>${chip('SENT_FOR_REPAIR')}</td>
+        </tr>`).join('') ||
+        `<tr><td colspan="3" class="empty">No pending repairs</td></tr>`;
 
-      // dash repairs
       document.getElementById('dash-repairs').innerHTML = repairsCache.filter(r=>r.repairStatus!=='FIXED'&&r.repairStatus!=='IRREPARABLE').slice(0,5).map(r=>`
-        <tr><td class="main-cell">${r.deviceName||'Device #'+r.deviceId}</td>
-        <td>${r.sentDate||'—'}</td>
-        <td>${chip(r.repairStatus)}</td></tr>`).join('') ||
+        <tr>
+          <td class="main-cell">${r.deviceName||'Device #'+r.deviceId}</td>
+          <td>${r.sentDate||'—'}</td>
+          <td>${chip(r.repairStatus)}</td>
+        </tr>`).join('') ||
         `<tr><td colspan="3" class="empty">No active repairs</td></tr>`;
 
-      // dash devices
       document.getElementById('dash-devices').innerHTML = devicesCache.slice(0,8).map(d=>`
-        <tr><td class="main-cell">${d.deviceName||'—'}</td>
-        <td>${chip(d.deviceType)}</td>
-        <td>${chip(d.deviceStatus)}</td>
-       <td>${d.assignedEmployeeName||'—'}</td></tr>`).join('') ||
-        `<tr><td colspan="5" class="empty">No devices</td></tr>`;
+        <tr>
+          <td class="main-cell">${d.deviceName||'—'}</td>
+          <td>${chip(d.deviceType)}</td>
+          <td>${chip(d.deviceStatus)}</td>
+          <td>${d.assignedEmployeeName||'—'}</td>
+        </tr>`).join('') ||
+        `<tr><td colspan="4" class="empty">No devices</td></tr>`;
     }
 
     // ── DEVICES ───────────────────────────────────────────────────────
     async function loadMyDevices(){
-  try{
-    const data = await apiFetch('/devices/vendor/me');
-    devicesCache = data || [];
-    renderDevices(devicesCache);
-  }catch(e){ renderDevices([]); }
-}
+      try{
+        const data = await apiFetch('/devices/vendor/me');
+        devicesCache = data || [];
+        renderDevices(devicesCache);
+      }catch(e){ renderDevices([]); }
+    }
 
     function renderDevices(list){
-  document.getElementById('devices-list').innerHTML = list.length
-    ? list.map(d=>`<tr>
-        <td style="font-family:var(--mono);font-size:11px;color:var(--text3)">#${d.id}</td>
-        <td class="main-cell">${d.deviceName||'—'}</td>
-        <td>${d.brand||'—'}</td>
-        <td>${chip(d.deviceType)}</td>
-        <td style="font-size:11px;font-family:var(--mono)">
-          ${d.warrantyExpiryDate
-            ? (new Date(d.warrantyExpiryDate) > new Date()
-                ? `<span style="color:var(--green)">✓ ${d.warrantyExpiryDate}</span>`
-                : `<span style="color:var(--red)">✗ ${d.warrantyExpiryDate}</span>`)
-            : '<span style="color:var(--text3)">—</span>'}
-        </td>
-        <td>${chip(d.deviceStatus)}</td>
-        <td><div class="action-row">
-          <button class="btn btn-ghost btn-xs" onclick="viewDevice(${d.id})">Details</button>
-        </div></td>
-      </tr>`).join('')
-    : `<tr><td colspan="7"><div class="empty"><div class="empty-icon">⬡</div>No devices registered yet</div></td></tr>`;
-}
+      document.getElementById('devices-list').innerHTML = list.length
+        ? list.map(d=>`<tr>
+            <td style="font-family:var(--mono);font-size:11px;color:var(--text3)">#${d.id}</td>
+            <td class="main-cell">${d.deviceName||'—'}</td>
+            <td>${d.brand||'—'}</td>
+            <td>${chip(d.deviceType)}</td>
+            <td style="font-size:11px;font-family:var(--mono)">
+              ${d.warrantyExpiryDate
+                ? (new Date(d.warrantyExpiryDate) > new Date()
+                    ? `<span style="color:var(--green)">✓ ${d.warrantyExpiryDate}</span>`
+                    : `<span style="color:var(--red)">✗ ${d.warrantyExpiryDate}</span>`)
+                : '<span style="color:var(--text3)">—</span>'}
+            </td>
+            <td>${chip(d.deviceStatus)}</td>
+            <td><div class="action-row">
+              <button class="btn btn-ghost btn-xs" onclick="viewDevice(${d.id})">Details</button>
+            </div></td>
+          </tr>`).join('')
+        : `<tr><td colspan="7"><div class="empty"><div class="empty-icon">⬡</div>No devices registered yet</div></td></tr>`;
+    }
 
     function filterDevices(){
       const q = document.getElementById('device-search').value.toLowerCase();
@@ -750,35 +727,43 @@
     }
 
     async function addDevice(){
-  const body = {
-    deviceName: document.getElementById('d-name').value.trim(),
-    brand: document.getElementById('d-brand').value.trim(),
-    deviceType: document.getElementById('d-type').value,
-    warrantyExpiryDate: document.getElementById('d-warranty').value || null,
-  };
-  if(!body.deviceName || !body.brand || !body.deviceType){
-    showAlert('Device name, brand and type are required','error'); return;
-  }
-  try{
-    await apiFetch('/devices', {method:'POST', body:JSON.stringify(body)});
-    showAlert('Device registered successfully!','success');
-    clearDeviceForm();
-    loadMyDevices();
-  }catch(e){ showAlert('Failed: '+e.message,'error'); }
-}
+      const body = {
+        deviceName: document.getElementById('d-name').value.trim(),
+        brand: document.getElementById('d-brand').value.trim(),
+        deviceType: document.getElementById('d-type').value,
+        warrantyExpiryDate: document.getElementById('d-warranty').value || null,
+      };
+      if(!body.deviceName || !body.brand || !body.deviceType){
+        showAlert('Device name, brand and type are required','error'); return;
+      }
+      try{
+        await apiFetch('/devices', {method:'POST', body:JSON.stringify(body)});
+        showAlert('Device registered successfully!','success');
+        clearDeviceForm();
+        loadMyDevices();
+      }catch(e){ showAlert('Failed: '+e.message,'error'); }
+    }
 
+    function clearDeviceForm(){
+      ['d-name','d-brand','d-warranty'].forEach(id=>document.getElementById(id).value='');
+      document.getElementById('d-type').value='LAPTOP';
+    }
 
-   function clearDeviceForm(){
-  ['d-name','d-brand','d-warranty'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('d-type').value='LAPTOP';
-}
-
-    // ── SERVICE REQUESTS ──────────────────────────────────────────────
+    // ── SERVICE REQUESTS (vendor repair queue) ────────────────────────
+    // GET  /service-requests/vendor/me  → list of SENT_FOR_REPAIR requests
+    // PUT  /service-requests/vendor     → { requestId, resolution, status }
+    //   REPAIR_DONE  → device becomes ASSIGNED (back to employee)
+    //   anything else → device becomes CONDEMNED
+    // ─────────────────────────────────────────────────────────────────
     async function loadServiceRequests(){
       try{
-        const data = await apiFetch('/tech-vendor/service-requests');
+        const data = await apiFetch('/service-requests/vendor/me');
         srCache = data || [];
         renderServiceRequests(srCache);
+        // refresh badge
+        const badge = document.getElementById('sr-badge');
+        if(srCache.length){ badge.textContent=srCache.length; badge.style.display=''; }
+        else badge.style.display='none';
       }catch(e){ renderServiceRequests([]); }
     }
 
@@ -787,46 +772,73 @@
         ? list.map(s=>`<tr>
             <td style="font-family:var(--mono);font-size:11px;color:var(--text3)">#${s.id}</td>
             <td class="main-cell">${s.deviceName||'Device #'+s.deviceId}</td>
-            <td>${(s.requestType||'').toLowerCase().replace('_',' ')}</td>
-            <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.issueDescription||'—'}</td>
-            <td>${s.urgent ? '<span style="color:var(--red);font-family:var(--mono);font-size:10px;font-weight:700">URGENT</span>' : '<span style="color:var(--text3);font-family:var(--mono);font-size:10px">—</span>'}</td>
-            <td>${chip(s.status)}</td>
+            <td>${(s.requestType||'').toLowerCase().replace(/_/g,' ')}</td>
+            <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text2)">${s.issueDescription||'—'}</td>
+            <td>${s.urgent
+              ? '<span style="color:var(--red);font-family:var(--mono);font-size:10px;font-weight:700">⚠ URGENT</span>'
+              : '<span style="color:var(--text3);font-family:var(--mono);font-size:10px">—</span>'}</td>
             <td style="font-size:10px;font-family:var(--mono);color:var(--text3)">${s.raisedAt ? s.raisedAt.split('T')[0] : '—'}</td>
-            <td><div class="action-row">
-              ${s.status==='OPEN' ? `<button class="btn btn-success btn-xs" onclick="acknowledgeRequest(${s.id})">Acknowledge</button>` : ''}
-              ${s.status==='ACKNOWLEDGED' ? `<button class="btn btn-warn btn-xs" onclick="sendForRepair(${s.id})">Send for Repair</button>` : ''}
-              ${s.status==='REPAIR_DONE' ? `<button class="btn btn-success btn-xs" onclick="resolveRequest(${s.id})">Resolve</button>` : ''}
-            </div></td>
+            <td>
+              <button class="btn btn-success btn-xs" onclick="openRepairPanel(${s.id}, '${(s.deviceName||'Device #'+s.deviceId).replace(/'/g,"\\'")}')">
+                ⚙ Update Repair
+              </button>
+            </td>
           </tr>`).join('')
-        : `<tr><td colspan="8"><div class="empty"><div class="empty-icon">★</div>No service requests</div></td></tr>`;
+        : `<tr><td colspan="7"><div class="empty"><div class="empty-icon">⚙</div>No devices in repair queue</div></td></tr>`;
     }
 
-    function filterServiceRequests(){
-      const f = document.getElementById('sr-filter').value;
-      renderServiceRequests(!f ? srCache : srCache.filter(s=>s.status===f));
+    // ── REPAIR PANEL ──────────────────────────────────────────────────
+    function openRepairPanel(requestId, deviceName){
+      document.getElementById('vr-request-id').value = requestId;
+      document.getElementById('vr-panel-subtitle').textContent = `Request #${requestId} — ${deviceName}`;
+      document.getElementById('vr-status').value = 'REPAIR_DONE';
+      document.getElementById('vr-resolution').value = '';
+      onOutcomeChange(); // set correct hint
+      const panel = document.getElementById('vendor-repair-panel');
+      panel.style.display = 'block';
+      panel.scrollIntoView({behavior:'smooth', block:'start'});
     }
 
-    async function acknowledgeRequest(id){
+    function closeRepairPanel(){
+      document.getElementById('vendor-repair-panel').style.display = 'none';
+    }
+
+    function onOutcomeChange(){
+      const status = document.getElementById('vr-status').value;
+      const hint = document.getElementById('vr-outcome-hint');
+      if(status === 'REPAIR_DONE'){
+        hint.className = 'outcome-hint success';
+        hint.innerHTML = '✓ Device status → <strong>ASSIGNED</strong> — returned to the employee';
+      } else {
+        hint.className = 'outcome-hint danger';
+        hint.innerHTML = '✕ Device status → <strong>CONDEMNED</strong> — device will be marked unusable';
+      }
+    }
+
+    async function submitRepairUpdate(){
+      const requestId = document.getElementById('vr-request-id').value;
+      const status    = document.getElementById('vr-status').value;
+      const resolution = document.getElementById('vr-resolution').value.trim();
+
+      if(!resolution){
+        showAlert('Please enter resolution notes','error'); return;
+      }
+
+      // RepairDTO: { requestId, resolution, status }
+      const body = {
+        requestId: parseInt(requestId),
+        resolution,
+        status   // "REPAIR_DONE" → ASSIGNED  |  anything else → CONDEMNED
+      };
+
       try{
-        await apiFetch(`/tech-vendor/service-requests/${id}/acknowledge`, {method:'PUT'});
-        showAlert('Request acknowledged','success');
-        loadServiceRequests(); loadDashboard();
-      }catch(e){ showAlert('Failed: '+e.message,'error'); }
-    }
-
-    async function sendForRepair(id){
-      try{
-        await apiFetch(`/tech-vendor/service-requests/${id}/send-repair`, {method:'PUT'});
-        showAlert('Device sent for repair','success');
-        loadServiceRequests(); loadRepairLogs(); loadMyDevices(); loadDashboard();
-      }catch(e){ showAlert('Failed: '+e.message,'error'); }
-    }
-
-    async function resolveRequest(id){
-      try{
-        await apiFetch(`/tech-vendor/service-requests/${id}/resolve`, {method:'PUT'});
-        showAlert('Request resolved','success');
-        loadServiceRequests(); loadDashboard();
+        await apiFetch('/service-requests/vendor', {method:'PUT', body:JSON.stringify(body)});
+        const label = status === 'REPAIR_DONE' ? 'Repair marked done — device returned to employee' : 'Device condemned';
+        showAlert(label, 'success');
+        closeRepairPanel();
+        // Refresh everything that could have changed
+        await Promise.all([loadServiceRequests(), loadMyDevices(), loadRepairLogs()]);
+        loadDashboard();
       }catch(e){ showAlert('Failed: '+e.message,'error'); }
     }
 
@@ -884,72 +896,71 @@
 
     // ── ASSIGNMENTS ───────────────────────────────────────────────────
     async function loadAssignments(){
-    try{
-    const data = await apiFetch('/devices/assignments'); // confirm your actual endpoint path
-    assignmentsCache = data || [];
-    document.getElementById('assignments-list').innerHTML = assignmentsCache.length
-      ? assignmentsCache.map(a=>`<tr>
-          <td class="main-cell">${a.deviceName||'—'}</td>
-          <td>${chip(a.deviceType)}</td>
-          <td>${a.employeeName||'—'}</td>
-          <td style="font-size:11px;font-family:var(--mono)">${a.assignedDate||'—'}</td>
-          <td>${chip(a.status==='ACTIVE'?'active_assign':a.status?.toLowerCase())}</td>
-        </tr>`).join('')
-      : `<tr><td colspan="5"><div class="empty"><div class="empty-icon">◎</div>No assignments found</div></td></tr>`;
-    }catch(e){}
-   }
+      try{
+        const data = await apiFetch('/devices/assignments');
+        assignmentsCache = data || [];
+        document.getElementById('assignments-list').innerHTML = assignmentsCache.length
+          ? assignmentsCache.map(a=>`<tr>
+              <td class="main-cell">${a.deviceName||'—'}</td>
+              <td>${chip(a.deviceType)}</td>
+              <td>${a.employeeName||'—'}</td>
+              <td style="font-size:11px;font-family:var(--mono)">${a.assignedDate||'—'}</td>
+              <td>${chip(a.status==='ACTIVE'?'active_assign':a.status?.toLowerCase())}</td>
+            </tr>`).join('')
+          : `<tr><td colspan="5"><div class="empty"><div class="empty-icon">◎</div>No assignments found</div></td></tr>`;
+      }catch(e){}
+    }
 
     // ── PROFILE ───────────────────────────────────────────────────────
     async function loadProfile(){
-  try{
-    const data = await apiFetch('/vendors/me');  // fix endpoint
-    document.getElementById('profile-name').textContent = data.name || '--';
-    document.getElementById('profile-email').textContent = data.email || '--';
-    document.getElementById('profile-phone').textContent = data.phone || '--';
-    document.getElementById('profile-reg').textContent = data.registeredAt || '--';
-    document.getElementById('profile-avatar').textContent = (data.name||'T').charAt(0).toUpperCase();
-    document.getElementById('sidebar-name').textContent = data.name || 'TechVendor';
-  }catch(e){}
-}
+      try{
+        const data = await apiFetch('/vendors/me');
+        document.getElementById('profile-name').textContent = data.name || '--';
+        document.getElementById('profile-email').textContent = data.email || '--';
+        document.getElementById('profile-phone').textContent = data.phone || '--';
+        document.getElementById('profile-reg').textContent = data.registeredAt || '--';
+        document.getElementById('profile-avatar').textContent = (data.name||'T').charAt(0).toUpperCase();
+        document.getElementById('sidebar-name').textContent = data.name || 'TechVendor';
+      }catch(e){}
+    }
 
     // ── DEVICE DETAIL MODAL ───────────────────────────────────────────
     async function viewDevice(id){
-  const d = devicesCache.find(x=>x.id===id);
-  if(!d) return;
-  document.getElementById('modal-device-name').textContent = d.deviceName;
+      const d = devicesCache.find(x=>x.id===id);
+      if(!d) return;
+      document.getElementById('modal-device-name').textContent = d.deviceName;
 
-  // Derive warranty status from expiry date
-  const today = new Date();
-  const warrantyExpiry = d.warrantyExpiryDate ? new Date(d.warrantyExpiryDate) : null;
-  const warrantyDisplay = warrantyExpiry
-    ? (warrantyExpiry > today
-        ? `<span style="color:var(--green);font-family:var(--mono)">✓ Valid until ${d.warrantyExpiryDate}</span>`
-        : `<span style="color:var(--red);font-family:var(--mono)">✗ Expired ${d.warrantyExpiryDate}</span>`)
-    : '<span style="color:var(--text3);font-family:var(--mono)">—</span>';
+      const today = new Date();
+      const warrantyExpiry = d.warrantyExpiryDate ? new Date(d.warrantyExpiryDate) : null;
+      const warrantyDisplay = warrantyExpiry
+        ? (warrantyExpiry > today
+            ? `<span style="color:var(--green);font-family:var(--mono)">✓ Valid until ${d.warrantyExpiryDate}</span>`
+            : `<span style="color:var(--red);font-family:var(--mono)">✗ Expired ${d.warrantyExpiryDate}</span>`)
+        : '<span style="color:var(--text3);font-family:var(--mono)">—</span>';
 
-  document.getElementById('modal-detail-grid').innerHTML = `
-    <div class="detail-item"><div class="detail-label">Brand</div><div class="detail-value">${d.brand||'—'}</div></div>
-    <div class="detail-item"><div class="detail-label">Type</div><div class="detail-value">${chip(d.deviceType)}</div></div>
-    <div class="detail-item"><div class="detail-label">Status</div><div class="detail-value">${chip(d.deviceStatus)}</div></div>
-    <div class="detail-item"><div class="detail-label">Warranty</div><div class="detail-value">${warrantyDisplay}</div></div>
-    <div class="detail-item"><div class="detail-label">Assigned To</div><div class="detail-value">${d.assignedEmployeeName||'<span style="color:var(--text3)">Unassigned</span>'}</div></div>
-    <div class="detail-item"><div class="detail-label">Added On</div><div class="detail-value">${d.createdAt ? d.createdAt.split('T')[0] : '—'}</div></div>
-  `;
+      document.getElementById('modal-detail-grid').innerHTML = `
+        <div class="detail-item"><div class="detail-label">Brand</div><div class="detail-value">${d.brand||'—'}</div></div>
+        <div class="detail-item"><div class="detail-label">Type</div><div class="detail-value">${chip(d.deviceType)}</div></div>
+        <div class="detail-item"><div class="detail-label">Status</div><div class="detail-value">${chip(d.deviceStatus)}</div></div>
+        <div class="detail-item"><div class="detail-label">Warranty</div><div class="detail-value">${warrantyDisplay}</div></div>
+        <div class="detail-item"><div class="detail-label">Assigned To</div><div class="detail-value">${d.assignedEmployeeName||'<span style="color:var(--text3)">Unassigned</span>'}</div></div>
+        <div class="detail-item"><div class="detail-label">Added On</div><div class="detail-value">${d.createdAt ? d.createdAt.split('T')[0] : '—'}</div></div>
+      `;
 
-  const repairs = repairsCache.filter(r=>r.deviceId===id);
-  document.getElementById('modal-repair-history').innerHTML = repairs.length
-    ? `<div class="timeline">${repairs.map(r=>`
-        <div class="tl-item">
-          <div class="tl-dot ${r.repairStatus==='FIXED'?'green':r.repairStatus==='IRREPARABLE'?'red':r.repairStatus==='IN_PROGRESS'?'amber':'cyan'}">⚙</div>
-          <div class="tl-content">
-            <div class="tl-title">${r.issueReported||'Repair'}</div>
-            <div class="tl-meta">${chip(r.repairStatus)} · ${r.sentDate||'—'} → ${r.actualReturnDate||'pending'} · ${r.repairCost ? '₹'+r.repairCost : 'cost pending'}</div>
-          </div>
-        </div>`).join('')}</div>`
-    : `<div class="empty" style="padding:16px">No repair history</div>`;
+      const repairs = repairsCache.filter(r=>r.deviceId===id);
+      document.getElementById('modal-repair-history').innerHTML = repairs.length
+        ? `<div class="timeline">${repairs.map(r=>`
+            <div class="tl-item">
+              <div class="tl-dot ${r.repairStatus==='FIXED'?'green':r.repairStatus==='IRREPARABLE'?'red':r.repairStatus==='IN_PROGRESS'?'amber':'cyan'}">⚙</div>
+              <div class="tl-content">
+                <div class="tl-title">${r.issueReported||'Repair'}</div>
+                <div class="tl-meta">${chip(r.repairStatus)} · ${r.sentDate||'—'} → ${r.actualReturnDate||'pending'} · ${r.repairCost ? '₹'+r.repairCost : 'cost pending'}</div>
+              </div>
+            </div>`).join('')}</div>`
+        : `<div class="empty" style="padding:16px">No repair history</div>`;
 
-  document.getElementById('device-modal').classList.add('open');
-}
+      document.getElementById('device-modal').classList.add('open');
+    }
 
     function closeModal(){
       document.getElementById('device-modal').classList.remove('open');
@@ -967,13 +978,13 @@
       el.className = `alert alert-${type}`;
       el.innerHTML = `<span>${type==='success'?'✓':'✕'}</span>${msg}`;
       document.body.appendChild(el);
-      setTimeout(()=>el.remove(), 3000);
+      setTimeout(()=>el.remove(), 3500);
     }
 
     function logout(){
       localStorage.removeItem('jwt_token');
       localStorage.removeItem('auth_type');
-      fetch(`${API}/session/logout`,{method:'POST',credentials:'include'}).finally(()=>window.location.href='/vendor-login.html');
+      fetch(`${API}/session/logout`,{method:'POST'}).finally(()=>window.location.href='/vendor-login.html');
     }
 </script>
 </body>
