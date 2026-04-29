@@ -147,30 +147,39 @@
                         <div class="form-group"><label>Name</label><input type="text" id="employee-name" placeholder="Employee name"></div>
                         <div class="form-group"><label>Email</label><input type="email" id="employee-email" placeholder="employee@company.com"></div>
                         <div class="form-group"><label>Password</label><input type="password" id="employee-password" placeholder="Temporary password"></div>
-                        <div class="form-group"><label>Department</label><input type="text" id="employee-dept" placeholder="Department"></div>
-                        <div class="form-group full"><label>Timezone</label>
-                            <select id="employee-timezone">
-                            <option value="Asia/Kolkata">India — IST UTC+5:30</option>
-                            <option value="UTC">UTC</option>
-                            <option value="America/New_York">New York — EST UTC-5</option>
-                            <option value="America/Los_Angeles">Los Angeles — PST UTC-8</option>
-                            <option value="Europe/London">London — GMT UTC+0</option>
-                            <option value="Europe/Paris">Paris — CET UTC+1</option>
-                            <option value="Asia/Tokyo">Tokyo — JST UTC+9</option>
-                            <option value="Asia/Dubai">Dubai — GST UTC+4</option>
-                            <option value="Australia/Sydney">Sydney — AEDT UTC+11</option>
-                            <option value="Asia/Singapore">Singapore — SGT UTC+8</option>
-                        </select>
-                        </div>
-                        <div class="form-group"><label>Gender</label>
+                        <div class="form-group">
+                            <label>Gender</label>
                             <select id="employee-gender">
                                 <option value="M">Male</option>
                                 <option value="F">Female</option>
                                 <option value="O">Other</option>
                             </select>
                         </div>
+                        <div class="form-group full">
+                            <label>Manager</label>
+                            <select id="employee-manager-select">
+                                <option value="">-- Select Manager --</option>
+                            </select>
+                        </div>
+                        <div class="form-group full"><label>Timezone</label>
+                            <select id="employee-timezone">
+                                <option value="Asia/Kolkata">India — IST UTC+5:30</option>
+                                <option value="UTC">UTC</option>
+                                <option value="America/New_York">New York — EST UTC-5</option>
+                                <option value="America/Los_Angeles">Los Angeles — PST UTC-8</option>
+                                <option value="Europe/London">London — GMT UTC+0</option>
+                                <option value="Europe/Paris">Paris — CET UTC+1</option>
+                                <option value="Asia/Tokyo">Tokyo — JST UTC+9</option>
+                                <option value="Asia/Dubai">Dubai — GST UTC+4</option>
+                                <option value="Australia/Sydney">Sydney — AEDT UTC+11</option>
+                                <option value="Asia/Singapore">Singapore — SGT UTC+8</option>
+                            </select>
+                        </div>
                     </div>
-                    <div class="modal-actions" style="margin-top: 20px;"><button class="btn btn-primary" onclick="createEmployee()">Create Employee</button><button class="btn btn-secondary" onclick="clearEmployeeForm('employee')">Clear</button></div>
+                    <div class="modal-actions" style="margin-top: 20px;">
+                        <button class="btn btn-primary" onclick="createEmployee()">Create Employee</button>
+                        <button class="btn btn-secondary" onclick="clearEmployeeForm('employee')">Clear</button>
+                    </div>
                 </div>
             </div>
 
@@ -648,7 +657,7 @@
         const loaders = {
             'dashboard': loadDashboard,
             'employees': loadEmployees,
-            'add-employee': () => {},
+            'add-employee': loadManagersDropdown,
             'add-manager': () => {},
             'add-vendor': () => {},
             'my-leaves': loadMyLeaves,
@@ -715,26 +724,51 @@
         } catch (e) { console.error(e); }
     }
 
-    async function createEmployee() {
-        const body = {
-            name: document.getElementById('employee-name').value.trim(),
-            email: document.getElementById('employee-email').value.trim(),
-            password: document.getElementById('employee-password').value,
-            dept: document.getElementById('employee-dept').value.trim(),
-            gender: document.getElementById('employee-gender').value,
-            timezone: document.getElementById('employee-timezone').value|| 'UTC'
-        };
-        if (!body.name || !body.email || !body.password || !body.dept) {
-            showAlert('Please fill all employee fields', 'error');
-            return;
-        }
-        try {
-            await apiFetch('/admin/employees', { method: 'POST', body: JSON.stringify(body) });
-            showAlert('Employee created successfully!', 'success');
-            clearEmployeeForm('employee');
-            loadEmployees();
-        } catch (e) { showAlert('Failed to create employee: ' + e.message, 'error'); }
+   async function loadManagersDropdown() {
+    try {
+        const managers = await apiFetch('/admin/managers');
+        const select = document.getElementById('employee-manager-select');
+        select.innerHTML = '<option value="">-- Select Manager --</option>';
+        (managers || []).forEach(m => {
+            const opt = document.createElement('option');
+            opt.value = m.managerId;  // ✅ matches ManagerDTO field
+            opt.textContent = `${m.name} — ${m.dept || 'N/A'} (${m.email})`;
+            select.appendChild(opt);
+        });
+    } catch (e) {
+        showAlert('Failed to load managers', 'error');
     }
+}
+
+
+
+    async function createEmployee() {
+    const managerId = document.getElementById('employee-manager-select').value;
+    const body = {
+        name: document.getElementById('employee-name').value.trim(),
+        email: document.getElementById('employee-email').value.trim(),
+        password: document.getElementById('employee-password').value,
+        gender: document.getElementById('employee-gender').value,
+        timezone: document.getElementById('employee-timezone').value || 'UTC',
+        managerId: parseInt(managerId)
+    };
+    if (!body.name || !body.email || !body.password) {
+        showAlert('Please fill all employee fields', 'error');
+        return;
+    }
+    if (!managerId) {
+        showAlert('Please select a manager', 'error');
+        return;
+    }
+    try {
+        await apiFetch('/admin/employees', { method: 'POST', body: JSON.stringify(body) });
+        showAlert('Employee created successfully!', 'success');
+        clearEmployeeForm('employee');
+        loadEmployees();
+    } catch (e) {
+        showAlert('Failed to create employee: ' + e.message, 'error');
+    }
+}
 
     async function createManager() {
         const body = {
@@ -757,12 +791,15 @@
         } catch (e) { showAlert('Failed to create manager: ' + e.message, 'error'); }
     }
 
-    function clearEmployeeForm(type) {
-        const fields = type === 'manager'
-            ? ['manager-name-create', 'manager-email-create', 'manager-password-create', 'manager-dept-create', 'manager-timezone-create']
-            : ['employee-name', 'employee-email', 'employee-password', 'employee-dept', 'employee-timezone'];
-        fields.forEach(id => document.getElementById(id).value = '');
+   function clearEmployeeForm(type) {
+    const fields = type === 'manager'
+        ? ['manager-name-create', 'manager-email-create', 'manager-password-create', 'manager-dept-create', 'manager-timezone-create']
+        : ['employee-name', 'employee-email', 'employee-password', 'employee-timezone'];
+    fields.forEach(id => document.getElementById(id).value = '');
+    if (type === 'employee') {
+        document.getElementById('employee-manager-select').value = '';
     }
+}
 
     async function deleteEmployee(employeeId) {
         if (!confirm(`Delete employee #${employeeId}?`)) return;
