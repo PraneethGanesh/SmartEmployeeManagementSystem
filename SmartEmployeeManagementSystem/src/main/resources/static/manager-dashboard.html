@@ -98,6 +98,9 @@
         .chip.maternity{background:var(--accent-dim);color:var(--accent)}
         .chip.employee{background:var(--blue-dim);color:var(--blue)}
         .chip.manager{background:var(--accent-dim);color:var(--accent)}
+        .chip.under_repair { background: var(--amber-dim); color: var(--amber); }
+        .chip.assigned { background: var(--green-dim); color: var(--green);}
+        .chip.condemned { background: var(--red-dim); color: var(--red);}
 
         /* BUTTONS */
         .btn{padding:8px 16px;border-radius:8px;border:none;font-family:var(--font);font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s}
@@ -1130,14 +1133,14 @@ async function loadMyAssignedDevices() {
                     : `<span style="color:var(--red);font-size:11px">✗ Expired ${d.warrantyExpiryDate}</span>`)
                 : '<span style="color:var(--text3);font-size:11px">—</span>';
             return `<tr>
-                <td style="font-family:var(--mono);font-size:12px">#${d.id}</td>
-                <td><strong>${d.deviceName || '—'}</strong></td>
-                <td>${d.brand || '—'}</td>
-                <td><span class="chip employee">${(d.deviceType || '').toLowerCase()}</span></td>
-                <td>${warrantyDisplay}</td>
-                <td style="font-family:var(--mono);font-size:12px;color:var(--text3)">${d.assignedDate || '—'}</td>
-                <td><span class="chip active">ASSIGNED</span></td>
-            </tr>`;
+<td>#${d.id}</td>
+<td><strong>${d.deviceName || '—'}</strong></td>
+<td>${d.brand || '—'}</td>
+<td><span class="chip">${(d.deviceType || '').toLowerCase()}</span></td>
+<td>${warrantyDisplay}</td>
+<td style="font-size:12px;color:var(--text2)">${d.assignedDate || '—'}</td>
+<td><span class="chip ${(d.deviceStatus || '').toLowerCase()}">${d.deviceStatus || '—'}</span></td>
+</tr>`;
         }).join('');
     } catch (e) {
         document.getElementById('my-devices-list').innerHTML =
