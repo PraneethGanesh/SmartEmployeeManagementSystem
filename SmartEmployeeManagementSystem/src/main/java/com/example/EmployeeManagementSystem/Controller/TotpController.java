@@ -128,7 +128,7 @@ public class TotpController {
     // ---- helper ----
 
     private Employee getEmployee(Authentication authentication) {
-        return employeeRepo.findByName(authentication.getName())
+        return employeeRepo.findByEmail(authentication.getName())
                 .orElseThrow(() -> new RuntimeException("Employee not found"));
     }
 }

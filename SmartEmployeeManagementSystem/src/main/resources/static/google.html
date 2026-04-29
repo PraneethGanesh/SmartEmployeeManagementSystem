@@ -379,6 +379,21 @@
         </div>
 
     </div>
+    <!-- TOTP MODAL OVERLAY -->
+    <div id="totp-overlay" style="display:none;position:fixed;inset:0;z-index:999;background:rgba(7,9,16,0.85);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;">
+        <div style="background:var(--panel);border:1px solid var(--border-lit);border-radius:16px;padding:36px;width:340px;text-align:center;animation:fadeIn 0.25s ease;">
+            <div style="font-size:28px;margin-bottom:8px;">🔐</div>
+            <h3 style="font-size:17px;font-weight:700;color:var(--text);margin-bottom:6px;">Two-Factor Verification</h3>
+            <p style="font-size:13px;color:var(--text2);margin-bottom:24px;">Enter the 6-digit code from your authenticator app.</p>
+            <input id="totp-code" class="form-input" type="text" inputmode="numeric" maxlength="6"
+                   placeholder="000000"
+                   style="text-align:center;font-size:22px;font-family:var(--mono);letter-spacing:8px;padding:14px;"
+                   oninput="this.value=this.value.replace(/\D/g,'')">
+            <div id="totp-status" style="display:none;margin-top:10px;font-size:13px;color:var(--red);"></div>
+            <button id="totp-verify-btn" class="btn-login blue" style="margin-top:16px;" onclick="submitTotp()">Verify</button>
+            <button onclick="cancelTotp()" style="margin-top:10px;width:100%;padding:10px;border:none;background:transparent;color:var(--text2);font-family:var(--font);font-size:13px;cursor:pointer;">Cancel</button>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -513,10 +528,15 @@
     }
 
     // ---- JWT Login ----
+    let _preAuthToken = null; // holds token between step 1 and step 2
+
     async function jwtLogin() {
         const username = document.getElementById('jwt-username').value.trim();
         const password = document.getElementById('jwt-password').value;
-        if (!username || !password) { showStatus('error', 'Please enter your username and password'); return; }
+        if (!username || !password) {
+            showStatus('error', 'Please enter your username and password');
+            return;
+        }
 
         const btn = document.getElementById('jwt-btn');
         btn.classList.add('loading'); btn.textContent = 'Signing in...';
@@ -524,28 +544,98 @@
 
         try {
             const res = await fetch(`${API}/Authenticate`, {
-                method:  'POST',
+                method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body:    JSON.stringify({ username, password })
+                body: JSON.stringify({ username, password })
             });
+
             if (res.ok) {
                 const data = await res.json();
-                localStorage.setItem('jwt_token',     data.accessToken);
+
+                // --- TOTP required: show step-2 modal ---
+                if (data.requiresTotp) {
+                    _preAuthToken = data.preAuthToken;
+                    btn.classList.remove('loading'); btn.textContent = 'Sign In';
+                    hideStatus();
+                    openTotpModal();
+                    return;
+                }
+
+                // --- No TOTP: issue JWT directly ---
+                localStorage.setItem('jwt_token',   data.accessToken);
                 localStorage.setItem('refresh_token', data.refreshToken || '');
-                localStorage.setItem('auth_type',     'jwt');
-                localStorage.setItem('last_role',     currentRole);
+                localStorage.setItem('auth_type',   'jwt');
+                localStorage.setItem('last_role',   currentRole);
                 localStorage.setItem('user_timezone', document.getElementById('tz-select').value);
                 showStatus('success', 'Login successful! Redirecting...');
                 setTimeout(() => redirectByRole(data.accessToken, 'jwt'), 600);
+
             } else {
                 const err = await res.text();
                 showStatus('error', 'Login failed: ' + (err || 'Invalid credentials'));
-                btn.classList.remove('loading');
-                btn.textContent = 'Sign In';
+                btn.classList.remove('loading'); btn.textContent = 'Sign In';
             }
-        } catch(e) {
+        } catch (e) {
             showStatus('error', 'Connection error: ' + e.message);
             btn.classList.remove('loading'); btn.textContent = 'Sign In';
+        }
+    }
+
+    function openTotpModal() {
+        const overlay = document.getElementById('totp-overlay');
+        overlay.style.display = 'flex';
+        document.getElementById('totp-code').value = '';
+        document.getElementById('totp-status').style.display = 'none';
+        setTimeout(() => document.getElementById('totp-code').focus(), 100);
+    }
+
+    function cancelTotp() {
+        _preAuthToken = null;
+        document.getElementById('totp-overlay').style.display = 'none';
+    }
+
+    async function submitTotp() {
+        const code = document.getElementById('totp-code').value.trim();
+        if (code.length !== 6) {
+            document.getElementById('totp-status').textContent = 'Please enter a 6-digit code.';
+            document.getElementById('totp-status').style.display = 'block';
+            return;
+        }
+
+        const verifyBtn = document.getElementById('totp-verify-btn');
+        verifyBtn.classList.add('loading'); verifyBtn.textContent = 'Verifying...';
+        document.getElementById('totp-status').style.display = 'none';
+
+        try {
+            const res = await fetch(`${API}/Authenticate/totp`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ preAuthToken: _preAuthToken, code })
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                _preAuthToken = null;
+                document.getElementById('totp-overlay').style.display = 'none';
+                localStorage.setItem('jwt_token',    data.accessToken);
+                localStorage.setItem('refresh_token', data.refreshToken || '');
+                localStorage.setItem('auth_type',    'jwt');
+                localStorage.setItem('last_role',    currentRole);
+                localStorage.setItem('user_timezone', document.getElementById('tz-select').value);
+                showStatus('success', 'Verified! Redirecting...');
+                setTimeout(() => redirectByRole(data.accessToken, 'jwt'), 600);
+            } else {
+                const err = await res.json().catch(() => ({}));
+                document.getElementById('totp-status').textContent = err.error || 'Invalid code. Try again.';
+                document.getElementById('totp-status').style.display = 'block';
+                document.getElementById('totp-code').value = '';
+                document.getElementById('totp-code').focus();
+            }
+        } catch (e) {
+            document.getElementById('totp-status').textContent = 'Connection error: ' + e.message;
+            document.getElementById('totp-status').style.display = 'block';
+        } finally {
+            verifyBtn.classList.remove('loading'); verifyBtn.textContent = 'Verify';
         }
     }
 
@@ -644,10 +734,14 @@
     // ---- Enter key support ----
     document.addEventListener('keydown', e => {
         if (e.key !== 'Enter') return;
+        // If TOTP modal is open, submit TOTP
+        if (document.getElementById('totp-overlay').style.display === 'flex') {
+            submitTotp();
+            return;
+        }
         if (document.getElementById('jwt-form').style.display !== 'none') jwtLogin();
         else sessionLogin();
     });
-
     // ---- Init ----
     window.onload = () => {
         const savedTz = localStorage.getItem('user_timezone') || 'Asia/Kolkata';

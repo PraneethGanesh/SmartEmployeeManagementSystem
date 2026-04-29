@@ -115,7 +115,7 @@ public class JWTAuthConfig {
 //                )
                 .authorizeHttpRequests(auth -> auth
                         // Auth endpoints
-                        .requestMatchers("/Authenticate", "/Authenticate/refresh").permitAll()
+                        .requestMatchers("/Authenticate", "/Authenticate/totp","/Authenticate/refresh").permitAll()
                         .requestMatchers("/session/login", "/session/logout").permitAll()
 
                         // OAuth2 endpoints
@@ -138,7 +138,8 @@ public class JWTAuthConfig {
                                 "/manager-dashboard.html",
                                 "/dashboard.html",
                                 "/pending.html",
-                                "/leave_management.html").permitAll()
+                                "/leave_management.html",
+                                "/totp-setup.html").permitAll()
 
                         // Vendor pages
                         .requestMatchers("/vendor-login.html").permitAll()

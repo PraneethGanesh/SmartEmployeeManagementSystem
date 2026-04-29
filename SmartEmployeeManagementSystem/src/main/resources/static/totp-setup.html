@@ -243,14 +243,14 @@
 </div>
 
 <script>
-    const token = () => localStorage.getItem('accessToken');
+    const token = () => localStorage.getItem('jwt_token');
     const authHeader = () => ({ 'Authorization': 'Bearer ' + token(), 'Content-Type': 'application/json' });
 
     // ---- Load status on page open ----
     async function loadStatus() {
         try {
             const res = await fetch('/totp/status', { headers: authHeader() });
-            if (res.status === 401) { window.location.href = '/login.html'; return; }
+            if (res.status === 401) { window.location.href = '/google.html'; return; }
             const data = await res.json();
             renderStatus(data.totpEnabled);
         } catch (e) {
@@ -432,8 +432,8 @@
     }
 
     // ---- Boot ----
-    if (!localStorage.getItem('accessToken')) {
-        window.location.href = '/login.html';
+    if (!localStorage.getItem('jwt_token')) {
+        window.location.href = '/google.html';
     } else {
         loadStatus();
     }

@@ -70,6 +70,9 @@ public class AuthController {
 
             UserDetails user = (UserDetails) auth.getPrincipal();
 
+            Employee employee = employeeRepo.findByEmail(authRequest.getUsername())
+                    .orElseThrow(() -> new RuntimeException("Employee not found"));
+
             String role = user.getAuthorities().stream()
                     .map(a -> a.getAuthority())
                     .filter(a -> a.startsWith("ROLE_"))
@@ -78,11 +81,11 @@ public class AuthController {
                     .orElseThrow(() -> new RuntimeException("Role not found"));
 
             // Check if TOTP is enabled for this user
-            if (user instanceof Employee employee && employee.isTotpEnabled()) {
-                // Issue a short-lived pre-auth token valid for 5 minutes
+            if (employee.isTotpEnabled()) {
                 String preAuthToken = UUID.randomUUID().toString();
                 PRE_AUTH_STORE.put(preAuthToken, new PreAuthEntry(
-                        employee.getUsername(), role,
+                        employee.getEmail(),   // store email, not display name
+                        role,
                         System.currentTimeMillis() + 5 * 60 * 1000L
                 ));
                 return ResponseEntity.ok(Map.of(
@@ -118,7 +121,7 @@ public class AuthController {
             return ResponseEntity.status(401).body(Map.of("error", "Pre-auth token expired or invalid. Please login again."));
         }
 
-        Employee employee = employeeRepo.findByName(entry.username())
+        Employee employee = employeeRepo.findByEmail(entry.username())
                 .orElseThrow(() -> new RuntimeException("Employee not found"));
 
         if (!totpService.verifyCode(employee.getTotpSecret(), code)) {

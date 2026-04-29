@@ -43,7 +43,6 @@ public class Employee implements UserDetails {
     private Role role;
     @Column(nullable = true)
     private String totpSecret;
-    @Column(nullable = false)
     private boolean totpEnabled = false;
     /** IANA timezone id, e.g. "Asia/Kolkata", "America/New_York". Defaults to UTC. */
     @Column(nullable = false)
