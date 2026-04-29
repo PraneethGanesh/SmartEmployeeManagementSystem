@@ -1,8 +1,6 @@
 package com.example.EmployeeManagementSystem.Service;
 
-import com.example.EmployeeManagementSystem.DTO.EmployeeDTO;
-import com.example.EmployeeManagementSystem.DTO.EmployeeAttendanceResponseDTO;
-import com.example.EmployeeManagementSystem.DTO.EmployeeStatusDTO;
+import com.example.EmployeeManagementSystem.DTO.*;
 import com.example.EmployeeManagementSystem.Entity.Employee;
 import com.example.EmployeeManagementSystem.Entity.LeaveRequest;
 import com.example.EmployeeManagementSystem.Enum.Role;
@@ -48,12 +46,11 @@ public class EmployeeService {
         return employeeRepo.findAll();
     }
 
-    public Employee createEmployee(EmployeeDTO employeeDTO) {
+    public Employee createEmployee(AdminEmployeeDTO employeeDTO) {
         log.info("Creating new employee with email: {}", employeeDTO.getEmail());
         var employee = new Employee();
         if (employeeDTO.getName() != null) employee.setName(employeeDTO.getName());
         if (employeeDTO.getEmail() != null) employee.setEmail(employeeDTO.getEmail());
-        if (employeeDTO.getDept() != null) employee.setDept(employeeDTO.getDept());
         if (employeeDTO.getTimezone() != null && isValidTimezone(employeeDTO.getTimezone())) {
             employee.setTimezone(employeeDTO.getTimezone());
         } else {
@@ -65,6 +62,11 @@ public class EmployeeService {
         }
         employee.setPassword(passwordEncoder.encode(employeeDTO.getPassword()));
         employee.setGender(employeeDTO.getGender());
+        Employee manager=employeeRepo.findById(employeeDTO.getManagerId()).orElseThrow(
+                ()->new EmployeeNotFound("Employee with not found"+ employeeDTO.getManagerId())
+        );
+        employee.setDept(manager.getDept());
+        employee.setManager(manager);
         return employeeRepo.save(employee);
     }
 
@@ -190,6 +192,22 @@ public class EmployeeService {
         dto.setEmail(employee.getEmail());
         dto.setDept(employee.getDept());
         dto.setRole(employee.getRole());
+        return dto;
+    }
+
+    public ResponseEntity<List<ManagerDTO>> getAllManagers() {
+        List<ManagerDTO> managers = employeeRepo.findByRole(Role.MANAGER).stream()
+                .map(this::toManagerDTO)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(managers);
+    }
+
+    private ManagerDTO toManagerDTO(Employee employee) {
+        ManagerDTO dto = new ManagerDTO();
+        dto.setManagerId(employee.getEmployeeId());
+        dto.setName(employee.getName());
+        dto.setEmail(employee.getEmail());
+        dto.setDept(employee.getDept());
         return dto;
     }
 }
