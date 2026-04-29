@@ -1,8 +1,6 @@
 package com.example.EmployeeManagementSystem.Controller;
 
-import com.example.EmployeeManagementSystem.DTO.EmployeeDTO;
-import com.example.EmployeeManagementSystem.DTO.VendorDTO;
-import com.example.EmployeeManagementSystem.DTO.VendorRequest;
+import com.example.EmployeeManagementSystem.DTO.*;
 import com.example.EmployeeManagementSystem.Entity.Employee;
 import com.example.EmployeeManagementSystem.Service.*;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -33,15 +31,14 @@ public class AdminController {
             LeaveRequestService leaveRequestService,
             RestaurantService restaurantService,
             SubscriptionService subscriptionService,
-            LeaveAccrualService accrualService,
-            SickLeaveResetService resetService) {
+            LeaveAccrualService accrualService, SickLeaveResetService resetService) {
         this.employeeService = employeeService;
         this.vendorService = vendorService;
         this.leaveRequestService = leaveRequestService;
         this.restaurantService = restaurantService;
         this.subscriptionService = subscriptionService;
         this.accrualService = accrualService;
-        this.resetService=resetService;
+        this.resetService = resetService;
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -56,10 +53,17 @@ public class AdminController {
 
     /** Create a regular employee. */
     @PostMapping("/employees")
-    public ResponseEntity<Employee> createEmployee(@RequestBody EmployeeDTO dto) {
+    public ResponseEntity<Employee> createEmployee(@RequestBody AdminEmployeeDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(employeeService.createEmployee(dto));
     }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/managers")
+    public ResponseEntity<List<ManagerDTO>> getAllManagers(){
+        return employeeService.getAllManagers();
+    }
+
 
     /** Promote / create a manager. */
     @PostMapping("/employees/manager")
