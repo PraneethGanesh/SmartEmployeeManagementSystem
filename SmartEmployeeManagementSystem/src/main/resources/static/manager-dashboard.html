@@ -179,6 +179,7 @@
             <div class="nav-item" onclick="showView('restaurants',this)"><span>🏪</span> Restaurants</div>
             <div class="nav-item" onclick="showView('my-devices',this)"><span>⊞</span> My Devices</div>
             <div class="nav-item" onclick="showView('service-requests', this)"><span class="icon">⚙</span> Service Requests</div>
+            <div class="nav-item" onclick="showView('search-employee',this)"><span>⌕</span> Search Employee</div>
         </nav>
         <div class="sidebar-footer">
             <div class="user-card">
@@ -306,6 +307,88 @@
                             <button class="btn btn-primary" onclick="addEmployee()">Add Employee</button>
                             <button class="btn btn-secondary" onclick="clearEmpForm()">Clear</button>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SEARCH EMPLOYEE -->
+            <div id="search-employee-view" class="view">
+                <div class="section">
+                    <div class="section-head">
+                        <div><div class="section-title">⌕ Search Employee</div><div class="section-sub">Look up any employee across the organisation</div></div>
+                    </div>
+                    <div style="padding:20px;border-bottom:1px solid var(--border)">
+                        <div style="display:flex;gap:10px">
+                            <input class="search-input" id="org-search-input" placeholder="Enter exact employee name..."
+                                   style="flex:1" onkeydown="if(event.key==='Enter')searchEmployee()">
+                            <button class="btn btn-primary" onclick="searchEmployee()">Search</button>
+                        </div>
+                        <div id="org-search-error" style="font-size:12px;color:var(--red);margin-top:8px;display:none"></div>
+                    </div>
+                    <div id="org-search-results" style="padding:20px;display:none">
+
+                        <!-- Employee Info Card -->
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+                            <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:16px">
+                                <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px">Employee Info</div>
+                                <div style="display:flex;flex-direction:column;gap:8px">
+                                    <div style="display:flex;justify-content:space-between">
+                                        <span style="font-size:12px;color:var(--text3)">Name</span>
+                                        <span style="font-size:13px;font-weight:600;color:var(--text)" id="sr-name">—</span>
+                                    </div>
+                                    <div style="display:flex;justify-content:space-between">
+                                        <span style="font-size:12px;color:var(--text3)">ID</span>
+                                        <span style="font-size:12px;font-family:var(--mono);color:var(--accent)" id="sr-id">—</span>
+                                    </div>
+                                    <div style="display:flex;justify-content:space-between">
+                                        <span style="font-size:12px;color:var(--text3)">Email</span>
+                                        <span style="font-size:12px;font-family:var(--mono);color:var(--text2)" id="sr-email">—</span>
+                                    </div>
+                                    <div style="display:flex;justify-content:space-between">
+                                        <span style="font-size:12px;color:var(--text3)">Department</span>
+                                        <span style="font-size:13px;color:var(--text)" id="sr-dept">—</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:16px">
+                                <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px">Status</div>
+                                <div style="display:flex;flex-direction:column;gap:8px">
+                                    <div style="display:flex;justify-content:space-between;align-items:center">
+                                        <span style="font-size:12px;color:var(--text3)">Work Status</span>
+                                        <span id="sr-status">—</span>
+                                    </div>
+                                    <div style="display:flex;justify-content:space-between;align-items:center">
+                                        <span style="font-size:12px;color:var(--text3)">Attendance</span>
+                                        <span style="font-size:13px;font-weight:600;color:var(--text)" id="sr-attendance">—</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Devices -->
+                        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;overflow:hidden">
+                            <div style="padding:12px 16px;border-bottom:1px solid var(--border)">
+                                <span style="font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px">Assigned Devices</span>
+                            </div>
+                            <table style="width:100%;border-collapse:collapse">
+                                <thead>
+                                <tr>
+                                    <th style="padding:10px 16px;text-align:left;font-size:10px;color:var(--text3);font-weight:700;letter-spacing:1px;text-transform:uppercase;background:var(--bg3)">Device</th>
+                                    <th style="padding:10px 16px;text-align:left;font-size:10px;color:var(--text3);font-weight:700;letter-spacing:1px;text-transform:uppercase;background:var(--bg3)">Brand</th>
+                                    <th style="padding:10px 16px;text-align:left;font-size:10px;color:var(--text3);font-weight:700;letter-spacing:1px;text-transform:uppercase;background:var(--bg3)">Type</th>
+                                    <th style="padding:10px 16px;text-align:left;font-size:10px;color:var(--text3);font-weight:700;letter-spacing:1px;text-transform:uppercase;background:var(--bg3)">Status</th>
+                                    <th style="padding:10px 16px;text-align:left;font-size:10px;color:var(--text3);font-weight:700;letter-spacing:1px;text-transform:uppercase;background:var(--bg3)">Warranty</th>
+                                    <th style="padding:10px 16px;text-align:left;font-size:10px;color:var(--text3);font-weight:700;letter-spacing:1px;text-transform:uppercase;background:var(--bg3)">Assigned On</th>
+                                </tr>
+                                </thead>
+                                <tbody id="sr-devices"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Empty / initial state -->
+                    <div id="org-search-empty" style="padding:40px;text-align:center;color:var(--text3);font-style:italic">
+                        Enter a name above to look up an employee
                     </div>
                 </div>
             </div>
@@ -679,7 +762,7 @@
         document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
         if(el)el.classList.add('active');
         document.getElementById('pageTitle').textContent=name.split('-').map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join(' ');
-       const loaders={dashboard:loadDashboard,employees:loadEmployees,'pending-leaves':loadPendingLeaves,'all-leaves':loadAllLeaves,'my-leaves':loadMyLeaves,'add-employee':()=>{},'promote-users':loadUsers,'my-subscriptions':loadMySubscriptions,'add-subscription':()=>{},restaurants: loadRestaurants, 'my-devices': loadMyAssignedDevices,'service-requests': loadServiceRequests};
+       const loaders={dashboard:loadDashboard,employees:loadEmployees,'pending-leaves':loadPendingLeaves,'all-leaves':loadAllLeaves,'my-leaves':loadMyLeaves,'add-employee':()=>{},'promote-users':loadUsers,'my-subscriptions':loadMySubscriptions,'add-subscription':()=>{},restaurants: loadRestaurants, 'my-devices': loadMyAssignedDevices,'service-requests': loadServiceRequests,'search-employee': () => {}};
         if(loaders[name])loaders[name]();
     }
 
@@ -1219,6 +1302,74 @@ function clearServiceRequestForm() {
     document.getElementById('sr-type').value = 'REPAIR';
     document.getElementById('sr-description').value = '';
     document.getElementById('sr-urgent').checked = false;
+}
+
+async function searchEmployee() {
+    const name = document.getElementById('org-search-input').value.trim();
+    const errorEl  = document.getElementById('org-search-error');
+    const resultsEl = document.getElementById('org-search-results');
+    const emptyEl  = document.getElementById('org-search-empty');
+
+    errorEl.style.display = 'none';
+    resultsEl.style.display = 'none';
+    emptyEl.style.display = 'block';
+
+    if (!name) {
+        errorEl.textContent = 'Please enter a name to search.';
+        errorEl.style.display = 'block';
+        return;
+    }
+
+    try {
+        const emp = await apiFetch(`/manager/employees/search?name=${encodeURIComponent(name)}`);
+
+        // Populate info card
+        document.getElementById('sr-name').textContent       = emp.name || '—';
+        document.getElementById('sr-id').textContent         = `#${emp.employeeId}`;
+        document.getElementById('sr-email').textContent      = emp.email || '—';
+        document.getElementById('sr-dept').textContent       = emp.dept || '—';
+        document.getElementById('sr-attendance').textContent = emp.attendance || '—';
+
+        // Status chip
+        const statusMap = { ACTIVE: 'approved', ON_LEAVE: 'pending', INACTIVE: 'rejected' };
+        const statusKey = (emp.status || '').toString();
+        document.getElementById('sr-status').innerHTML =
+            `<span class="chip ${statusMap[statusKey] || ''}">${statusKey || '—'}</span>`;
+
+        // Devices table
+        const today = new Date();
+        const devices = emp.devices || [];
+        document.getElementById('sr-devices').innerHTML = devices.length
+            ? devices.map(d => {
+                const exp = d.warrantyExpiryDate ? new Date(d.warrantyExpiryDate) : null;
+                const warranty = exp
+                    ? (exp > today
+                        ? `<span style="font-size:11px;color:var(--green)">✓ ${d.warrantyExpiryDate}</span>`
+                        : `<span style="font-size:11px;color:var(--red)">✗ Expired</span>`)
+                    : '<span style="font-size:11px;color:var(--text3)">—</span>';
+                const statusCss = { ASSIGNED: 'assigned', UNDER_REPAIR: 'under_repair', CONDEMNED: 'condemned' };
+                const ds = (d.deviceStatus || '').toString();
+                return `<tr>
+                    <td style="padding:10px 16px;border-top:1px solid var(--border);font-size:13px;color:var(--text)"><strong>${d.deviceName || '—'}</strong></td>
+                    <td style="padding:10px 16px;border-top:1px solid var(--border);font-size:13px;color:var(--text2)">${d.brand || '—'}</td>
+                    <td style="padding:10px 16px;border-top:1px solid var(--border)"><span class="chip pending">${(d.deviceType || '').toLowerCase()}</span></td>
+                    <td style="padding:10px 16px;border-top:1px solid var(--border)"><span class="chip ${statusCss[ds] || ''}">${ds || '—'}</span></td>
+                    <td style="padding:10px 16px;border-top:1px solid var(--border)">${warranty}</td>
+                    <td style="padding:10px 16px;border-top:1px solid var(--border);font-size:12px;color:var(--text3)">${d.assignedDate || '—'}</td>
+                </tr>`;
+            }).join('')
+            : `<tr><td colspan="6" style="padding:20px;text-align:center;color:var(--text3);font-style:italic">No devices assigned</td></tr>`;
+
+        emptyEl.style.display = 'none';
+        resultsEl.style.display = 'block';
+
+    } catch (e) {
+        errorEl.textContent = e.message.includes('not found') || e.message.includes('404')
+            ? `No employee found with name "${name}".`
+            : 'Search failed: ' + e.message;
+        errorEl.style.display = 'block';
+        emptyEl.style.display = 'block';
+    }
 }
 
     function logout(){

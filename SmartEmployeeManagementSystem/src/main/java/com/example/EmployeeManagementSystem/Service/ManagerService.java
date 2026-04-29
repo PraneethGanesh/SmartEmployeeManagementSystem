@@ -1,15 +1,19 @@
 package com.example.EmployeeManagementSystem.Service;
 
 import com.example.EmployeeManagementSystem.DTO.*;
+import com.example.EmployeeManagementSystem.Entity.Device;
+import com.example.EmployeeManagementSystem.Entity.DeviceAssignment;
 import com.example.EmployeeManagementSystem.Entity.Employee;
 import com.example.EmployeeManagementSystem.Entity.LeaveRequest;
+import com.example.EmployeeManagementSystem.Enum.AssignmentStatus;
 import com.example.EmployeeManagementSystem.Enum.LeaveStatus;
 import com.example.EmployeeManagementSystem.Enum.Role;
+import com.example.EmployeeManagementSystem.Enum.Status;
 import com.example.EmployeeManagementSystem.Exception.EmployeeNotFound;
+import com.example.EmployeeManagementSystem.Repository.DeviceAssignmentRepo;
 import com.example.EmployeeManagementSystem.Repository.EmployeeRepo;
 import com.example.EmployeeManagementSystem.Repository.LeaveRequestRepo;
 import com.example.EmployeeManagementSystem.Util.AuthUtil;
-import org.jspecify.annotations.Nullable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -24,11 +28,16 @@ public class ManagerService {
     private final EmployeeRepo employeeRepo;
     private final PasswordEncoder passwordEncoder;
     private final LeaveRequestRepo leaveRequestRepo;
+    private final DeviceAssignmentRepo deviceAssignmentRepo;
 
-    public ManagerService(EmployeeRepo employeeRepo, PasswordEncoder passwordEncoder, LeaveRequestRepo leaveRequestRepo) {
+    public ManagerService(EmployeeRepo employeeRepo,
+                          PasswordEncoder passwordEncoder,
+                          LeaveRequestRepo leaveRequestRepo,
+                          DeviceAssignmentRepo deviceAssignmentRepo) {
         this.employeeRepo = employeeRepo;
         this.passwordEncoder = passwordEncoder;
         this.leaveRequestRepo = leaveRequestRepo;
+        this.deviceAssignmentRepo = deviceAssignmentRepo;
     }
 
     public Employee createEmp(EmployeeDetails employeeDetails, Authentication authentication) {
@@ -123,6 +132,30 @@ public class ManagerService {
                 .collect(Collectors.toList());
     }
 
+    public ManagerEmployeeDetailsDTO getEmployeeDetailsByName( String name) {
+
+        Employee employee = employeeRepo.findByName(name).orElseThrow(
+                () -> new EmployeeNotFound("Employee:" + name + " not found")
+        );
+
+
+
+        ManagerEmployeeDetailsDTO dto = new ManagerEmployeeDetailsDTO();
+        dto.setEmployeeId(employee.getEmployeeId());
+        dto.setName(employee.getName());
+        dto.setEmail(employee.getEmail());
+        dto.setDept(employee.getDept());
+        dto.setStatus(employee.getStatus());
+        dto.setAttendance(toAttendance(employee.getStatus()));
+        dto.setDevices(deviceAssignmentRepo
+                .findByAssignedToEmployeeIdAndStatus(employee.getEmployeeId(), AssignmentStatus.ACTIVE)
+                .stream()
+                .map(DeviceAssignment::getDevice)
+                .map(this::toDeviceResponseDTO)
+                .toList());
+        return dto;
+    }
+
     private LeaveResponseDTO convertToLeaveResponseDTO(LeaveRequest leaveRequest) {
         LeaveResponseDTO dto = new LeaveResponseDTO();
         dto.setLeaveRequestId(leaveRequest.getId());
@@ -146,5 +179,40 @@ public class ManagerService {
         managerLeaveResponseDTO.setStatus(leaveRequest.getStatus());
         managerLeaveResponseDTO.setReason(leaveRequest.getReason());
         return managerLeaveResponseDTO;
+    }
+
+    private String toAttendance(Status status) {
+        if (status == Status.ON_LEAVE) {
+            return "ON_LEAVE";
+        }
+        if (status == Status.ACTIVE) {
+            return "PRESENT";
+        }
+        return status.name();
+    }
+
+    private DeviceResponseDTO toDeviceResponseDTO(Device device) {
+        DeviceResponseDTO dto = new DeviceResponseDTO();
+        dto.setId(device.getId());
+        dto.setDeviceName(device.getDeviceName());
+        dto.setBrand(device.getBrand());
+        dto.setDeviceType(device.getDeviceType());
+        dto.setDeviceStatus(device.getDeviceStatus());
+        dto.setWarrantyExpiryDate(device.getWarrantyExpiryDate());
+
+        if (device.getTechVendor() != null) {
+            dto.setVendorName(device.getTechVendor().getName());
+        }
+
+        DeviceAssignment assignment = device.getCurrentAssignment();
+        if (assignment != null && assignment.getStatus() == AssignmentStatus.ACTIVE) {
+            dto.setAssignedDate(assignment.getAssignedDate());
+            if (assignment.getAssignedTo() != null) {
+                dto.setAssignedEmployeeId(assignment.getAssignedTo().getEmployeeId());
+                dto.setAssignedEmployeeName(assignment.getAssignedTo().getName());
+            }
+        }
+
+        return dto;
     }
 }
