@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EMS — Manager Console</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
     <style>
         *{margin:0;padding:0;box-sizing:border-box}
         :root{
@@ -174,6 +176,164 @@
         .search-input{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:9px 14px;color:var(--text);font-family:var(--font);font-size:13px}
         .search-input:focus{outline:none;border-color:var(--accent)}
         .search-input::placeholder{color:var(--text3)}
+
+        /* ===================== */
+        /* CALENDAR VIEW STYLES  */
+        /* ===================== */
+
+        /* Leave balance summary cards above the calendar */
+        .leave-balance-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 14px;
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+        .leave-bal-card {
+            background: var(--bg3);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            position: relative;
+            overflow: hidden;
+            transition: border-color 0.2s;
+        }
+        .leave-bal-card:hover { border-color: var(--border2); }
+        .leave-bal-card::before {
+            content: '';
+            position: absolute;
+            left: 0; top: 0; bottom: 0;
+            width: 3px;
+            border-radius: 3px 0 0 3px;
+        }
+        .leave-bal-card.sick::before   { background: var(--red); }
+        .leave-bal-card.casual::before { background: var(--amber); }
+        .leave-bal-card.mat::before    { background: var(--accent); }
+        .leave-bal-card.total::before  { background: var(--green); }
+        .lbc-icon  { font-size: 18px; }
+        .lbc-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+        .lbc-count { font-size: 24px; font-weight: 700; color: var(--text); font-family: var(--mono); line-height: 1; }
+        .lbc-sub   { font-size: 11px; color: var(--text3); }
+
+        /* Legend row */
+        .cal-legend {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--border);
+            flex-wrap: wrap;
+        }
+        .legend-label { font-size: 11px; color: var(--text3); font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; margin-right: 4px; }
+        .legend-item  { display: flex; align-items: center; gap:6px; font-size: 12px; color: var(--text2); }
+        .legend-dot   { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+        /* FullCalendar dark-theme overrides */
+        #employee-calendar {
+            padding: 16px 20px 20px;
+        }
+        /* Toolbar */
+        #employee-calendar .fc .fc-toolbar-title {
+            font-family: var(--font);
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text);
+        }
+        #employee-calendar .fc .fc-button {
+            background: var(--panel2);
+            border: 1px solid var(--border2);
+            color: var(--text2);
+            font-family: var(--font);
+            font-size: 12px;
+            font-weight: 600;
+            border-radius: 6px;
+            padding: 5px 12px;
+            transition: all 0.2s;
+            box-shadow: none;
+            text-transform: capitalize;
+        }
+        #employee-calendar .fc .fc-button:hover,
+        #employee-calendar .fc .fc-button-active,
+        #employee-calendar .fc .fc-button:not(:disabled):active {
+            background: var(--accent-dim);
+            border-color: var(--accent);
+            color: var(--accent);
+            box-shadow: none;
+        }
+        #employee-calendar .fc .fc-button:focus { box-shadow: none; outline: none; }
+
+        /* Grid */
+        #employee-calendar .fc-theme-standard td,
+        #employee-calendar .fc-theme-standard th,
+        #employee-calendar .fc-theme-standard .fc-scrollgrid {
+            border-color: var(--border);
+        }
+        #employee-calendar .fc .fc-col-header-cell-cushion {
+            font-family: var(--font);
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text3);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            padding: 8px 4px;
+        }
+        #employee-calendar .fc .fc-daygrid-day-number {
+            font-family: var(--mono);
+            font-size: 12px;
+            color: var(--text3);
+            padding: 6px 8px;
+        }
+        #employee-calendar .fc .fc-daygrid-day.fc-day-today {
+            background: var(--accent-dim) !important;
+        }
+        #employee-calendar .fc .fc-daygrid-day.fc-day-today .fc-daygrid-day-number {
+            color: var(--accent);
+            font-weight: 700;
+        }
+        #employee-calendar .fc .fc-daygrid-day:hover {
+            background: rgba(56,189,248,0.03);
+        }
+        #employee-calendar .fc-daygrid-day-frame {
+            background: var(--bg3);
+        }
+        #employee-calendar .fc .fc-day-other .fc-daygrid-day-frame {
+            background: var(--bg2);
+        }
+
+        /* Events */
+        #employee-calendar .fc-event {
+            border: none !important;
+            border-radius: 4px;
+            font-family: var(--font);
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 6px;
+            cursor: pointer;
+        }
+        #employee-calendar .fc-event-title { font-weight: 600; }
+
+        /* Event tooltip */
+        .cal-tooltip {
+            position: fixed;
+            background: var(--panel2);
+            border: 1px solid var(--border2);
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 12px;
+            color: var(--text);
+            z-index: 9999;
+            pointer-events: none;
+            max-width: 200px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+        }
+        .cal-tooltip .tt-title { font-weight: 600; margin-bottom: 4px; font-size: 13px; }
+        .cal-tooltip .tt-row   { color: var(--text2); margin-top: 2px; }
+
+        /* balance loading state */
+        .lbc-count.loading { color: var(--text3); font-size: 16px; }
     </style>
 </head>
 <body>
@@ -206,6 +366,7 @@
             <div class="nav-section">Personal</div>
             <div class="nav-item" onclick="showView('apply-leave',this)"><span>＋</span> Apply Leave</div>
             <div class="nav-item" onclick="showView('my-leaves',this)"><span>◷</span> My Leaves</div>
+            <div class="nav-item" onclick="showView('my-calendar',this)"><span class="icon">📅</span> My Calendar</div>
             <div class="nav-item" onclick="showView('my-subscriptions',this)"><span>🍱</span> My Subscriptions</div>
             <div class="nav-item" onclick="showView('add-subscription',this)"><span>＋</span> Subscribe to Meal</div>
             <div class="nav-item" onclick="showView('restaurants',this)"><span>🏪</span> Restaurants</div>
@@ -546,6 +707,78 @@
                 </div>
             </div>
 
+            <!-- ========================= -->
+            <!-- MY CALENDAR VIEW (NEW)    -->
+            <!-- ========================= -->
+            <div id="my-calendar-view" class="view">
+                <div class="section">
+                    <div class="section-head">
+                        <div>
+                            <div class="section-title">My Leave Calendar</div>
+                            <div class="section-sub">All approved leaves and public holidays</div>
+                        </div>
+                        <button class="btn btn-secondary btn-sm" onclick="refreshCalendar()">↺ Refresh</button>
+                    </div>
+
+                    <!-- Leave Balance Summary Cards -->
+                    <div class="leave-balance-grid">
+                        <!-- Sick Leave Card -->
+                        <div class="leave-bal-card sick">
+                            <span class="lbc-icon">🤒</span>
+                            <span class="lbc-label">Sick Leave</span>
+                            <span class="lbc-count" id="cal-sick-remaining">--</span>
+                            <span class="lbc-sub" id="cal-sick-sub">loading...</span>
+                        </div>
+                        <!-- Casual Leave Card -->
+                        <div class="leave-bal-card casual">
+                            <span class="lbc-icon">🏖️</span>
+                            <span class="lbc-label">Casual Leave</span>
+                            <span class="lbc-count" id="cal-casual-remaining">--</span>
+                            <span class="lbc-sub" id="cal-casual-sub">loading...</span>
+                        </div>
+                        <!-- Maternity Leave Card -->
+                        <div class="leave-bal-card mat">
+                            <span class="lbc-icon">👶</span>
+                            <span class="lbc-label">Maternity Leave</span>
+                            <span class="lbc-count" id="cal-mat-remaining">--</span>
+                            <span class="lbc-sub" id="cal-mat-sub">loading...</span>
+                        </div>
+                        <!-- Total Used Card -->
+                        <div class="leave-bal-card total">
+                            <span class="lbc-icon">📊</span>
+                            <span class="lbc-label">Total Used</span>
+                            <span class="lbc-count" id="cal-total-used">--</span>
+                            <span class="lbc-sub" id="cal-total-sub">loading...</span>
+                        </div>
+                    </div>
+
+                    <!-- Legend -->
+                    <div class="cal-legend">
+                        <span class="legend-label">Legend:</span>
+                        <div class="legend-item">
+                            <div class="legend-dot" style="background:#34d399"></div>
+                            Approved Leave
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-dot" style="background:#fbbf24"></div>
+                            Pending Leave
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-dot" style="background:#f87171"></div>
+                            Rejected Leave
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-dot" style="background:#38bdf8"></div>
+                            Public Holiday
+                        </div>
+                    </div>
+
+                    <!-- FullCalendar Mount Point -->
+                    <div id="employee-calendar"></div>
+                </div>
+            </div>
+            <!-- END CALENDAR VIEW -->
+
             <!-- MY SUBSCRIPTIONS -->
             <div id="my-subscriptions-view" class="view">
                 <div class="section">
@@ -730,10 +963,25 @@
         </div>
     </div>
 </div>
-
+<!-- Tooltip for calendar events -->
+<div class="cal-tooltip" id="cal-tooltip" style="display:none"></div>
 <script>
     const API='http://localhost:8080';
     let allEmployeesCache=[];
+
+    // Add these near the top of your <script>, right after:  let allEmployeesCache=[];
+
+let employeeCalendar = null;
+let calendarInitialized = false;
+
+const STATUS_COLORS = {
+    APPROVED : { bg:'rgba(52,211,153,0.25)', border:'#34d399', text:'#34d399' },
+    PENDING  : { bg:'rgba(251,191,36,0.25)',  border:'#fbbf24', text:'#fbbf24' },
+    REJECTED : { bg:'rgba(248,113,113,0.25)', border:'#f87171', text:'#f87171' },
+    HOLIDAY  : { bg:'rgba(167,139,250,0.25)', border:'#a78bfa', text:'#a78bfa' },
+};
+
+const TYPE_LABEL = { SICK:'🤒 Sick', CASUAL:'🏖️ Casual', MATERNITY:'👶 Maternity' };
 
     (function(){
         const token=localStorage.getItem('jwt_token');
@@ -809,7 +1057,7 @@
         document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
         if(el)el.classList.add('active');
         document.getElementById('pageTitle').textContent=name.split('-').map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join(' ');
-       const loaders={dashboard:loadDashboard,employees:loadEmployees,'pending-leaves':loadPendingLeaves,'all-leaves':loadAllLeaves,'my-leaves':loadMyLeaves,'add-employee':()=>{},'promote-users':loadUsers,'my-subscriptions':loadMySubscriptions,'add-subscription':()=>{},restaurants: loadRestaurants, 'my-devices': loadMyAssignedDevices,'service-requests': loadServiceRequests,'search-employee': () => {}};
+       const loaders={dashboard:loadDashboard,employees:loadEmployees,'pending-leaves':loadPendingLeaves,'all-leaves':loadAllLeaves,'my-leaves':loadMyLeaves,'my-calendar':loadMyCalendar,'add-employee':()=>{},'promote-users':loadUsers,'my-subscriptions':loadMySubscriptions,'add-subscription':()=>{},restaurants: loadRestaurants, 'my-devices': loadMyAssignedDevices,'service-requests': loadServiceRequests,'search-employee': () => {}};
         if(loaders[name])loaders[name]();
     }
 
@@ -1244,6 +1492,214 @@ function clearSubscriptionForm(){
     document.getElementById('slot-rows').innerHTML = '';
     slotRowCount = 0;
 }
+
+    /* ============================
+       MY CALENDAR (NEW)
+    ============================ */
+    async function loadMyCalendar(){
+        // 1. Load balance cards
+        await loadCalendarBalanceCards();
+        // 2. Build or refresh FullCalendar
+        if(!calendarInitialized){
+            initFullCalendar();
+        } else {
+            await refreshCalendarEvents();
+        }
+    }
+
+    async function loadCalendarBalanceCards(){
+        // Default state
+        ['cal-sick-remaining','cal-casual-remaining','cal-mat-remaining','cal-total-used']
+            .forEach(id=>{ document.getElementById(id).textContent='--'; });
+
+        try{
+            const dashboard = await apiFetch('/api/employees/me/leave-dashboard');
+            const balances  = dashboard?.leaveBalances || {};
+
+            let totalUsed=0, totalAllowed=0;
+
+            // SICK
+            const sick = balances['SICK'] || balances['sick'] || {};
+            const sickRem   = Number(sick.available || 0);
+            const sickTotal = Number(sick.total     || 0);
+            const sickUsed  = sickTotal - sickRem;
+            document.getElementById('cal-sick-remaining').textContent = sickRem;
+            document.getElementById('cal-sick-sub').textContent       = `${sickUsed} used of ${sickTotal} days`;
+
+            // CASUAL
+            const cas = balances['CASUAL'] || balances['casual'] || {};
+            const casRem   = Number(cas.available || 0);
+            const casTotal = Number(cas.total     || 0);
+            const casUsed  = casTotal - casRem;
+            document.getElementById('cal-casual-remaining').textContent = casRem;
+            document.getElementById('cal-casual-sub').textContent       = `${casUsed} used of ${casTotal} days`;
+
+            // MATERNITY
+            const mat = balances['MATERNITY'] || balances['maternity'] || {};
+            const matRem   = Number(mat.available || 0);
+            const matTotal = Number(mat.total     || 0);
+            const matUsed  = matTotal - matRem;
+            document.getElementById('cal-mat-remaining').textContent = matRem;
+            document.getElementById('cal-mat-sub').textContent       = `${matUsed} used of ${matTotal} days`;
+
+            // TOTAL
+            Object.values(balances).forEach(b=>{
+                totalUsed    += (Number(b.total||0) - Number(b.available||0));
+                totalAllowed += Number(b.total||0);
+            });
+            document.getElementById('cal-total-used').textContent = totalUsed;
+            document.getElementById('cal-total-sub').textContent  = `out of ${totalAllowed} days total`;
+
+        }catch(e){
+            console.error('Could not load leave balance for calendar:', e);
+            ['cal-sick-sub','cal-casual-sub','cal-mat-sub','cal-total-sub']
+                .forEach(id=>{ document.getElementById(id).textContent='unavailable'; });
+        }
+    }
+
+    async function buildCalendarEvents(){
+        const events = [];
+        try{
+            // — Employee leaves —
+            const data   = await apiFetch('/leave_requests/employee');
+            const leaves = data?.requests || data || [];
+            leaves.forEach(l=>{
+                const s = (l.status||'PENDING').toUpperCase();
+                const c = STATUS_COLORS[s] || STATUS_COLORS.PENDING;
+                const typeLabel = TYPE_LABEL[l.leaveType] || l.leaveType || 'Leave';
+
+                // FullCalendar end date is exclusive, so add 1 day for multi-day events
+                let endDate = l.endDate;
+                if(endDate){
+                    const d = new Date(endDate);
+                    d.setDate(d.getDate()+1);
+                    endDate = d.toISOString().split('T')[0];
+                }
+
+                events.push({
+                    id      : `leave-${l.leaveRequestId}`,
+                    title   : `${typeLabel} (${s.charAt(0)+s.slice(1).toLowerCase()})`,
+                    start   : l.startDate,
+                    end     : endDate,
+                    allDay  : true,
+                    backgroundColor : c.bg,
+                    borderColor     : c.border,
+                    textColor       : c.text,
+                    extendedProps   : {
+                        type    : 'leave',
+                        status  : s,
+                        reason  : l.reason || '—',
+                        leaveType: l.leaveType
+                    }
+                });
+            });
+        }catch(e){ console.warn('Could not load leaves for calendar:', e); }
+
+        try{
+            // — Public holidays (admin-added) —
+            const holidays = await apiFetch('/holidays');
+            (holidays||[]).forEach(h=>{
+                const c = STATUS_COLORS.HOLIDAY;
+                events.push({
+                    id     : `holiday-${h.id||h.holidayId||Math.random()}`,
+                    title  : `🎉 ${h.name||h.holidayName||'Holiday'}`,
+                    start  : h.date||h.holidayDate,
+                    allDay : true,
+                    backgroundColor : c.bg,
+                    borderColor     : c.border,
+                    textColor       : c.text,
+                    extendedProps   : { type:'holiday', description: h.description||'' }
+                });
+            });
+        }catch(e){ console.warn('Could not load holidays for calendar:', e); }
+
+        return events;
+    }
+
+    function initFullCalendar(){
+        const calendarEl = document.getElementById('employee-calendar');
+
+        employeeCalendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            height     : 'auto',
+            headerToolbar:{
+                left  : 'prev,next today',
+                center: 'title',
+                right : 'dayGridMonth,dayGridWeek,listMonth'
+            },
+            buttonText:{
+                today    : 'Today',
+                month    : 'Month',
+                week     : 'Week',
+                listMonth: 'List'
+            },
+            dayMaxEvents: 3,     // "+N more" link if overflowing
+            navLinks    : true,  // click day number → day view
+            events      : [],    // start empty, populate below
+
+            // Event hover tooltip
+            eventMouseEnter: function(info){
+                const ep = info.event.extendedProps;
+                const tooltip = document.getElementById('cal-tooltip');
+                let html = `<div class="tt-title">${info.event.title}</div>`;
+                if(ep.type==='leave'){
+                    html += `<div class="tt-row">📅 ${info.event.startStr} → ${info.event.endStr||info.event.startStr}</div>`;
+                    if(ep.reason && ep.reason!=='—')
+                        html += `<div class="tt-row">💬 ${ep.reason.substring(0,60)}</div>`;
+                    html += `<div class="tt-row">Status: <strong style="color:${STATUS_COLORS[ep.status]?.text||'#fff'}">${ep.status}</strong></div>`;
+                } else {
+                    if(ep.description) html += `<div class="tt-row">${ep.description}</div>`;
+                }
+                tooltip.innerHTML = html;
+                tooltip.style.display = 'block';
+            },
+            eventMouseLeave: function(){
+                document.getElementById('cal-tooltip').style.display='none';
+            },
+            eventClick: function(info){
+                // Click navigates to leave history
+                const ep = info.event.extendedProps;
+                if(ep.type==='leave'){
+                    showView('my-leaves', document.querySelector('.nav-item:nth-child(4)'));
+                }
+            },
+        });
+
+        employeeCalendar.render();
+        calendarInitialized = true;
+
+        // Load events asynchronously after render
+        refreshCalendarEvents();
+    }
+
+    async function refreshCalendarEvents(){
+        if(!employeeCalendar) return;
+        const events = await buildCalendarEvents();
+        // Remove all existing events and re-add
+        employeeCalendar.removeAllEvents();
+        events.forEach(e=>employeeCalendar.addEvent(e));
+    }
+
+    async function refreshCalendar(){
+        await loadCalendarBalanceCards();
+        await refreshCalendarEvents();
+        showAlert('Calendar refreshed!','success');
+    }
+
+    // Move tooltip with mouse
+    document.addEventListener('mousemove', function(e){
+        const tt = document.getElementById('cal-tooltip');
+        if(tt.style.display==='block'){
+            tt.style.left = (e.clientX+14)+'px';
+            tt.style.top  = (e.clientY+14)+'px';
+            // Keep tooltip on screen
+            const rect = tt.getBoundingClientRect();
+            if(rect.right > window.innerWidth)
+                tt.style.left = (e.clientX - rect.width - 10)+'px';
+            if(rect.bottom > window.innerHeight)
+                tt.style.top  = (e.clientY - rect.height - 10)+'px';
+        }
+    });
 
 // ============ MY DEVICES ============
 async function loadMyAssignedDevices() {
