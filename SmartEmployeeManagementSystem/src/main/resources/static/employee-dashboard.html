@@ -1104,7 +1104,7 @@
 
         try{
             // — Public holidays (admin-added) —
-            const holidays = await apiFetch('/api/holidays');
+            const holidays = await apiFetch('/holidays');
             (holidays||[]).forEach(h=>{
                 const c = STATUS_COLORS.HOLIDAY;
                 events.push({
