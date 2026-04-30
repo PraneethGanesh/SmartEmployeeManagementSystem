@@ -128,6 +128,7 @@ public class JWTAuthConfig {
 
                         // Shared login page
                         .requestMatchers("/login.html", "/google.html").permitAll()
+                        .requestMatchers("/error").permitAll()
 
                         // Dashboards — served as static HTML, actual data is protected by JWT
                         .requestMatchers("/login.html",
