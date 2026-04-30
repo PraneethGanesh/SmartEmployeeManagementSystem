@@ -522,7 +522,7 @@
     (function(){
         const token = localStorage.getItem('jwt_token');
         const authType = localStorage.getItem('auth_type');
-        if(!token && authType !== 'session') { window.location.href = '/login.html'; return; }
+        if(!token && authType !== 'session') { window.location.href = '/google.html'; return; }
         // Decode JWT to check role
         if(token) {
             try {
@@ -551,7 +551,7 @@
     if(res.status===401){
         localStorage.removeItem('jwt_token'); localStorage.removeItem('auth_type');
         showAlert('Session expired. Please login again.','error');
-        setTimeout(()=>window.location.href='/login.html',1500);
+        setTimeout(()=>window.location.href='/google.html',1500);
         throw new Error('Unauthorized');
     }
     if(res.status===403) throw new Error('ACCESS_DENIED');
