@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -150,6 +151,10 @@ public class JWTAuthConfig {
                         .requestMatchers("/manager/createAdmin").permitAll()
                         //totp
                         .requestMatchers("/totp/**").authenticated()
+                        // notification
+                        .requestMatchers(HttpMethod.GET,  "/notifications").authenticated()
+                        .requestMatchers(HttpMethod.GET,  "/notifications/unread-count").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/notifications/mark-read").authenticated()
                         // Everything else requires a valid token
                         .anyRequest().authenticated()
                 )

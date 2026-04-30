@@ -39,16 +39,19 @@ public class LeaveRequestService {
     private final EmployeeRepo employeeRepo;
     private final LeaveTypeRepository leaveTypeRepository;
     private final LeaveEntitlementRepository leaveEntitlementRepository;
+    private final NotificationService notificationService;
     private static final Logger log = LoggerFactory.getLogger(LeaveRequestService.class);
 
     public LeaveRequestService(LeaveRequestRepo leaveRequestRepo,
                                EmployeeRepo employeeRepo,
                                LeaveTypeRepository leaveTypeRepository,
-                               LeaveEntitlementRepository leaveEntitlementRepository) {
+                               LeaveEntitlementRepository leaveEntitlementRepository,
+                                NotificationService notificationService) {
         this.leaveRequestRepo = leaveRequestRepo;
         this.employeeRepo = employeeRepo;
         this.leaveTypeRepository = leaveTypeRepository;
         this.leaveEntitlementRepository = leaveEntitlementRepository;
+        this.notificationService=notificationService;
     }
 
     public List<LeaveResponseDTO> getAllTheLeaveRequest(){
@@ -134,6 +137,15 @@ public class LeaveRequestService {
              leaveRequest.setReason(requestDTO.getReason());
          }
          LeaveRequest savedRequest=leaveRequestRepo.save(leaveRequest);
+
+        Employee manager = employee.getManager(); // assuming getManager() exists
+        if (manager != null) {
+            notificationService.notify(
+                    manager,
+                    employee.getName() + " has submitted a leave request.",
+                    "LEAVE_REQUEST"
+            );
+        }
          return ResponseEntity.status(HttpStatus.CREATED).body(convertToDTO(savedRequest));
     }
 
@@ -171,9 +183,20 @@ public class LeaveRequestService {
          if(actionDTO.getAction().equalsIgnoreCase("approved")){
              leaveRequest.setStatus(LeaveStatus.APPROVED);
              applyApprovedLeaveToEntitlement(leaveRequest);
+             notificationService.notify(
+                     leaveRequest.getEmployee(),
+                     "Your leave request from " + leaveRequest.getStartDate() + " to " + leaveRequest.getEndDate() + " has been approved.",
+                     "LEAVE_APPROVED"
+             );
          }
          else if(actionDTO.getAction().equalsIgnoreCase("rejected")){
              leaveRequest.setStatus(LeaveStatus.REJECTED);
+             notificationService.notify(
+                     leaveRequest.getEmployee(),
+                     "Your leave request from " + leaveRequest.getStartDate() + " to " + leaveRequest.getEndDate() + " was rejected." +
+                             (actionDTO.getRemarks() != null ? " Reason: " + actionDTO.getRemarks() : ""),
+                     "LEAVE_REJECTED"
+             );
          }
          else{
              return ResponseEntity.badRequest().body("Invalid action,Use APPROVED or REJECTED");
@@ -268,6 +291,11 @@ public class LeaveRequestService {
         leaveRequest.setStatus(LeaveStatus.APPROVED);
         leaveRequest.setManager("ADMIN"); // Or get from security context if needed
         applyApprovedLeaveToEntitlement(leaveRequest);
+        notificationService.notify(
+                leaveRequest.getEmployee(),
+                "Your leave request from " + leaveRequest.getStartDate() + " to " + leaveRequest.getEndDate() + " has been approved by admin.",
+                "LEAVE_APPROVED"
+        );
 
         LeaveRequest saved = leaveRequestRepo.save(leaveRequest);
         return convertToDTO(saved);
@@ -288,6 +316,11 @@ public class LeaveRequestService {
 
         leaveRequest.setStatus(LeaveStatus.REJECTED);
         leaveRequest.setManager("ADMIN");
+        notificationService.notify(
+                leaveRequest.getEmployee(),
+                "Your leave request from " + leaveRequest.getStartDate() + " to " + leaveRequest.getEndDate() + " was rejected by admin.",
+                "LEAVE_REJECTED"
+        );
 
         LeaveRequest saved = leaveRequestRepo.save(leaveRequest);
         return convertToDTO(saved);

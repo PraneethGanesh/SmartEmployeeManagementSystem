@@ -55,6 +55,38 @@
         .topbar-right{display:flex;align-items:center;gap:12px}
         .logout-btn{padding:7px 16px;background:transparent;border:1px solid var(--border2);border-radius:6px;color:var(--text2);font-family:var(--font);font-size:12px;cursor:pointer;transition:all 0.2s}
         .logout-btn:hover{background:var(--red-dim);border-color:var(--red);color:var(--red)}
+        .notif-wrapper { position: relative; cursor: pointer; }
+
+        .notif-badge {
+            position: absolute; top: -5px; right: -6px;
+            background: #e53e3e; color: white;
+            font-size: 10px; font-weight: 600;
+            min-width: 16px; height: 16px;
+            border-radius: 50%; display: flex;
+            align-items: center; justify-content: center;
+            padding: 0 3px;
+        }
+
+        .notif-panel {
+            position: absolute; top: 48px; right: 16px;
+            width: 320px; max-height: 400px; overflow-y: auto;
+            background: white; border: 1px solid #e2e8f0;
+            border-radius: 10px; box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+            z-index: 999;
+        }
+
+        .notif-header {
+            padding: 12px 16px; font-weight: 600;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .notif-item {
+            padding: 12px 16px; font-size: 14px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .notif-item.unread { background: #eff6ff; }
+        .notif-time { font-size: 11px; color: #94a3b8; margin-top: 4px; }
 
         /* CONTENT */
         .content{flex:1;overflow-y:auto;padding:24px}
@@ -348,6 +380,21 @@
     <div class="main">
         <div class="topbar">
             <div class="page-title" id="pageTitle">Dashboard</div>
+            <!-- Bell icon with badge -->
+            <div class="notif-wrapper" onclick="toggleNotifPanel()">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                </svg>
+                <span id="notif-badge" class="notif-badge" style="display:none"></span>
+            </div>
+
+            <!-- Dropdown panel -->
+            <div id="notif-panel" class="notif-panel" style="display:none">
+                <div class="notif-header">Notifications</div>
+                <div id="notif-list"></div>
+            </div>
             <div class="topbar-right">
                 <span style="font-size:12px;color:var(--text3);font-family:var(--mono)" id="topbar-email"></span>
                 <button class="logout-btn" onclick="logout()">Sign Out</button>
@@ -1359,6 +1406,66 @@
             window.location.href='/google.html';
         });
     }
+    async function loadNotifCount() {
+        const res = await fetch('/notifications/unread-count', {
+            headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+        });
+        const data = await res.json();
+        const badge = document.getElementById('notif-badge');
+        if (data.count > 0) {
+            badge.textContent = data.count;
+            badge.style.display = 'flex';
+        } else {
+            badge.style.display = 'none';
+        }
+    }
+
+    async function toggleNotifPanel() {
+        const panel = document.getElementById('notif-panel');
+        if (panel.style.display === 'none') {
+            panel.style.display = 'block';
+            await loadNotifications();
+            await fetch('/notifications/mark-read', {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+            });
+            document.getElementById('notif-badge').style.display = 'none';
+        } else {
+            panel.style.display = 'none';
+        }
+    }
+
+    async function loadNotifications() {
+        const res = await fetch('/notifications', {
+            headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+        });
+        const data = await res.json();
+        const list = document.getElementById('notif-list');
+        if (data.length === 0) {
+            list.innerHTML = '<div class="notif-item">No notifications yet.</div>';
+            return;
+        }
+        list.innerHTML = data.map(n => `
+        <div class="notif-item ${n.read ? '' : 'unread'}">
+            <div>${n.message}</div>
+            <div class="notif-time">${new Date(n.createdAt).toLocaleString()}</div>
+        </div>
+    `).join('');
+    }
+
+    // Load badge count on page load
+    loadNotifCount();
+    // Refresh count every 30 seconds
+    setInterval(loadNotifCount, 30000);
+
+    // Close panel when clicking outside
+    document.addEventListener('click', e => {
+        const panel = document.getElementById('notif-panel');
+        const wrapper = document.querySelector('.notif-wrapper');
+        if (!panel.contains(e.target) && !wrapper.contains(e.target)) {
+            panel.style.display = 'none';
+        }
+    });
 
     function showAlert(msg,type){
         const el=document.createElement('div');
