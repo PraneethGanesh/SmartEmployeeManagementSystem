@@ -132,6 +132,7 @@
             <div class="nav-item" onclick="showView('add-manager', event)">&#9632; Add Manager</div>
             <div class="nav-item" onclick="showView('add-vendor', event)">&#9632; Add Vendor</div>
             <div class="nav-item" onclick="window.location.href='/leave_management.html'">&#9632; Leave Management</div>
+            <div class="nav-item" onclick="showView('holidays', event)">&#9632; Holidays</div>
             <div class="nav-item" onclick="showView('restaurants', event)">&#9632; Restaurants</div>
             <div class="nav-item" onclick="showView('subscriptions', event)">&#9632; Subscriptions</div>
             <div class="nav-item" onclick="showView('add-subscription', event)">&#9632; Add Subscription</div>
@@ -140,6 +141,7 @@
             <div class="nav-item" onclick="showView('my-devices', event)">&#9632; My Devices</div>
             <div class="nav-item" onclick="showView('service-requests', event)">&#9632; Service Requests</div>
             <div class="nav-item" onclick="showView('admin-service-requests', event)">&#9632; All Service Requests</div>
+
         </div>
     </div>
 
@@ -296,6 +298,54 @@
                         <div class="form-group full"><label>Reason</label><textarea id="leave-reason" rows="3" placeholder="Please provide reason for leave..."></textarea></div>
                     </div>
                     <div class="modal-actions" style="margin-top: 20px;"><button class="btn btn-primary" onclick="applyLeave()">Submit Leave Request</button><button class="btn btn-secondary" onclick="clearLeaveForm()">Clear</button></div>
+                </div>
+            </div>
+
+            <!-- HOLIDAYS VIEW -->
+            <div id="holidays-view" class="view">
+                <div class="section-head">
+                    <div class="section-title">Fixed Holidays</div>
+                    <button class="btn btn-primary btn-sm" onclick="loadHolidays()">Refresh</button>
+                </div>
+
+                <!-- Add Holiday Form -->
+                <div class="form-card" style="margin-bottom: 24px;">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Holiday Name</label>
+                            <input type="text" id="h-name" placeholder="e.g. Diwali, Christmas">
+                        </div>
+                        <div class="form-group">
+                            <label>Date</label>
+                            <input type="date" id="h-date">
+                        </div>
+                        <div class="form-group full">
+                            <label>Description (optional)</label>
+                            <input type="text" id="h-desc" placeholder="Brief description">
+                        </div>
+                    </div>
+                    <div class="modal-actions" style="margin-top: 20px;">
+                        <button class="btn btn-primary" onclick="addHoliday()">Add Holiday</button>
+                        <button class="btn btn-secondary" onclick="clearHolidayForm()">Clear</button>
+                    </div>
+                </div>
+
+                <!-- Holidays Table -->
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Date</th>
+                            <th>Description</th>
+                            <th>Action</th>
+                        </tr>
+                        </thead>
+                        <tbody id="holidays-list">
+                        <tr><td colspan="5" class="empty-state">Loading...</td></tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
@@ -705,6 +755,7 @@
             'dashboard': loadDashboard,
             'employees': loadEmployees,
             'add-employee': loadManagersDropdown,
+            'holidays': loadHolidays,
             'add-manager': () => {},
             'add-vendor': () => {},
             'my-leaves': loadMyLeaves,
@@ -1486,6 +1537,59 @@
     // Set today's date as default for leave form
     document.getElementById('leave-start').valueAsDate = new Date();
     document.getElementById('leave-end').valueAsDate = new Date();
+
+    // ============ HOLIDAYS ============
+async function loadHolidays() {
+    try {
+        const year = new Date().getFullYear();
+        const holidays = await apiFetch(`/holidays?year=${year}`);
+        const tbody = document.getElementById('holidays-list');
+        if (!holidays || !holidays.length) {
+            tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No holidays added yet</td></tr>';
+            return;
+        }
+        tbody.innerHTML = holidays.map(h => `<tr>
+            <td>#${h.id}</td>
+            <td><strong>${h.name}</strong></td>
+            <td>${h.date}</td>
+            <td>${h.description || '—'}</td>
+            <td>
+                <button class="btn btn-danger btn-sm" onclick="deleteHoliday(${h.id})">Delete</button>
+            </td>
+        </tr>`).join('');
+    } catch(e) { console.error(e); }
+}
+
+async function addHoliday() {
+    const name = document.getElementById('h-name').value.trim();
+    const date = document.getElementById('h-date').value;
+    const description = document.getElementById('h-desc').value.trim();
+    if (!name || !date) { showAlert('Please enter name and date', 'error'); return; }
+    try {
+        await apiFetch('/holidays', {
+            method: 'POST',
+            body: JSON.stringify({ name, date, description })
+        });
+        showAlert('Holiday added!', 'success');
+        clearHolidayForm();
+        loadHolidays();
+    } catch(e) { showAlert('Failed: ' + e.message, 'error'); }
+}
+
+async function deleteHoliday(id) {
+    if (!confirm('Delete this holiday?')) return;
+    try {
+        await apiFetch(`/holidays/${id}`, { method: 'DELETE' });
+        showAlert('Holiday deleted', 'success');
+        loadHolidays();
+    } catch(e) { showAlert('Failed: ' + e.message, 'error'); }
+}
+
+function clearHolidayForm() {
+    document.getElementById('h-name').value = '';
+    document.getElementById('h-date').value = '';
+    document.getElementById('h-desc').value = '';
+}
 </script>
 </body>
 </html>
