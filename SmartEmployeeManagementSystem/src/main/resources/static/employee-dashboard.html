@@ -1407,16 +1407,17 @@
         });
     }
     async function loadNotifCount() {
-        const res = await fetch('/notifications/unread-count', {
-            headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
-        });
-        const data = await res.json();
-        const badge = document.getElementById('notif-badge');
-        if (data.count > 0) {
-            badge.textContent = data.count;
-            badge.style.display = 'flex';
-        } else {
-            badge.style.display = 'none';
+        try {
+            const data = await apiFetch('/notifications/unread-count');
+            const badge = document.getElementById('notif-badge');
+            if (data && data.count > 0) {
+                badge.textContent = data.count;
+                badge.style.display = 'flex';
+            } else {
+                badge.style.display = 'none';
+            }
+        } catch(e) {
+            console.warn('Could not load notification count:', e);
         }
     }
 
@@ -1424,33 +1425,37 @@
         const panel = document.getElementById('notif-panel');
         if (panel.style.display === 'none') {
             panel.style.display = 'block';
-            await loadNotifications();
-            await fetch('/notifications/mark-read', {
-                method: 'POST',
-                headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
-            });
-            document.getElementById('notif-badge').style.display = 'none';
+            try {
+                await loadNotifications();
+                await apiFetch('/notifications/mark-read', { method: 'POST' });
+                document.getElementById('notif-badge').style.display = 'none';
+            } catch(e) {
+                console.warn('Notification panel error:', e);
+            }
         } else {
             panel.style.display = 'none';
         }
     }
 
     async function loadNotifications() {
-        const res = await fetch('/notifications', {
-            headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
-        });
-        const data = await res.json();
-        const list = document.getElementById('notif-list');
-        if (data.length === 0) {
-            list.innerHTML = '<div class="notif-item">No notifications yet.</div>';
-            return;
+        try {
+            const data = await apiFetch('/notifications');
+            const list = document.getElementById('notif-list');
+            if (!data || data.length === 0) {
+                list.innerHTML = '<div class="notif-item">No notifications yet.</div>';
+                return;
+            }
+            list.innerHTML = data.map(n => `
+            <div class="notif-item ${n.read ? '' : 'unread'}">
+                <div>${n.message}</div>
+                <div class="notif-time">${new Date(n.createdAt).toLocaleString()}</div>
+            </div>
+        `).join('');
+        } catch(e) {
+            document.getElementById('notif-list').innerHTML =
+                '<div class="notif-item">Could not load notifications.</div>';
+            console.warn('loadNotifications failed:', e);
         }
-        list.innerHTML = data.map(n => `
-        <div class="notif-item ${n.read ? '' : 'unread'}">
-            <div>${n.message}</div>
-            <div class="notif-time">${new Date(n.createdAt).toLocaleString()}</div>
-        </div>
-    `).join('');
     }
 
     // Load badge count on page load

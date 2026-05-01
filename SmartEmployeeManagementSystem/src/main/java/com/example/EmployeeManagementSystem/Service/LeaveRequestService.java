@@ -146,6 +146,15 @@ public class LeaveRequestService {
                     "LEAVE_REQUEST"
             );
         }
+        // After the existing manager notification block
+        employeeRepo.findByRole(Role.ADMIN).forEach(admin ->
+                notificationService.notify(
+                        admin,
+                        employee.getName() + " submitted a " + requestDTO.getLeaveType() + " leave request (" +
+                                requestDTO.getStartDate() + " → " + requestDTO.getEndDate() + ")",
+                        "LEAVE_REQUEST"
+                )
+        );
          return ResponseEntity.status(HttpStatus.CREATED).body(convertToDTO(savedRequest));
     }
 
@@ -188,6 +197,13 @@ public class LeaveRequestService {
                      "Your leave request from " + leaveRequest.getStartDate() + " to " + leaveRequest.getEndDate() + " has been approved.",
                      "LEAVE_APPROVED"
              );
+             employeeRepo.findByRole(Role.ADMIN).forEach(admin ->
+                     notificationService.notify(
+                             admin,
+                             leaveRequest.getEmployee().getName() + "'s leave request has been approved by " + manager.getName(),
+                             "LEAVE_APPROVED"
+                     )
+             );
          }
          else if(actionDTO.getAction().equalsIgnoreCase("rejected")){
              leaveRequest.setStatus(LeaveStatus.REJECTED);
@@ -196,6 +212,13 @@ public class LeaveRequestService {
                      "Your leave request from " + leaveRequest.getStartDate() + " to " + leaveRequest.getEndDate() + " was rejected." +
                              (actionDTO.getRemarks() != null ? " Reason: " + actionDTO.getRemarks() : ""),
                      "LEAVE_REJECTED"
+             );
+             employeeRepo.findByRole(Role.ADMIN).forEach(admin ->
+                     notificationService.notify(
+                             admin,
+                             leaveRequest.getEmployee().getName() + "'s leave request has been rejected by " + manager.getName(),
+                             "LEAVE_REJECTED"
+                     )
              );
          }
          else{

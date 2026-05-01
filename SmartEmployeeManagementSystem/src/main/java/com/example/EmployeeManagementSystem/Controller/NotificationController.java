@@ -6,6 +6,8 @@ import com.example.EmployeeManagementSystem.Repository.EmployeeRepo;
 import com.example.EmployeeManagementSystem.Service.NotificationService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
@@ -47,7 +49,11 @@ public class NotificationController {
     }
 
     private Employee getEmployee(Authentication authentication) {
-        return employeeRepo.findByEmail(authentication.getName())
-                .orElseThrow(() -> new RuntimeException("Employee not found"));
+        final String email = (authentication instanceof OAuth2AuthenticationToken oauth)
+                ? oauth.getPrincipal().<String>getAttribute("email")
+                : authentication.getName(); // JWT path — getName() returns email
+
+        return employeeRepo.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Employee not found: " + email));
     }
 }

@@ -94,27 +94,27 @@
             align-items: center; justify-content: center;
             padding: 0 3px;
         }
-
         .notif-panel {
-            position: absolute; top: 48px; right: 16px;
+            position: absolute; top: 48px; right: 0;
             width: 320px; max-height: 400px; overflow-y: auto;
-            background: white; border: 1px solid #e2e8f0;
-            border-radius: 10px; box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+            background: var(--panel);
+            border: 1px solid var(--border2);
+            border-radius: 10px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.4);
             z-index: 999;
         }
-
         .notif-header {
             padding: 12px 16px; font-weight: 600;
-            border-bottom: 1px solid #e2e8f0;
+            color: var(--text);
+            border-bottom: 1px solid var(--border);
         }
-
         .notif-item {
-            padding: 12px 16px; font-size: 14px;
-            border-bottom: 1px solid #f1f5f9;
+            padding: 12px 16px; font-size: 13px;
+            color: var(--text2);
+            border-bottom: 1px solid var(--border);
         }
-
-        .notif-item.unread { background: #eff6ff; }
-        .notif-time { font-size: 11px; color: #94a3b8; margin-top: 4px; }
+        .notif-item.unread { background: var(--accent-dim); color: var(--text); }
+        .notif-time { font-size: 11px; color: var(--text3); margin-top: 4px; }
     </style>
 </head>
 <body>
@@ -1488,8 +1488,14 @@
         try {
             const data = await apiFetch('/notifications/unread-count');
             const badge = document.getElementById('notif-badge');
-            if (data && data.count > 0) {
-                badge.textContent = data.count;
+
+            // Handles: plain number, { count: N }, or { unreadCount: N }
+            const count = typeof data === 'number'
+                ? data
+                : (data?.count ?? data?.unreadCount ?? 0);
+
+            if (count > 0) {
+                badge.textContent = count;
                 badge.style.display = 'flex';
             } else {
                 badge.style.display = 'none';
