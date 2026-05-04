@@ -159,7 +159,7 @@ public class ManagerService {
     private LeaveResponseDTO convertToLeaveResponseDTO(LeaveRequest leaveRequest) {
         LeaveResponseDTO dto = new LeaveResponseDTO();
         dto.setLeaveRequestId(leaveRequest.getId());
-        dto.setEmployeeId(leaveRequest.getEmployee().getEmployeeId());
+        dto.setEmployeeName(leaveRequest.getEmployee().getName());
         dto.setLeaveType(leaveRequest.getLeaveType());
         dto.setStartDate(leaveRequest.getStartDate());
         dto.setEndDate(leaveRequest.getEndDate());
