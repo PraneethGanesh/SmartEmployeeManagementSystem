@@ -10,6 +10,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
+import java.time.YearMonth;
 
 @Component
 public class LeaveAccrualScheduler {
@@ -31,7 +32,7 @@ public class LeaveAccrualScheduler {
         this.yearEndService = yearEndService;
     }
 
-    // 1st of month — accrue then warn
+    // 1st of month at 00:05 — accrue 1 day for all eligible employees, then warn
     @Scheduled(cron = "0 5 0 1 * ?")
     public void runMonthlyAccrual() {
         LocalDate today = LocalDate.now();
@@ -39,10 +40,15 @@ public class LeaveAccrualScheduler {
         warningService.runWarningCheck(today);
     }
 
-    // Last day of month 23:55 — sick leave reset
+    // Last day of month at 23:55 — reset unused sick leave
+    // FIX: use YearMonth to compute the actual last day of the current month,
+    //      so if the scheduler fires even a minute late (past midnight) on the
+    //      1st, we still reset the correct month and log the correct date.
     @Scheduled(cron = "0 55 23 L * ?")
     public void runSickLeaveReset() {
-        resetService.runMonthlyReset(LocalDate.now());
+        LocalDate lastDayOfMonth = YearMonth.now().atEndOfMonth();
+        log.info("Running sick leave reset for end-of-month: {}", lastDayOfMonth);
+        resetService.runMonthlyReset(lastDayOfMonth);
     }
 
     // Dec 31 at 22:00 — year-end carry-forward cap
