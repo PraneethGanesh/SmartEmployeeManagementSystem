@@ -61,6 +61,7 @@ public class LeaveRequestController {
     }
 
     @PostMapping("/maternity/apply")
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER','EMPLOYEE')")
     public ResponseEntity<?> applyMaternityLeave(
             Authentication authentication,
             @RequestBody MaternityLeaveRequestDTO dto) {
