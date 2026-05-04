@@ -73,8 +73,9 @@ public class JWTAuthConfig {
     }
 
     @Bean
-    public ApiKeyFilter apiKeyFilter() {
-        return new ApiKeyFilter();
+    public ApiKeyFilter apiKeyFilter(
+            @Qualifier("apiKeyAuthenticationManager") AuthenticationManager apiKeyAuthManager) {
+        return new ApiKeyFilter(apiKeyAuthManager);
     }
 
     @Bean
@@ -103,7 +104,13 @@ public class JWTAuthConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    @Qualifier("apiKeyAuthenticationManager")
+    public AuthenticationManager apiKeyAuthenticationManager() {
+        return new ProviderManager(apiKeyAuthProvider);
+    }
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, ApiKeyFilter apiKeyFilter) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
@@ -170,7 +177,7 @@ public class JWTAuthConfig {
                         .successHandler(oAuth2SuccessHandler())
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(apiKeyFilter(), UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(apiKeyFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

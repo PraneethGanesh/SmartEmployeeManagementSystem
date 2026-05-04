@@ -4,6 +4,7 @@ import com.example.EmployeeManagementSystem.Scheduler.LeaveStatusScheduler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -27,6 +28,7 @@ public class SchedulerController {
      * Manual trigger for leave scheduler
      */
     @PostMapping("/run")
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('SCHEDULER_TRIGGER')")
     public ResponseEntity<?> runScheduler() {
         try {
             leaveStatusScheduler.runManually();
