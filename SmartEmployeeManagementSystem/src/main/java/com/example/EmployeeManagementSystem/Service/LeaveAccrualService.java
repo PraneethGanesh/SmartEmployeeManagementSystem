@@ -23,7 +23,7 @@ public class LeaveAccrualService {
 
     private static final Logger log = LoggerFactory.getLogger(LeaveAccrualService.class);
     private static final BigDecimal ONE_DAY = BigDecimal.ONE;
-    private static final Set<String> SUPPORTED_LEAVE_TYPES = Set.of("SICK", "CASUAL", "MATERNITY");
+    private static final Set<String> SUPPORTED_LEAVE_TYPES = Set.of("SICK", "CASUAL");
 
     private final EmployeeRepo employeeRepository;
     private final LeaveTypeRepository leaveTypeRepository;

@@ -3,7 +3,9 @@ package com.example.EmployeeManagementSystem.Controller;
 import com.example.EmployeeManagementSystem.DTO.ActionDTO;
 import com.example.EmployeeManagementSystem.DTO.LeaveRequestDTO;
 import com.example.EmployeeManagementSystem.DTO.LeaveResponseDTO;
+import com.example.EmployeeManagementSystem.DTO.MaternityLeaveRequestDTO;
 import com.example.EmployeeManagementSystem.Service.LeaveRequestService;
+import com.example.EmployeeManagementSystem.Service.MaternityLeaveService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -15,9 +17,11 @@ import java.util.List;
 @RequestMapping("leave_requests")
 public class LeaveRequestController {
     private final LeaveRequestService leaveRequestService;
+    private final MaternityLeaveService maternityLeaveService;
 
-    public LeaveRequestController(LeaveRequestService leaveRequestService) {
+    public LeaveRequestController(LeaveRequestService leaveRequestService, MaternityLeaveService maternityLeaveService) {
         this.leaveRequestService = leaveRequestService;
+        this.maternityLeaveService = maternityLeaveService;
     }
 
     @GetMapping
@@ -54,6 +58,13 @@ public class LeaveRequestController {
     @PreAuthorize("hasAnyRole('ADMIN','MANAGER','EMPLOYEE')")
     public ResponseEntity<?> getEmployeeLeaves(Authentication authentication) {
         return leaveRequestService.getLeaveRequestsByEmployee(authentication);
+    }
+
+    @PostMapping("/maternity/apply")
+    public ResponseEntity<?> applyMaternityLeave(
+            Authentication authentication,
+            @RequestBody MaternityLeaveRequestDTO dto) {
+        return maternityLeaveService.applyMaternityLeave(authentication, dto);
     }
 
 }

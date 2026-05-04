@@ -1,15 +1,9 @@
 package com.example.EmployeeManagementSystem.Service;
 
-import com.example.EmployeeManagementSystem.DTO.ActionDTO;
-import com.example.EmployeeManagementSystem.DTO.AuthRequest;
-import com.example.EmployeeManagementSystem.DTO.LeaveRequestDTO;
-import com.example.EmployeeManagementSystem.DTO.LeaveResponseDTO;
+import com.example.EmployeeManagementSystem.DTO.*;
 import com.example.EmployeeManagementSystem.Entity.Employee;
 import com.example.EmployeeManagementSystem.Entity.LeaveRequest;
-import com.example.EmployeeManagementSystem.Enum.LeaveStatus;
-import com.example.EmployeeManagementSystem.Enum.LeaveType;
-import com.example.EmployeeManagementSystem.Enum.Role;
-import com.example.EmployeeManagementSystem.Enum.Status;
+import com.example.EmployeeManagementSystem.Enum.*;
 import com.example.EmployeeManagementSystem.Exception.*;
 import com.example.EmployeeManagementSystem.Repository.EmployeeRepo;
 import com.example.EmployeeManagementSystem.Repository.LeaveEntitlementRepository;
@@ -358,11 +352,62 @@ public class LeaveRequestService {
     }
 
     private void applyApprovedLeaveToEntitlement(LeaveRequest leaveRequest) {
-        updateUsedLeave(leaveRequest, requestedDays(leaveRequest));
+        if (leaveRequest.getLeaveType() == LeaveType.MATERNITY) {
+            grantAndDeductMaternity(leaveRequest);  // special maternity flow
+        } else {
+            updateUsedLeave(leaveRequest, requestedDays(leaveRequest)); // existing flow
+        }
+    }
+
+    private void grantAndDeductMaternity(LeaveRequest leaveRequest) {
+        int year = leaveRequest.getStartDate().getYear();
+        Employee employee = leaveRequest.getEmployee();
+
+        com.example.EmployeeManagementSystem.Entity.LeaveType maternityType =
+                leaveTypeRepository.findByName("MATERNITY")
+                        .orElseThrow(() -> new IllegalStateException(
+                                "Maternity leave type not configured"));
+
+        var entitlement = leaveEntitlementRepository
+                .findByEmployeeEmployeeIdAndLeaveTypeIdAndYear(
+                        employee.getEmployeeId(), maternityType.getId(), year)
+                .orElseGet(() -> createEntitlement(employee, maternityType, year));
+
+        // Grant 180 days one time on approval
+        entitlement.setAccruedThisYear(BigDecimal.valueOf(180));
+
+        // Deduct the days she is taking (always 180)
+        entitlement.setUsedThisYear(requestedDays(leaveRequest));
+
+        leaveEntitlementRepository.save(entitlement);
     }
 
     private void reverseApprovedLeaveFromEntitlement(LeaveRequest leaveRequest) {
-        updateUsedLeave(leaveRequest, requestedDays(leaveRequest).negate());
+        if (leaveRequest.getLeaveType() == LeaveType.MATERNITY) {
+            reverseMaternityEntitlement(leaveRequest); // wipe the grant entirely
+        } else {
+            updateUsedLeave(leaveRequest, requestedDays(leaveRequest).negate());
+        }
+    }
+
+    private void reverseMaternityEntitlement(LeaveRequest leaveRequest) {
+        int year = leaveRequest.getStartDate().getYear();
+        Employee employee = leaveRequest.getEmployee();
+
+        com.example.EmployeeManagementSystem.Entity.LeaveType maternityType =
+                leaveTypeRepository.findByName("MATERNITY")
+                        .orElseThrow(() -> new IllegalStateException(
+                                "Maternity leave type not configured"));
+
+        leaveEntitlementRepository
+                .findByEmployeeEmployeeIdAndLeaveTypeIdAndYear(
+                        employee.getEmployeeId(), maternityType.getId(), year)
+                .ifPresent(entitlement -> {
+                    // Wipe both the grant and the usage
+                    entitlement.setAccruedThisYear(BigDecimal.ZERO);
+                    entitlement.setUsedThisYear(BigDecimal.ZERO);
+                    leaveEntitlementRepository.save(entitlement);
+                });
     }
 
     private void updateUsedLeave(LeaveRequest leaveRequest, BigDecimal delta) {
