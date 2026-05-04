@@ -70,9 +70,6 @@ public class AuthController {
 
             UserDetails user = (UserDetails) auth.getPrincipal();
 
-            Employee employee = employeeRepo.findByEmail(authRequest.getUsername())
-                    .orElseThrow(() -> new RuntimeException("Employee not found"));
-
             String role = user.getAuthorities().stream()
                     .map(a -> a.getAuthority())
                     .filter(a -> a.startsWith("ROLE_"))
@@ -80,11 +77,19 @@ public class AuthController {
                     .map(a -> a.substring("ROLE_".length()))
                     .orElseThrow(() -> new RuntimeException("Role not found"));
 
-            // Check if TOTP is enabled for this user
+            // Handle Vendor login — no TOTP, issue tokens directly
+            if (user instanceof Vendor vendor) {
+                return ResponseEntity.ok(issueTokens(vendor, role));
+            }
+
+            // Handle Employee login
+            Employee employee = employeeRepo.findByEmail(authRequest.getUsername())
+                    .orElseThrow(() -> new RuntimeException("Employee not found"));
+
             if (employee.isTotpEnabled()) {
                 String preAuthToken = UUID.randomUUID().toString();
                 PRE_AUTH_STORE.put(preAuthToken, new PreAuthEntry(
-                        employee.getEmail(),   // store email, not display name
+                        employee.getEmail(),
                         role,
                         System.currentTimeMillis() + 5 * 60 * 1000L
                 ));
@@ -94,7 +99,6 @@ public class AuthController {
                 ));
             }
 
-            // TOTP not enabled — issue JWT directly (existing behavior)
             return ResponseEntity.ok(issueTokens(user, role));
 
         } catch (Exception e) {
