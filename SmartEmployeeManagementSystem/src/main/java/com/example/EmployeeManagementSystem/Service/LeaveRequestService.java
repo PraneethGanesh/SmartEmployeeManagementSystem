@@ -70,6 +70,15 @@ public class LeaveRequestService {
                     .body(Map.of("error", "Only active employees can apply for leave"));
         }
 
+        if (requestDTO.getLeaveType() == LeaveType.MATERNITY) {
+            if(employee.getGender()==Gender.M){
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body("Maternity leave is not applicable");
+            }
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Please use the maternity leave application process.");
+        }
+
         leaveRequest.setEmployee(employee);
         //Checking if the start date is before today
         String timezone= employee.getTimezone();
