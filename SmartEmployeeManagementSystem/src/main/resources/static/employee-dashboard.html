@@ -131,7 +131,8 @@
         .chip.sick{background:var(--red-dim);color:var(--red)}
         .chip.casual{background:var(--amber-dim);color:var(--amber)}
         .chip.maternity{background:var(--accent-dim);color:var(--accent)}
-        .chip.under_repair{background:var(--amber-dim);color:var(--amber)}
+        .chip.under_repair { background: var(--amber-dim); color: var(--amber); }
+        .chip.unpaid { background: rgba(139,92,246,0.15); color: #a78bfa; border: 1px solid rgba(139,92,246,0.2); }
         .chip.assigned{background:var(--green-dim);color:var(--green)}
         .chip.condemned{background:var(--red-dim);color:var(--red)}
 
@@ -461,7 +462,11 @@
                                     <option value="SICK">Sick Leave</option>
                                     <option value="CASUAL">Casual Leave</option>
                                     <option value="MATERNITY">Maternity Leave</option>
+                                    <option value="UNPAID">Unpaid Leave</option>
                                 </select>
+                                <div id="sick-leave-hint" style="display:none;margin-top:6px;font-size:11px;color:var(--amber);background:var(--amber-dim);border:1px solid rgba(251,191,36,0.2);border-radius:6px;padding:8px 12px;">
+                                    ⚠️ Sick leave is limited to <strong>1 day per month</strong>. If already used this month, please select Unpaid Leave.
+                                </div>
                             </div>
                             <div class="form-group">
                                 <label>Start Date</label>
@@ -781,7 +786,8 @@
         HOLIDAY  : { bg:'rgba(56,189,248,0.25)',  border:'#38bdf8', text:'#38bdf8' },
     };
 
-    const TYPE_LABEL = { SICK:'🤒 Sick', CASUAL:'🏖️ Casual', MATERNITY:'👶 Maternity' };
+    const TYPE_LABEL = { SICK:'🤒 Sick', CASUAL:'🏖️ Casual', MATERNITY:'👶 Maternity', UNPAID:'🚫 Unpaid'
+    };
 
     /* ============================
        AUTH / INIT
@@ -983,6 +989,10 @@
             loadMyLeaves();
         }catch(e){showAlert('Failed to submit: '+e.message,'error');}
     }
+    document.getElementById('leave-type').addEventListener('change', function(){
+        document.getElementById('sick-leave-hint').style.display =
+            this.value === 'SICK' ? 'block' : 'none';
+    });
 
     async function cancelLeave(id){
         if(!confirm('Cancel this leave request?')) return;

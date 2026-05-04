@@ -3,5 +3,6 @@ package com.example.EmployeeManagementSystem.Enum;
 public enum LeaveType {
     SICK,
     CASUAL,
-    MATERNITY
+    MATERNITY,
+    UNPAID
 }

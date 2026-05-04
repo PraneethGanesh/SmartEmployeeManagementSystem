@@ -20,6 +20,7 @@ public class LeaveTypeDataInitializer implements CommandLineRunner {
         ensureLeaveType("SICK", false, true, 0, false, null);
         ensureLeaveType("CASUAL", true, false, 30, false, null);
         ensureLeaveType("MATERNITY", true, false, 30, true, Gender.F);
+        ensureLeaveType("UNPAID",false,false,0,false,null);
     }
 
     private void ensureLeaveType(String name,
