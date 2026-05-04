@@ -243,7 +243,6 @@
                             <select id="leave-type">
                                 <option value="SICK">Sick Leave</option>
                                 <option value="CASUAL">Casual Leave</option>
-                                <option value="MATERNITY">Maternity Leave</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -707,7 +706,9 @@
         document.getElementById('action-remarks').value  = '';
         document.getElementById('action-modal-title').textContent = `${action === 'APPROVED' ? 'Approve' : 'Reject'} Leave Request #${id}`;
         const btn = document.getElementById('action-submit-btn');
-        btn.textContent = action === 'APPROVED' ? 'Approve' : 'Reject';
+        btn.textContent = action === 'APPROVED' ?
+
+         'Approve' : 'Reject';
         btn.className   = action === 'APPROVED' ? 'btn btn-success' : 'btn btn-danger';
         document.getElementById('action-modal').classList.add('open');
     }
