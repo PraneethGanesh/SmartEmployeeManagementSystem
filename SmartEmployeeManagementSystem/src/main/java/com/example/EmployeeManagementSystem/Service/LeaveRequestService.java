@@ -265,7 +265,7 @@ public class LeaveRequestService {
     private LeaveResponseDTO convertToDTO(LeaveRequest request){
         var responseDTO=new LeaveResponseDTO();
         responseDTO.setLeaveRequestId(request.getId());
-        responseDTO.setEmployeeId(request.getEmployee().getEmployeeId());
+        responseDTO.setEmployeeName(request.getEmployee().getName());
         responseDTO.setLeaveType(request.getLeaveType());
         responseDTO.setStartDate(request.getStartDate());
         responseDTO.setEndDate(request.getEndDate());
