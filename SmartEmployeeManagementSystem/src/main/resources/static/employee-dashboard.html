@@ -759,6 +759,50 @@
                         <div class="profile-field"><div class="field-label">Timezone</div><div class="field-value" id="p-tz">—</div></div>
                     </div>
                 </div>
+
+                <div class="section" id="maternity-apply-btn" style="display:none">
+                    <div class="section-head">
+                        <div>
+                            <div class="section-title">👶 Maternity Leave</div>
+                            <div class="section-sub">Apply for 180 days maternity leave</div>
+                        </div>
+                    </div>
+                    <div class="form-card">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Start Date</label>
+                                <input type="date" id="mat-start-date">
+                            </div>
+                            <div class="form-group">
+                                <label>End Date (Auto)</label>
+                                <input type="text" id="mat-end-date"
+                                       placeholder="Auto: start + 180 days"
+                                       disabled
+                                       style="color:var(--text3);cursor:not-allowed">
+                            </div>
+                            <div class="form-group full">
+                                <label>Reason / Notes</label>
+                                <textarea id="mat-reason" rows="3"
+                                          placeholder="Optional notes..."></textarea>
+                            </div>
+                            <!-- Info box -->
+                            <div class="form-group full">
+                                <div style="background:var(--accent-dim);border:1px solid rgba(56,189,248,0.2);
+                                border-radius:8px;padding:12px 16px;font-size:12px;color:var(--text2)">
+                                    ℹ️ Maternity leave is fixed at <strong style="color:var(--accent)">180 days</strong>.
+                                    The end date will be automatically calculated.
+                                    You can apply <strong style="color:var(--accent)">once per year</strong>.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-actions">
+                            <button class="btn btn-primary" onclick="applyMaternityLeave()">
+                                👶 Submit Maternity Leave
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
             </div>
 
         </div><!-- /content -->
@@ -777,6 +821,8 @@
     ============================ */
     let employeeCalendar = null;   // FullCalendar instance
     let calendarInitialized = false;
+    let currentEmployeeGender = null;
+    let currentEmployeeId = null;
 
     // Event color map
     const STATUS_COLORS = {
@@ -862,12 +908,19 @@
                 const me = await apiFetch('/employee/me');
                 if(me){
                     name=me.name||email; email=me.email||email;
+                    currentEmployeeGender = me.gender; // 👈 store gender
+                    currentEmployeeId = me.employeeId;
                     document.getElementById('p-name').textContent=me.name||'—';
                     document.getElementById('p-email').textContent=me.email||'—';
                     document.getElementById('p-dept').textContent=me.dept||'—';
                     document.getElementById('p-role').textContent=me.role||'EMPLOYEE';
                     document.getElementById('p-status').textContent=me.status||'—';
                     document.getElementById('p-tz').textContent=me.timezone||'—';
+
+                    const maternityBtn = document.getElementById('maternity-apply-btn');
+                  if(maternityBtn) {
+                    maternityBtn.style.display = me.gender === 'F' ? 'block' : 'none';
+                     }
                 }
             }catch(e){ console.warn('Could not load profile'); }
             const initials=(name||email||'?').charAt(0).toUpperCase();
@@ -1472,6 +1525,44 @@
     loadNotifCount();
     // Refresh count every 30 seconds
     setInterval(loadNotifCount, 30000);
+
+    document.getElementById('mat-start-date').addEventListener('change', function(){
+    if(this.value) {
+        const start = new Date(this.value);
+        const end = new Date(start);
+        end.setDate(end.getDate() + 179); // 180 days inclusive
+        document.getElementById('mat-end-date').value =
+            end.toISOString().split('T')[0];
+    } else {
+        document.getElementById('mat-end-date').value = '';
+    }
+});
+
+   async function applyMaternityLeave() {
+    const startDate = document.getElementById('mat-start-date').value;
+    const reason    = document.getElementById('mat-reason').value.trim();
+
+    if(!startDate) {
+        showAlert('Please select a start date', 'error');
+        return;
+    }
+
+    try {
+        await apiFetch('/leave_requests/maternity/apply', {
+            method: 'POST',
+            body: JSON.stringify({ startDate, reason })
+        });
+        showAlert('Maternity leave request submitted successfully!', 'success');
+        // Clear form
+        document.getElementById('mat-start-date').value = '';
+        document.getElementById('mat-end-date').value = '';
+        document.getElementById('mat-reason').value = '';
+        // Refresh dashboard
+        loadDashboard();
+    } catch(e) {
+        showAlert('Failed to submit: ' + e.message, 'error');
+    }
+}
 
     // Close panel when clicking outside
     document.addEventListener('click', e => {
