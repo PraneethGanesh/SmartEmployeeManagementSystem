@@ -84,4 +84,15 @@ public interface LeaveRequestRepo extends JpaRepository<LeaveRequest, Long> {
             @Param("year") int year,
             @Param("month") int month);
 
+    @Query("SELECT COUNT(l) > 0 FROM LeaveRequest l " +
+            "WHERE l.employee = :employee " +
+            "AND l.leaveType = :leaveType " +
+            "AND YEAR(l.startDate) = :year " +
+            "AND l.status NOT IN (:statuses)")
+    boolean existsMaternityLeaveForYear(
+            @Param("employee") Employee employee,
+            @Param("leaveType") LeaveType leaveType,
+            @Param("year") int year,
+            @Param("statuses") List<LeaveStatus> statuses
+    );
 }

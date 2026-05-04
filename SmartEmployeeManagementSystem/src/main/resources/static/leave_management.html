@@ -686,7 +686,7 @@
             tbody.innerHTML = arr.length
                 ? arr.map(l => `<tr>
           <td>${l.leaveRequestId}</td>
-          <td>${l.employeeId || '—'}</td>
+          <td>${l.employeeName || '—'}</td>
           <td>${chip(l.leaveType)}</td>
           <td>${l.startDate || '—'}</td>
           <td>${l.endDate || '—'}</td>
@@ -748,7 +748,7 @@
         tbody.innerHTML = leaves.length
             ? leaves.map(l => `<tr>
         <td>${l.leaveRequestId}</td>
-        <td>${l.employeeId || '—'}</td>
+        <td>${l.employeeName || '—'}</td>
         <td>${chip(l.leaveType)}</td>
         <td>${l.startDate || '—'}</td>
         <td>${l.endDate || '—'}</td>
