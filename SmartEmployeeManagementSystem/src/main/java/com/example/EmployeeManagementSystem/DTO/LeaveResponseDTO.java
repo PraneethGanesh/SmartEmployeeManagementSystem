@@ -7,7 +7,7 @@ import java.time.LocalDate;
 
 public class LeaveResponseDTO {
     private long leaveRequestId;
-    private long employeeId;
+    private String employeeName;
     private LeaveType leaveType;
     private LocalDate startDate;
     private LocalDate endDate;
@@ -23,12 +23,12 @@ public class LeaveResponseDTO {
         this.leaveRequestId = leaveRequestId;
     }
 
-    public long getEmployeeId() {
-        return employeeId;
+    public String getEmployeeName() {
+        return employeeName;
     }
 
-    public void setEmployeeId(long employeeId) {
-        this.employeeId = employeeId;
+    public void setEmployeeName(String employeeName) {
+        this.employeeName = employeeName;
     }
 
     public LocalDate getStartDate() {
