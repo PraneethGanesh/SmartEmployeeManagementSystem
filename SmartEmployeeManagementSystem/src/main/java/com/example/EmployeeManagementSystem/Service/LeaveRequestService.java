@@ -98,12 +98,20 @@ public class LeaveRequestService {
         }
         //optional
         if (requestDTO.getLeaveType() == LeaveType.SICK) {
-            long sickDaysUsed = leaveRequestRepo.countDaysByEmployeeAndLeaveTypeAndYear(
-                    employee, LeaveType.SICK, today.getYear());
+            // Only 1 sick day allowed per calendar month
+            long sickDaysUsedThisMonth = leaveRequestRepo.countApprovedSickDaysInMonth(
+                    employee, today.getYear(), today.getMonthValue());
 
-            if (sickDaysUsed + daysRequested > 12) { // Assuming 12 sick days per year
+            if (sickDaysUsedThisMonth >= 1) {
                 return ResponseEntity.badRequest()
-                        .body(Map.of("error", "Sick leave limit exceeded for this year"));
+                        .body(Map.of(
+                                "error", "You have already used your sick leave for this month. Please apply for Unpaid leave instead."
+                        ));
+            }
+
+            if (daysRequested > 1) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error", "Sick leave is limited to 1 day per month."));
             }
         }
         long duplicateCount= leaveRequestRepo.checkDuplicate(

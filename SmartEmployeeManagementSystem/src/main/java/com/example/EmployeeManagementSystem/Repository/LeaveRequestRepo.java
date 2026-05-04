@@ -70,4 +70,18 @@ public interface LeaveRequestRepo extends JpaRepository<LeaveRequest, Long> {
 
     List<LeaveRequest> findByStatusAndEmployee_Manager(LeaveStatus status, Employee manager);
 
+    @Query("""
+    SELECT COALESCE(SUM(DATEDIFF(lr.endDate, lr.startDate) + 1), 0)
+    FROM LeaveRequest lr
+    WHERE lr.employee = :employee
+      AND lr.leaveType = com.example.EmployeeManagementSystem.Enum.LeaveType.SICK
+      AND lr.status = com.example.EmployeeManagementSystem.Enum.LeaveStatus.APPROVED
+      AND YEAR(lr.startDate) = :year
+      AND MONTH(lr.startDate) = :month
+    """)
+    long countApprovedSickDaysInMonth(
+            @Param("employee") Employee employee,
+            @Param("year") int year,
+            @Param("month") int month);
+
 }
