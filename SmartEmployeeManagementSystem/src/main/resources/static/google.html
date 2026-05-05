@@ -35,15 +35,15 @@
         .bg-layer{
             position:fixed;inset:0;z-index:0;
             background:
-                    radial-gradient(ellipse 60% 50% at 20% 50%, rgba(79,140,255,0.06) 0%, transparent 70%),
-                    radial-gradient(ellipse 40% 60% at 80% 20%, rgba(167,139,250,0.05) 0%, transparent 60%),
-                    radial-gradient(ellipse 50% 40% at 70% 80%, rgba(52,211,153,0.04) 0%, transparent 60%);
+                radial-gradient(ellipse 60% 50% at 20% 50%, rgba(79,140,255,0.06) 0%, transparent 70%),
+                radial-gradient(ellipse 40% 60% at 80% 20%, rgba(167,139,250,0.05) 0%, transparent 60%),
+                radial-gradient(ellipse 50% 40% at 70% 80%, rgba(52,211,153,0.04) 0%, transparent 60%);
         }
         .grid-overlay{
             position:fixed;inset:0;z-index:0;
             background-image:
-                    linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
-                    linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+                linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
             background-size:40px 40px;
             mask-image:radial-gradient(ellipse 80% 80% at center, black 20%, transparent 80%);
         }
@@ -91,8 +91,6 @@
             line-height:1.1;letter-spacing:-1px;color:var(--text);margin-bottom:16px;
         }
         .hero-text h1 .hl-blue{color:var(--blue)}
-        .hero-text h1 .hl-violet{color:var(--violet)}
-        .hero-text h1 .hl-orange{color:var(--orange)}
         .hero-text p{font-size:15px;color:var(--text2);line-height:1.6;max-width:380px}
         .feature-pills{display:flex;flex-wrap:wrap;gap:8px;margin-top:32px}
         .pill{
@@ -119,21 +117,6 @@
         @keyframes fadeRight{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:translateX(0)}}
         .form-box{width:100%}
 
-        /* ---- ROLE SELECTOR — 3 roles only: Employee | Manager | Admin ---- */
-        .role-label{font-size:10px;font-weight:600;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;font-family:var(--mono);margin-bottom:10px}
-        .role-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:28px}
-        .role-tab{
-            padding:10px 8px;border-radius:10px;border:1.5px solid var(--border);
-            background:var(--bg);color:var(--text2);font-family:var(--font);
-            font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;
-            display:flex;flex-direction:column;align-items:center;gap:4px;
-        }
-        .role-tab .role-icon{font-size:16px}
-        .role-tab:hover{border-color:var(--border-lit);color:var(--text)}
-        .role-tab.active-emp{border-color:var(--blue);background:var(--blue-dim);color:var(--blue)}
-        .role-tab.active-mgr{border-color:var(--violet);background:var(--violet-dim);color:var(--violet)}
-        .role-tab.active-adm{border-color:var(--orange);background:var(--orange-dim);color:var(--orange)}
-
         /* ---- AUTH TABS ---- */
         .auth-tabs{display:flex;background:var(--bg);border-radius:10px;padding:4px;gap:4px;margin-bottom:24px;border:1px solid var(--border)}
         .auth-tab{
@@ -142,6 +125,17 @@
             font-size:13px;cursor:pointer;border-radius:7px;transition:all 0.2s;
         }
         .auth-tab.active{background:var(--panel2);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,0.3)}
+
+        /* ---- FORM SECTION HEADER ---- */
+        .section-header{
+            margin-bottom:20px;
+        }
+        .section-title{
+            font-size:18px;font-weight:700;color:var(--text);letter-spacing:-0.3px;margin-bottom:4px;
+        }
+        .section-sub{
+            font-size:12px;color:var(--text3);
+        }
 
         /* ---- FORM ELEMENTS ---- */
         .form-group{margin-bottom:16px}
@@ -155,22 +149,15 @@
         }
         .form-input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(79,140,255,0.08)}
         .form-input::placeholder{color:var(--text3)}
-        .form-input.focus-violet:focus{border-color:var(--violet);box-shadow:0 0 0 3px rgba(167,139,250,0.08)}
-        .form-input.focus-orange:focus{border-color:var(--orange);box-shadow:0 0 0 3px rgba(245,158,11,0.08)}
 
         /* ---- BUTTONS ---- */
         .btn-login{
             width:100%;padding:12px;border:none;border-radius:9px;
             font-family:var(--font);font-size:14px;font-weight:600;
             cursor:pointer;transition:all 0.2s;margin-top:4px;
-            position:relative;overflow:hidden;
+            background:var(--blue);color:#fff;
         }
-        .btn-login.blue{background:var(--blue);color:#fff}
-        .btn-login.blue:hover{background:#6ba0ff;box-shadow:0 6px 20px rgba(79,140,255,0.35);transform:translateY(-1px)}
-        .btn-login.violet{background:var(--violet);color:#fff}
-        .btn-login.violet:hover{background:#b8a0fc;box-shadow:0 6px 20px rgba(167,139,250,0.35);transform:translateY(-1px)}
-        .btn-login.orange{background:var(--orange);color:#fff}
-        .btn-login.orange:hover{background:#f7b23b;box-shadow:0 6px 20px rgba(245,158,11,0.35);transform:translateY(-1px)}
+        .btn-login:hover{background:#6ba0ff;box-shadow:0 6px 20px rgba(79,140,255,0.35);transform:translateY(-1px)}
         .btn-login:active{transform:translateY(0)}
         .btn-login.loading{opacity:0.7;pointer-events:none}
 
@@ -185,17 +172,6 @@
             display:flex;align-items:center;justify-content:center;gap:10px;
         }
         .btn-google:hover{background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.2);color:var(--text)}
-
-        /* ---- GOOGLE ROLE SELECT ---- */
-        .google-role-row{display:flex;gap:8px;margin-bottom:10px;align-items:center}
-        .google-role-label{font-size:11px;color:var(--text3);font-family:var(--mono);white-space:nowrap}
-        .google-role-select{
-            flex:1;padding:8px 10px;background:var(--bg);
-            border:1px solid var(--border);border-radius:8px;
-            color:var(--text);font-family:var(--font);font-size:13px;cursor:pointer;
-        }
-        .google-role-select:focus{outline:none;border-color:var(--border-lit)}
-        .google-role-select option{background:var(--panel)}
 
         /* ---- VENDOR LINK ---- */
         .vendor-link-row{
@@ -284,18 +260,10 @@
 <div class="right-panel">
     <div class="form-box">
 
-        <!-- ROLE SELECTOR: 3 roles only — Vendor removed -->
-        <div class="role-label">Sign in as</div>
-        <div class="role-tabs">
-            <button class="role-tab active-emp" id="role-emp" onclick="selectRole('EMPLOYEE')">
-                <span class="role-icon">👤</span>Employee
-            </button>
-            <button class="role-tab" id="role-mgr" onclick="selectRole('MANAGER')">
-                <span class="role-icon">🗂</span>Manager
-            </button>
-            <button class="role-tab" id="role-adm" onclick="selectRole('ADMIN')">
-                <span class="role-icon">🛡</span>Admin
-            </button>
+        <!-- SECTION HEADER -->
+        <div class="section-header">
+            <div class="section-title">Welcome back</div>
+            <div class="section-sub">Sign in — your dashboard will load automatically based on your account.</div>
         </div>
 
         <!-- AUTH METHOD TABS -->
@@ -307,39 +275,31 @@
         <!-- JWT FORM -->
         <div id="jwt-form">
             <div class="form-group">
-                <label class="form-label">Enter your Email</label>
+                <label class="form-label">Email</label>
                 <input class="form-input" id="jwt-username" type="text" placeholder="your.email@company.com" autocomplete="off">
             </div>
             <div class="form-group">
                 <label class="form-label">Password</label>
                 <input class="form-input" id="jwt-password" type="password" placeholder="••••••••" autocomplete="current-password">
             </div>
-            <button class="btn-login blue" id="jwt-btn" onclick="jwtLogin()">Sign In</button>
+            <button class="btn-login" id="jwt-btn" onclick="jwtLogin()">Sign In</button>
         </div>
 
         <!-- SESSION FORM -->
         <div id="session-form" style="display:none">
             <div class="form-group">
-                <label class="form-label">Enter your Email</label>
+                <label class="form-label">Email</label>
                 <input class="form-input" id="session-username" type="text" placeholder="your.email@company.com">
             </div>
             <div class="form-group">
                 <label class="form-label">Password</label>
                 <input class="form-input" id="session-password" type="password" placeholder="••••••••">
             </div>
-            <button class="btn-login blue" id="session-btn" onclick="sessionLogin()">Sign In with Session</button>
+            <button class="btn-login" id="session-btn" onclick="sessionLogin()">Sign In with Session</button>
         </div>
 
-        <!-- OAUTH — Vendor removed from Google role select -->
+        <!-- GOOGLE OAUTH — no role selector needed -->
         <div class="divider">or continue with</div>
-        <div class="google-role-row">
-            <span class="google-role-label">Sign in as</span>
-            <select class="google-role-select" id="oauth-role">
-                <option value="EMPLOYEE">Employee</option>
-                <option value="MANAGER">Manager</option>
-                <option value="ADMIN">Admin</option>
-            </select>
-        </div>
         <button class="btn-google" onclick="googleLogin()">
             <svg width="18" height="18" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -379,8 +339,9 @@
         </div>
 
     </div>
+
     <!-- TOTP MODAL OVERLAY -->
-    <div id="totp-overlay" style="display:none;position:fixed;inset:0;z-index:999;background:rgba(7,9,16,0.85);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;">
+    <div id="totp-overlay" style="display:none;position:fixed;inset:0;z-index:999;background:rgba(7,9,16,0.85);backdrop-filter:blur(8px);align-items:center;justify-content:center;">
         <div style="background:var(--panel);border:1px solid var(--border-lit);border-radius:16px;padding:36px;width:340px;text-align:center;animation:fadeIn 0.25s ease;">
             <div style="font-size:28px;margin-bottom:8px;">🔐</div>
             <h3 style="font-size:17px;font-weight:700;color:var(--text);margin-bottom:6px;">Two-Factor Verification</h3>
@@ -390,7 +351,7 @@
                    style="text-align:center;font-size:22px;font-family:var(--mono);letter-spacing:8px;padding:14px;"
                    oninput="this.value=this.value.replace(/\D/g,'')">
             <div id="totp-status" style="display:none;margin-top:10px;font-size:13px;color:var(--red);"></div>
-            <button id="totp-verify-btn" class="btn-login blue" style="margin-top:16px;" onclick="submitTotp()">Verify</button>
+            <button id="totp-verify-btn" class="btn-login" style="margin-top:16px;" onclick="submitTotp()">Verify</button>
             <button onclick="cancelTotp()" style="margin-top:10px;width:100%;padding:10px;border:none;background:transparent;color:var(--text2);font-family:var(--font);font-size:13px;cursor:pointer;">Cancel</button>
         </div>
     </div>
@@ -398,114 +359,14 @@
 
 <script>
     const API = 'http://localhost:8080';
-    const GOOGLE_CLIENT_ID = '525324511556-s9eugd1o761n6cjje2nr60cv8ho6joq2.apps.googleusercontent.com';
-    const REDIRECT_URI = 'http://loaclhost:8080/google.html';
 
-    // Role dashboard mapping — VENDOR removed from this page
+    // Role dashboard mapping
     const DASHBOARDS = {
-        EMPLOYEE: '/employee-dashboard.html',
-        MANAGER:  '/manager-dashboard.html',
-        ADMIN:    '/dashboard.html',
-        USER:     '/pending.html'
+        EMPLOYEE:    '/employee-dashboard.html',
+        MANAGER:     '/manager-dashboard.html',
+        ADMIN:       '/dashboard.html',
+        USER:        '/pending.html'
     };
-
-    let currentRole = 'EMPLOYEE';
-
-    function buildAuthOptions(token, authType) {
-        const headers = {};
-        if (token) headers.Authorization = `Bearer ${token}`;
-        return {
-            headers,
-            credentials: authType === 'session' ? 'include' : 'same-origin'
-        };
-    }
-
-    async function resolveRoleFromServer(token, authType) {
-        const authOptions = buildAuthOptions(token, authType);
-
-        // Check employee/manager/admin endpoint — vendors are not expected here
-        const employeeResponse = await fetch(`${API}/employee/me`, authOptions);
-        if (employeeResponse.ok) {
-            const employee = await employeeResponse.json();
-            return employee.role || 'EMPLOYEE';
-        }
-
-        throw new Error('Unable to determine authenticated role');
-    }
-
-    async function redirectByRole(token, authType = localStorage.getItem('auth_type')) {
-    let role;
-
-    if (token) {
-        role = getRoleFromJWT(token);
-    } else {
-        try {
-            const res = await fetch(`${API}/employee/me`, { credentials: 'include' });
-            if (res.ok) {
-                const emp = await res.json();
-                role = emp.role || 'USER';
-            } else {
-                role = 'USER';
-            }
-        } catch(e) {
-            role = localStorage.getItem('last_role') || 'USER';
-        }
-    }
-
-    console.log('Final role for redirect:', role);
-    localStorage.setItem('last_role', role);
-
-    // Block ALL vendor types from using the main login page
-    if (role === 'FOOD_VENDOR' || role === 'TECH_VENDOR') {
-        localStorage.removeItem('jwt_token');
-        localStorage.removeItem('auth_type');
-        localStorage.removeItem('last_role');
-        // Reset button state
-        const jwtBtn = document.getElementById('jwt-btn');
-        const sesBtn = document.getElementById('session-btn');
-        if (jwtBtn) { jwtBtn.classList.remove('loading'); jwtBtn.textContent = 'Sign In'; }
-        if (sesBtn) { sesBtn.classList.remove('loading'); sesBtn.textContent = 'Sign In with Session'; }
-        showStatus('error', 'Vendors must use the Vendor Login page.');
-        return;
-    }
-
-    const destination = DASHBOARDS[role];
-    if (!destination) {
-        // Unknown role — don't redirect anywhere, just show error
-        localStorage.removeItem('jwt_token');
-        localStorage.removeItem('auth_type');
-        showStatus('error', 'Unknown role: ' + role + '. Please contact your administrator.');
-        const jwtBtn = document.getElementById('jwt-btn');
-        if (jwtBtn) { jwtBtn.classList.remove('loading'); jwtBtn.textContent = 'Sign In'; }
-        return;
-    }
-
-    console.log('Redirecting to:', destination);
-    window.location.href = destination;
-}
-
-    // ---- Role selector (3 tabs: Employee | Manager | Admin) ----
-    function selectRole(role) {
-        currentRole = role;
-        document.getElementById('role-emp').className = 'role-tab';
-        document.getElementById('role-mgr').className = 'role-tab';
-        document.getElementById('role-adm').className = 'role-tab';
-
-        const classMap = { EMPLOYEE: 'active-emp', MANAGER: 'active-mgr', ADMIN: 'active-adm' };
-        const idMap    = { EMPLOYEE: 'role-emp',   MANAGER: 'role-mgr',   ADMIN: 'role-adm'   };
-        document.getElementById(idMap[role]).classList.add(classMap[role]);
-
-        document.getElementById('oauth-role').value = role;
-
-        const colorMap = { EMPLOYEE: 'blue', MANAGER: 'violet', ADMIN: 'orange' };
-        const col = colorMap[role];
-        document.getElementById('jwt-btn').className     = `btn-login ${col}`;
-        document.getElementById('session-btn').className = `btn-login ${col}`;
-
-        document.querySelectorAll('.form-input').forEach(inp => {
-            inp.className = (`form-input focus-${col === 'blue' ? '' : col}`).trim();
-        });
-    }
 
     // ---- Auth tab switching ----
     function switchTab(type) {
@@ -527,14 +388,77 @@
         document.getElementById('status-box').style.display = 'none';
     }
 
+    // ---- Parse role from JWT ----
+    function getRoleFromJWT(token) {
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            console.log('JWT payload:', payload);
+            const role = payload.role || 'USER';
+            return typeof role === 'string' ? role.replace(/^ROLE_/, '') : 'USER';
+        } catch (e) {
+            console.error('Failed to parse JWT:', e);
+            return 'USER';
+        }
+    }
+
+    // ---- Redirect by role from token ----
+    async function redirectByRole(token, authType = localStorage.getItem('auth_type')) {
+        let role;
+
+        if (token) {
+            role = getRoleFromJWT(token);
+        } else {
+            try {
+                const res = await fetch(`${API}/employee/me`, { credentials: 'include' });
+                if (res.ok) {
+                    const emp = await res.json();
+                    role = emp.role || 'USER';
+                } else {
+                    role = 'USER';
+                }
+            } catch(e) {
+                role = localStorage.getItem('last_role') || 'USER';
+            }
+        }
+
+        console.log('Final role for redirect:', role);
+        localStorage.setItem('last_role', role);
+
+        // Block vendor types from using the main login page
+        if (role === 'FOOD_VENDOR' || role === 'TECH_VENDOR') {
+            localStorage.removeItem('jwt_token');
+            localStorage.removeItem('auth_type');
+            localStorage.removeItem('last_role');
+            const jwtBtn = document.getElementById('jwt-btn');
+            const sesBtn = document.getElementById('session-btn');
+            if (jwtBtn) { jwtBtn.classList.remove('loading'); jwtBtn.textContent = 'Sign In'; }
+            if (sesBtn) { sesBtn.classList.remove('loading'); sesBtn.textContent = 'Sign In with Session'; }
+            showStatus('error', 'Vendors must use the Vendor Login page.');
+            return;
+        }
+
+        const destination = DASHBOARDS[role];
+        if (!destination) {
+            localStorage.removeItem('jwt_token');
+            localStorage.removeItem('auth_type');
+            showStatus('error', 'Unknown role: ' + role + '. Please contact your administrator.');
+            const jwtBtn = document.getElementById('jwt-btn');
+            if (jwtBtn) { jwtBtn.classList.remove('loading'); jwtBtn.textContent = 'Sign In'; }
+            return;
+        }
+
+        console.log('Redirecting to:', destination);
+        window.location.href = destination;
+    }
+
     // ---- JWT Login ----
-    let _preAuthToken = null; // holds token between step 1 and step 2
+    let _preAuthToken = null;
 
     async function jwtLogin() {
         const username = document.getElementById('jwt-username').value.trim();
         const password = document.getElementById('jwt-password').value;
         if (!username || !password) {
-            showStatus('error', 'Please enter your username and password');
+            showStatus('error', 'Please enter your email and password');
             return;
         }
 
@@ -552,7 +476,7 @@
             if (res.ok) {
                 const data = await res.json();
 
-                // --- TOTP required: show step-2 modal ---
+                // TOTP required
                 if (data.requiresTotp) {
                     _preAuthToken = data.preAuthToken;
                     btn.classList.remove('loading'); btn.textContent = 'Sign In';
@@ -561,11 +485,9 @@
                     return;
                 }
 
-                // --- No TOTP: issue JWT directly ---
-                localStorage.setItem('jwt_token',   data.accessToken);
+                localStorage.setItem('jwt_token',     data.accessToken);
                 localStorage.setItem('refresh_token', data.refreshToken || '');
-                localStorage.setItem('auth_type',   'jwt');
-                localStorage.setItem('last_role',   currentRole);
+                localStorage.setItem('auth_type',     'jwt');
                 localStorage.setItem('user_timezone', document.getElementById('tz-select').value);
                 showStatus('success', 'Login successful! Redirecting...');
                 setTimeout(() => redirectByRole(data.accessToken, 'jwt'), 600);
@@ -581,6 +503,7 @@
         }
     }
 
+    // ---- TOTP ----
     function openTotpModal() {
         const overlay = document.getElementById('totp-overlay');
         overlay.style.display = 'flex';
@@ -617,10 +540,9 @@
                 const data = await res.json();
                 _preAuthToken = null;
                 document.getElementById('totp-overlay').style.display = 'none';
-                localStorage.setItem('jwt_token',    data.accessToken);
+                localStorage.setItem('jwt_token',     data.accessToken);
                 localStorage.setItem('refresh_token', data.refreshToken || '');
-                localStorage.setItem('auth_type',    'jwt');
-                localStorage.setItem('last_role',    currentRole);
+                localStorage.setItem('auth_type',     'jwt');
                 localStorage.setItem('user_timezone', document.getElementById('tz-select').value);
                 showStatus('success', 'Verified! Redirecting...');
                 setTimeout(() => redirectByRole(data.accessToken, 'jwt'), 600);
@@ -643,7 +565,7 @@
     async function sessionLogin() {
         const username = document.getElementById('session-username').value.trim();
         const password = document.getElementById('session-password').value;
-        if (!username || !password) { showStatus('error', 'Please enter your username and password'); return; }
+        if (!username || !password) { showStatus('error', 'Please enter your email and password'); return; }
 
         const btn = document.getElementById('session-btn');
         btn.classList.add('loading'); btn.textContent = 'Signing in...';
@@ -658,7 +580,6 @@
             });
             if (res.ok) {
                 localStorage.setItem('auth_type',     'session');
-                localStorage.setItem('last_role',     currentRole);
                 localStorage.setItem('user_timezone', document.getElementById('tz-select').value);
                 showStatus('success', 'Login successful! Redirecting...');
                 setTimeout(() => redirectByRole(null, 'session'), 600);
@@ -673,52 +594,37 @@
         }
     }
 
-    // ---- Google OAuth — goes through backend /auth/google/init ----
+    // ---- Google OAuth — no role param needed, backend determines role from account ----
     function googleLogin() {
-        const role     = document.getElementById('oauth-role').value;
         const timezone = document.getElementById('tz-select').value;
         window.location.href =
             `/auth/google/init` +
-            `?role=${encodeURIComponent(role)}` +
-            `&timezone=${encodeURIComponent(timezone)}`;
+            `?timezone=${encodeURIComponent(timezone)}`;
     }
 
-   function getRoleFromJWT(token) {
-    try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        console.log('JWT payload:', payload);
-        const role = payload.role || 'USER';
-        // Strip ROLE_ prefix if accidentally present
-        return typeof role === 'string' ? role.replace(/^ROLE_/, '') : 'USER';
-    } catch (e) {
-        console.error('Failed to parse JWT:', e);
-        return 'USER';
-    }
-  }
-
-    // ---- Spring redirects back here with tokens as query params ----
+    // ---- Handle OAuth callback (token in query params) ----
     async function handleOAuthCallback() {
-    const params       = new URLSearchParams(window.location.search);
-    const accessToken  = params.get('accessToken');
-    const refreshToken = params.get('refreshToken');
+        const params       = new URLSearchParams(window.location.search);
+        const accessToken  = params.get('accessToken');
+        const refreshToken = params.get('refreshToken');
 
-    if (!accessToken) return;
+        if (!accessToken) return;
 
-    window.history.replaceState({}, document.title, window.location.pathname);
+        window.history.replaceState({}, document.title, window.location.pathname);
 
-    localStorage.setItem('jwt_token',     accessToken);
-    localStorage.setItem('refresh_token', refreshToken || '');
-    localStorage.setItem('auth_type',     'jwt');
+        localStorage.setItem('jwt_token',     accessToken);
+        localStorage.setItem('refresh_token', refreshToken || '');
+        localStorage.setItem('auth_type',     'jwt');
 
-    const role = getRoleFromJWT(accessToken);
-    console.log('Authenticated role:', role);
-    localStorage.setItem('last_role', role);
+        const role = getRoleFromJWT(accessToken);
+        console.log('OAuth role from token:', role);
+        localStorage.setItem('last_role', role);
 
-    showStatus('success', 'Signed in! Redirecting...');
-    setTimeout(() => {
-        window.location.href = DASHBOARDS[role] || '/google.html';
-    }, 800);
-}
+        showStatus('success', 'Signed in! Redirecting...');
+        setTimeout(() => {
+            window.location.href = DASHBOARDS[role] || '/pending.html';
+        }, 800);
+    }
 
     // ---- Timezone ----
     function updateTz() {
@@ -734,7 +640,6 @@
     // ---- Enter key support ----
     document.addEventListener('keydown', e => {
         if (e.key !== 'Enter') return;
-        // If TOTP modal is open, submit TOTP
         if (document.getElementById('totp-overlay').style.display === 'flex') {
             submitTotp();
             return;
@@ -742,6 +647,7 @@
         if (document.getElementById('jwt-form').style.display !== 'none') jwtLogin();
         else sessionLogin();
     });
+
     // ---- Init ----
     window.onload = () => {
         const savedTz = localStorage.getItem('user_timezone') || 'Asia/Kolkata';
