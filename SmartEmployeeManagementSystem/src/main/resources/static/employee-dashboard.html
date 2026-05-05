@@ -365,6 +365,7 @@
             <div class="nav-item" onclick="showView('profile',this)"><span class="icon">◉</span> My Profile</div>
             <div class="nav-item" onclick="showView('my-devices',this)"><span class="icon">⊞</span> My Devices</div>
             <div class="nav-item" onclick="showView('service-requests',this)"><span class="icon">⚙</span> Service Requests</div>
+            <div class="nav-item" onclick="showView('two-factor',this)"><span class="icon">🔐</span> Two-Factor Auth</div>
         </nav>
         <div class="sidebar-footer">
             <div class="user-card">
@@ -747,7 +748,79 @@
                     </div>
                 </div>
             </div>
+            <!-- TWO-FACTOR AUTH -->
+            <div id="two-factor-view" class="view">
+                <div class="section">
+                    <div class="section-head">
+                        <div>
+                            <div class="section-title">🔐 Two-Factor Authentication</div>
+                            <div class="section-sub">Protect your account with an authenticator app</div>
+                        </div>
+                        <span id="totp-status-chip" class="chip">Checking...</span>
+                    </div>
 
+                    <div style="padding:24px;max-width:480px">
+
+                        <!-- DISABLED state — setup flow -->
+                        <div id="totp-setup-section">
+                            <p style="font-size:13px;color:var(--text2);margin-bottom:16px;line-height:1.6">
+                                Use Google Authenticator, Authy, or any TOTP app.
+                                Scan the QR code below, then enter the 6-digit code to activate.
+                            </p>
+                            <button class="btn btn-primary" onclick="generateTotpQr()" id="generate-qr-btn">
+                                Generate QR Code
+                            </button>
+
+                            <div id="qr-area" style="display:none;margin-top:24px;text-align:center">
+                                <img id="qr-img" src="" alt="QR Code"
+                                     style="width:180px;height:180px;border-radius:10px;
+                                border:1px solid var(--border2);display:block;margin:0 auto">
+                                <div style="margin-top:12px;font-size:11px;color:var(--text3)">
+                                    Can't scan? Enter this key manually:
+                                </div>
+                                <div id="totp-secret-display"
+                                     style="font-family:var(--mono);font-size:13px;color:var(--accent);
+                                background:var(--bg3);border:1px solid var(--border2);
+                                border-radius:6px;padding:8px 12px;margin-top:6px;
+                                word-break:break-all"></div>
+
+                                <div style="margin-top:20px;text-align:left">
+                                    <label style="font-size:11px;color:var(--text3);font-weight:600;
+                                      text-transform:uppercase;letter-spacing:0.8px;
+                                      display:block;margin-bottom:8px">
+                                        Enter 6-digit code to activate
+                                    </label>
+                                    <input id="totp-verify-input" type="text" inputmode="numeric"
+                                           maxlength="6" placeholder="000000"
+                                           style="text-align:center;font-size:20px;
+                                      font-family:var(--mono);letter-spacing:8px;padding:12px"
+                                           oninput="this.value=this.value.replace(/\D/g,'')">
+                                    <button class="btn btn-primary"
+                                            onclick="verifyAndActivateTotp()"
+                                            style="width:100%;margin-top:10px">
+                                        Activate 2FA
+                                    </button>
+                                    <div id="totp-verify-error"
+                                         style="display:none;margin-top:8px;font-size:12px;
+                                    color:var(--red)"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ENABLED state -->
+                        <div id="totp-disable-section" style="display:none">
+                            <div style="background:var(--green-dim);border:1px solid rgba(52,211,153,0.2);
+                            border-radius:8px;padding:12px 16px;font-size:13px;
+                            color:var(--green);margin-bottom:16px">
+                                ✅ Two-factor authentication is active on your account.
+                            </div>
+                            <button class="btn btn-danger" onclick="disableTotp()">
+                                Disable 2FA
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <!-- PROFILE -->
             <div id="profile-view" class="view">
                 <div class="section">
@@ -955,7 +1028,8 @@
             'add-subscription':()=>{},
             profile:()=>{},
             'my-devices':loadMyAssignedDevices,
-            'service-requests':loadServiceRequests
+            'service-requests':loadServiceRequests,
+            'two-factor':loadTotpStatus
         };
         if(loaders[name]) loaders[name]();
         if(name==='add-subscription') loadRestaurantChoices();
@@ -1617,6 +1691,84 @@
         el.textContent=msg;
         document.body.appendChild(el);
         setTimeout(()=>el.remove(),3000);
+    }
+    // ============ TWO-FACTOR AUTH ============
+    async function loadTotpStatus() {
+        const chip = document.getElementById('totp-status-chip');
+        chip.textContent = 'Checking...';
+        chip.className = 'chip';
+        document.getElementById('qr-area').style.display = 'none';
+        document.getElementById('totp-verify-input').value = '';
+        document.getElementById('totp-verify-error').style.display = 'none';
+        try {
+            const data = await apiFetch('/totp/status');
+            if (data.totpEnabled) {
+                chip.textContent = 'ENABLED';
+                chip.className = 'chip approved';
+                document.getElementById('totp-setup-section').style.display = 'none';
+                document.getElementById('totp-disable-section').style.display = 'block';
+            } else {
+                chip.textContent = 'DISABLED';
+                chip.className = 'chip rejected';
+                document.getElementById('totp-setup-section').style.display = 'block';
+                document.getElementById('totp-disable-section').style.display = 'none';
+            }
+        } catch(e) {
+            chip.textContent = 'Error';
+            chip.className = 'chip pending';
+        }
+    }
+
+    async function generateTotpQr() {
+        const btn = document.getElementById('generate-qr-btn');
+        btn.textContent = 'Generating...';
+        btn.disabled = true;
+        try {
+            const data = await apiFetch('/totp/setup', { method: 'POST' });
+            document.getElementById('totp-secret-display').textContent = data.secret || '';
+            const qrUri = encodeURIComponent(data.qrCodeUri || '');
+            document.getElementById('qr-img').src =
+                `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${qrUri}`;
+            document.getElementById('qr-area').style.display = 'block';
+        } catch(e) {
+            showAlert('Failed to generate QR: ' + e.message, 'error');
+        } finally {
+            btn.textContent = 'Regenerate QR Code';
+            btn.disabled = false;
+        }
+    }
+
+    async function verifyAndActivateTotp() {
+        const code = document.getElementById('totp-verify-input').value.trim();
+        const errEl = document.getElementById('totp-verify-error');
+        errEl.style.display = 'none';
+        if (code.length !== 6) {
+            errEl.textContent = 'Please enter a 6-digit code.';
+            errEl.style.display = 'block';
+            return;
+        }
+        try {
+            await apiFetch('/totp/verify-setup', {
+                method: 'POST',
+                body: JSON.stringify({ code })
+            });
+            showAlert('✅ 2FA activated! You will need your authenticator on next login.', 'success');
+            loadTotpStatus();
+        } catch(e) {
+            errEl.textContent = 'Invalid code. Try again.';
+            errEl.style.display = 'block';
+        }
+    }
+
+    async function disableTotp() {
+        if (!confirm('Are you sure you want to disable two-factor authentication?')) return;
+        try {
+            await apiFetch('/totp/disable', { method: 'DELETE' });
+            showAlert('2FA has been disabled.', 'success');
+            loadTotpStatus();
+        } catch(e) {
+            showAlert('Failed to disable 2FA: ' + e.message, 'error');
+        }
     }
 </script>
 </body>
