@@ -1010,7 +1010,7 @@
                 tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No leave requests</td></tr>';
             } else {
                 tbody.innerHTML = recent.map(l => `<tr>
-                    <td>${l.employeeId || 'N/A'}</td>
+                    <td>${l.employeeName || 'N/A'}</td>
                     <td><span class="chip">${l.leaveType || 'N/A'}</span></td>
                     <td>${l.startDate || 'N/A'}</td>
                     <td>${l.endDate || 'N/A'}</td>

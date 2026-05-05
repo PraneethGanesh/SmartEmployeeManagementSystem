@@ -244,6 +244,12 @@
                                 <option value="SICK">Sick Leave</option>
                                 <option value="CASUAL">Casual Leave</option>
                             </select>
+                            <div id="sick-leave-hint" style="display:none;margin-top:6px;font-size:11px;color:var(--amber);background:var(--amber-dim);border:1px solid rgba(249,199,79,0.2);border-radius:6px;padding:8px 12px;">
+                                ⚠️ Sick leave is limited to <strong>1 day per month</strong>. If already used this month, please select Unpaid Leave.
+                            </div>
+                            <div id="casual-leave-hint" style="display:none;margin-top:6px;font-size:11px;color:var(--accent);background:var(--accent-dim);border:1px solid rgba(79,140,255,0.2);border-radius:6px;padding:6px 10px;">
+                                You have <strong id="casual-balance-text">...</strong> casual leave days available.
+                            </div>
                         </div>
                         <div class="form-group">
                             <label>Priority</label>
@@ -393,26 +399,34 @@
         return token ? { 'Authorization': `Bearer ${token}` } : {};
     }
 
-    async function apiFetch(path, opts = {}) {
-        const response = await fetch(`${API}${path}`, {
-            ...opts,
-            headers: { 'Content-Type': 'application/json', ...getAuthHeader(), ...opts.headers },
-            credentials: 'include'
-        });
-        if (response.status === 401) {
-            localStorage.removeItem('jwt_token');
-            localStorage.removeItem('auth_type');
-            showAlert('Session expired. Please login again.', 'error');
-            setTimeout(() => window.location.href = '/google.html', 1500);
-            throw new Error('Unauthorized');
-        }
-        if (!response.ok) {
-            const err = await response.json().catch(() => ({ message: response.statusText }));
-            throw new Error(err.message || `Error ${response.status}`);
-        }
-        const text = await response.text();
-        return text ? JSON.parse(text) : {};
+   async function apiFetch(path, opts = {}) {
+    const response = await fetch(`${API}${path}`, {
+        ...opts,
+        headers: { 'Content-Type': 'application/json', ...getAuthHeader(), ...opts.headers },
+        credentials: 'include'
+    });
+    if (response.status === 401) {
+        localStorage.removeItem('jwt_token');
+        localStorage.removeItem('auth_type');
+        showAlert('Session expired. Please login again.', 'error');
+        setTimeout(() => window.location.href = '/google.html', 1500);
+        throw new Error('Unauthorized');
     }
+    if (!response.ok) {
+        const text = await response.text();
+        let msg = `Error ${response.status}`;
+        try {
+            const body = JSON.parse(text);
+            // handles: {error:...}, {message:...}, Spring's default {error:..., message:...}
+            msg = body.error || body.message || body.detail || text || msg;
+        } catch(_) {
+            msg = text || msg;
+        }
+        throw new Error(msg);
+    }
+    const text = await response.text();
+    return text ? JSON.parse(text) : {};
+}
 
     function logout() {
         localStorage.removeItem('jwt_token');
@@ -510,7 +524,7 @@
             const tbody = document.getElementById('recent-leaves-body');
             tbody.innerHTML = recent.length
                 ? recent.map(l => `<tr>
-          <td>${l.employeeId || '—'}</td>
+          <td>${l.employeeName || '—'}</td>
           <td>${chip(l.leaveType)}</td>
           <td>${l.startDate || '—'}</td>
           <td>${l.endDate || '—'}</td>
@@ -533,22 +547,33 @@
 
     // ─── Apply Leave ───────────────────────────────────────────────────────────
     async function applyLeave() {
-        const leaveType = document.getElementById('leave-type').value;
-        const startDate = document.getElementById('leave-start').value;
-        const endDate   = document.getElementById('leave-end').value;
-        const reason    = document.getElementById('leave-reason').value.trim();
-        if (!startDate || !endDate) { showAlert('Please select both start and end dates.', 'error'); return; }
-        if (new Date(endDate) < new Date(startDate)) { showAlert('End date cannot be before start date.', 'error'); return; }
-        try {
-            await apiFetch('/leave_requests', {
-                method: 'POST',
-                body: JSON.stringify({ leaveType, startDate, endDate, reason })
-            });
+    const leaveType = document.getElementById('leave-type').value;
+    const startDate = document.getElementById('leave-start').value;
+    const endDate   = document.getElementById('leave-end').value;
+    const reason    = document.getElementById('leave-reason').value.trim();
+    if (!startDate || !endDate) { showAlert('Please select both start and end dates.', 'error'); return; }
+    if (new Date(endDate) < new Date(startDate)) { showAlert('End date cannot be before start date.', 'error'); return; }
+    try {
+        const data = await apiFetch('/leave_requests', {
+            method: 'POST',
+            body: JSON.stringify({ leaveType, startDate, endDate, reason })
+        });
+        if(data && data.warning) {
+            showAlert(data.warning, 'warning');
+        } else {
             showAlert('Leave request submitted successfully!', 'success');
-            clearLeaveForm();
-            loadPendingCount();
-        } catch(e) { showAlert('Failed to submit: ' + e.message, 'error'); }
+        }
+        clearLeaveForm();
+        loadPendingCount();
+    } catch(e) {
+        let msg = e.message;
+        try {
+            const parsed = JSON.parse(msg);
+            if(parsed.error) msg = parsed.error;
+        } catch(_) {}
+        showAlert(msg, 'error');
     }
+}
 
     function clearLeaveForm() {
         document.getElementById('leave-start').value  = '';
@@ -764,6 +789,29 @@
       </tr>`).join('')
             : `<tr><td colspan="8" class="empty-state">No leave requests found</td></tr>`;
     }
+
+    document.getElementById('leave-type').addEventListener('change', async function() {
+    document.getElementById('sick-leave-hint').style.display =
+        this.value === 'SICK' ? 'block' : 'none';
+
+    const casualHint = document.getElementById('casual-leave-hint');
+    if(this.value === 'CASUAL') {
+        casualHint.style.display = 'block';
+        document.getElementById('casual-balance-text').textContent = 'loading...';
+        try {
+            const dashboard = await apiFetch('/api/employees/me/leave-dashboard');
+            const balances  = dashboard?.leaveBalances || {};
+            const cas       = balances['CASUAL'] || balances['casual'] || {};
+            const available = Number(cas.available ?? cas.availableBalance ?? 0);
+            document.getElementById('casual-balance-text').textContent =
+                available > 0 ? `${available}` : '0 (no balance remaining)';
+        } catch(e) {
+            document.getElementById('casual-balance-text').textContent = 'unavailable';
+        }
+    } else {
+        casualHint.style.display = 'none';
+    }
+});
 </script>
 </body>
 </html>
