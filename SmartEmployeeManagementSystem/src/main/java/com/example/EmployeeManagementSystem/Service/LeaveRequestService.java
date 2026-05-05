@@ -172,7 +172,8 @@ public class LeaveRequestService {
             if (casualBalance <= 0) maxUnpaid++;        // casual exhausted
 
             long unpaidDaysThisMonth = leaveRequestRepo.countUnpaidDaysInMonth(
-                    employee, today.getYear(), today.getMonthValue());
+                    employee,requestDTO.getStartDate().getYear(),
+                    requestDTO.getStartDate().getMonthValue());
 
             if (maxUnpaid == 0) {
                 return ResponseEntity.badRequest()
