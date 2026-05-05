@@ -2,13 +2,16 @@ package com.example.EmployeeManagementSystem.Scheduler;
 
 import com.example.EmployeeManagementSystem.Service.CarryForwardWarningService;
 import com.example.EmployeeManagementSystem.Service.LeaveAccrualService;
+import com.example.EmployeeManagementSystem.Repository.ApiKeyRepository;
 import com.example.EmployeeManagementSystem.Service.SickLeaveResetService;
 import com.example.EmployeeManagementSystem.Service.YearEndCarryForwardService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.YearMonth;
 
@@ -21,15 +24,18 @@ public class LeaveAccrualScheduler {
     private final SickLeaveResetService resetService;
     private final CarryForwardWarningService warningService;
     private final YearEndCarryForwardService yearEndService;
+    private final ApiKeyRepository apiKeyRepository;
 
     public LeaveAccrualScheduler(LeaveAccrualService accrualService,
                                  SickLeaveResetService resetService,
                                  CarryForwardWarningService warningService,
-                                 YearEndCarryForwardService yearEndService) {
+                                 YearEndCarryForwardService yearEndService,
+                                 ApiKeyRepository apiKeyRepository) {
         this.accrualService = accrualService;
         this.resetService = resetService;
         this.warningService = warningService;
         this.yearEndService = yearEndService;
+        this.apiKeyRepository = apiKeyRepository;
     }
 
     // 1st of month at 00:05 — accrue 1 day for all eligible employees, then warn
@@ -56,5 +62,10 @@ public class LeaveAccrualScheduler {
     public void runYearEnd() {
         int closingYear = LocalDate.now().getYear();
         yearEndService.runYearEnd(closingYear);
+    }
+    @Scheduled(cron = "0 0 0 * * *") // runs every midnight
+    @Transactional
+    public void expireKeys() {
+        apiKeyRepository.expireOldKeys(Instant.now());
     }
 }
