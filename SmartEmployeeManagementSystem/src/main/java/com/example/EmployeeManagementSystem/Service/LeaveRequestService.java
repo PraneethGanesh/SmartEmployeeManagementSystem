@@ -11,8 +11,7 @@ import com.example.EmployeeManagementSystem.Repository.LeaveRequestRepo;
 import com.example.EmployeeManagementSystem.Repository.LeaveTypeRepository;
 import com.example.EmployeeManagementSystem.Util.AuthUtil;
 import org.slf4j.Logger;
-import com.example.EmployeeManagementSystem.Enum.LeaveType;   // the Enum — used everywhere in logic
-// Entity LeaveType is always referenced fully qualified in the code below — no import needed
+import com.example.EmployeeManagementSystem.Enum.LeaveType;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
