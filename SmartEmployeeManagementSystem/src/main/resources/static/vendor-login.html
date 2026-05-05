@@ -28,11 +28,11 @@
                     radial-gradient(ellipse 40% 60% at 80% 20%, rgba(249,199,79,0.05) 0%,transparent 60%),
                     radial-gradient(ellipse 50% 40% at 70% 80%, rgba(248,113,113,0.04) 0%,transparent 60%);
         }
-        .grid-overlay{position:fixed;inset:0;z-index:0;background-image:linear-gradient(rgba(255,255,255,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.02) 1px,transparent 1px);background-size:40px 40px;mask-image:radial-gradient(ellipse 80% 80% at center,black 20%,transparent 80%);}
+        .grid-overlay{position:fixed;inset:0;z-index:0;background-image:linear-gradient(rgba(255,255,255,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.02) 1px,transparent 1px);background-size:40px 40px;mask-image:radial-gradient(ellipse 80% 80% at center, black 20%, transparent 80%);}
 
         /* LEFT */
         .left-panel{flex:1;display:flex;flex-direction:column;justify-content:center;padding:60px;position:relative;z-index:1;animation:fadeLeft 0.8s ease both;}
-        @keyframes fadeLeft{from{opacity:0;transform:translateX(-24px)}to{opacity:1;transform:translateX(0)}}
+        @keyframes fadeLeft{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:translateX(0)}}
         .brand-logo{display:flex;align-items:center;gap:12px;margin-bottom:32px}
         .brand-icon{width:44px;height:44px;background:linear-gradient(135deg,#f87171,#fb923c);border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;color:#fff;box-shadow:0 0 30px rgba(248,113,113,0.35);flex-shrink:0;}
         .brand-name{font-size:22px;font-weight:700;color:var(--text);letter-spacing:-0.3px}
@@ -55,7 +55,7 @@
         @keyframes fadeRight{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:translateX(0)}}
         .form-box{width:100%}
 
-        .vendor-badge{display:inline-flex;align-items:center;gap:8px;background:var(--red-dim);border:1px solid rgba(248,113,113,0.25);border-radius:20px;padding:6px 14px;font-size:12px;font-weight:600;color:var(--red);letter-spacing:0.3px;margin-bottom:24px;}
+        .vendor-badge{display:inline-flex;align-items:center;gap:8px;background:var(--red-dim);border:1px solid rgba(248,113,113,0.25);border-radius:20px;padding:6px 14px;font-size:12px;font-weight:600;color:var(--red);margin-bottom:16px;}
         .vendor-badge .dot{width:7px;height:7px;border-radius:50%;background:var(--red);animation:pulse 1.4s infinite;}
         @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
 
@@ -98,6 +98,89 @@
         .tz-select:focus{outline:none;border-color:var(--border-lit)}
         .tz-time{font-size:10px;color:var(--red);font-family:var(--mono)}
 
+        /* ---- TOTP OVERLAY ---- */
+        #totp-overlay{
+            display:none;
+            position:fixed;inset:0;z-index:999;
+            background:rgba(7,9,16,0.88);
+            backdrop-filter:blur(10px);
+            align-items:center;justify-content:center;
+        }
+        #totp-overlay.open{ display:flex; }
+
+        .totp-card{
+            background:var(--panel);
+            border:1px solid var(--border-lit);
+            border-radius:20px;
+            padding:40px 36px 32px;
+            width:360px;
+            text-align:center;
+            animation:totpSlideUp 0.3s cubic-bezier(0.34,1.56,0.64,1) both;
+            position:relative;
+        }
+        @keyframes totpSlideUp{from{opacity:0;transform:translateY(24px) scale(0.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+
+        .totp-shield{
+            width:56px;height:56px;
+            background:linear-gradient(135deg, rgba(248,113,113,0.2), rgba(251,146,60,0.15));
+            border:1.5px solid rgba(248,113,113,0.3);
+            border-radius:16px;
+            display:flex;align-items:center;justify-content:center;
+            font-size:26px;
+            margin:0 auto 20px;
+        }
+        .totp-title{font-size:18px;font-weight:700;color:var(--text);margin-bottom:8px;}
+        .totp-subtitle{font-size:13px;color:var(--text2);margin-bottom:28px;line-height:1.5;}
+
+        /* Segmented digit boxes — matching google.html aesthetic */
+        .totp-digits{
+            display:flex;gap:8px;justify-content:center;margin-bottom:20px;
+        }
+        .totp-digit{
+            width:44px;height:54px;
+            background:var(--bg);
+            border:1.5px solid var(--border);
+            border-radius:10px;
+            font-size:24px;font-weight:700;
+            color:var(--text);
+            font-family:var(--mono);
+            text-align:center;
+            caret-color:var(--red);
+            transition:border-color 0.15s, box-shadow 0.15s;
+            outline:none;
+        }
+        .totp-digit:focus{border-color:var(--red);box-shadow:0 0 0 3px rgba(248,113,113,0.12);}
+        .totp-digit.filled{border-color:rgba(248,113,113,0.4);}
+
+        /* Progress bar under digits */
+        .totp-progress-wrap{height:3px;background:rgba(255,255,255,0.05);border-radius:2px;margin-bottom:20px;overflow:hidden;}
+        .totp-progress-bar{height:100%;background:linear-gradient(90deg,var(--red),#fb923c);border-radius:2px;width:100%;transition:width 1s linear;}
+
+        .totp-error{display:none;margin-bottom:14px;font-size:12px;color:var(--red);font-family:var(--mono);background:var(--red-dim);border:1px solid rgba(248,113,113,0.2);border-radius:8px;padding:8px 12px;}
+
+        .totp-verify-btn{
+            width:100%;padding:12px;border:none;border-radius:10px;
+            background:var(--red);color:#fff;
+            font-family:var(--font);font-size:14px;font-weight:600;
+            cursor:pointer;transition:all 0.2s;
+        }
+        .totp-verify-btn:hover{background:#f98a8a;box-shadow:0 6px 20px rgba(248,113,113,0.3);transform:translateY(-1px)}
+        .totp-verify-btn:active{transform:translateY(0)}
+        .totp-verify-btn.loading{opacity:0.7;pointer-events:none}
+
+        .totp-cancel{
+            margin-top:10px;width:100%;padding:10px;border:none;
+            background:transparent;color:var(--text2);
+            font-family:var(--font);font-size:13px;cursor:pointer;
+            border-radius:8px;transition:color 0.2s;
+        }
+        .totp-cancel:hover{color:var(--text)}
+
+        /* Divider between digit groups (visual) */
+        .totp-sep{
+            width:12px;height:2px;background:var(--text3);border-radius:1px;align-self:center;flex-shrink:0;
+        }
+
         @media(max-width:900px){
             .left-panel{display:none}
             .right-panel{width:100%;border-left:none;background:var(--bg)}
@@ -123,24 +206,24 @@
     </div>
     <div class="info-cards">
         <div class="info-card">
-            <span class="info-card-icon">📦</span>
+            <span class="info-card-icon">🚚</span>
             <div class="info-card-text">
                 <strong>Delivery Tracking</strong>
                 <span>Monitor your active and scheduled meal deliveries in real-time.</span>
             </div>
         </div>
         <div class="info-card">
-            <span class="info-card-icon">🍽</span>
+            <span class="info-card-icon">🍽️</span>
             <div class="info-card-text">
                 <strong>Restaurant Management</strong>
                 <span>View and update restaurant details and meal offerings.</span>
             </div>
         </div>
         <div class="info-card">
-            <span class="info-card-icon">🔑</span>
+            <span class="info-card-icon">🔐</span>
             <div class="info-card-text">
-                <strong>Account by Admin Only</strong>
-                <span>Vendor accounts are created by the system admin. Contact your admin if you don't have credentials.</span>
+                <strong>Two-Factor Auth (TOTP)</strong>
+                <span>Accounts protected with TOTP authenticator for enhanced security.</span>
             </div>
         </div>
     </div>
@@ -216,181 +299,426 @@
     </div>
 </div>
 
+<!-- ========== TOTP MODAL ========== -->
+<div id="totp-overlay">
+    <div class="totp-card">
+
+        <div class="totp-shield">🛡️</div>
+        <div class="totp-title">Two-Factor Verification</div>
+        <div class="totp-subtitle">Enter the 6-digit code from your<br>authenticator app (e.g. Google Authenticator).</div>
+
+        <!-- Segmented digit inputs -->
+        <div class="totp-digits" id="totp-digits">
+            <input class="totp-digit" id="d0" type="text" inputmode="numeric" maxlength="1" autocomplete="one-time-code">
+            <input class="totp-digit" id="d1" type="text" inputmode="numeric" maxlength="1">
+            <input class="totp-digit" id="d2" type="text" inputmode="numeric" maxlength="1">
+            <div class="totp-sep"></div>
+            <input class="totp-digit" id="d3" type="text" inputmode="numeric" maxlength="1">
+            <input class="totp-digit" id="d4" type="text" inputmode="numeric" maxlength="1">
+            <input class="totp-digit" id="d5" type="text" inputmode="numeric" maxlength="1">
+        </div>
+
+        <!-- 30s TOTP timer progress bar -->
+        <div class="totp-progress-wrap">
+            <div class="totp-progress-bar" id="totp-progress"></div>
+        </div>
+
+        <div class="totp-error" id="totp-error"></div>
+
+        <button class="totp-verify-btn" id="totp-verify-btn" onclick="submitTotp()">Verify Code</button>
+        <button class="totp-cancel" onclick="cancelTotp()">← Back to login</button>
+
+    </div>
+</div>
+
 <script>
     const API = 'http://localhost:8080';
 
- const DASHBOARDS = {
-     FOOD_VENDOR: '/vendor-dashboard.html',
-     TECH_VENDOR: '/tech-vendor-dashboard.html'
- };
+    const DASHBOARDS = {
+        FOOD_VENDOR: '/vendor-dashboard.html',
+        TECH_VENDOR: '/tech-vendor-dashboard.html'
+    };
 
- // ── ALREADY LOGGED IN? ────────────────────────────────────────────
- (function(){
-     const token = localStorage.getItem('jwt_token');
-     if(!token) return;
-     try{
-         const role = getRoleFromJWT(token);
-         if(DASHBOARDS[role]) window.location.href = DASHBOARDS[role];
-     }catch(e){}
- })();
+    // ---- Already logged in? ----
+    (function(){
+        const token = localStorage.getItem('jwt_token');
+        if(!token) return;
+        try{
+            const role = getRoleFromJWT(token);
+            if(DASHBOARDS[role]) window.location.href = DASHBOARDS[role];
+        }catch(e){}
+    })();
 
- // ── HELPERS ───────────────────────────────────────────────────────
- function getRoleFromJWT(token){
-     const payload = JSON.parse(atob(token.split('.')[1]));
-     const raw = payload.role || payload.roles || payload.authorities || payload.scope || '';
-     const role = Array.isArray(raw) ? raw[0] : raw;
-     return String(role).replace(/^ROLE_/, '').toUpperCase().trim();
- }
+    // ---- Helpers ----
+    function getRoleFromJWT(token){
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        const raw = payload.role || payload.roles || payload.authorities || payload.scope || '';
+        const role = Array.isArray(raw) ? raw[0] : raw;
+        return String(role).replace(/^ROLE_/, '').toUpperCase().trim();
+    }
 
- function showStatus(type, msg){
-     const box = document.getElementById('status-box');
-     box.className     = `status-box ${type}`;
-     box.textContent   = msg;
-     box.style.display = 'block';
- }
- function hideStatus(){
-     document.getElementById('status-box').style.display = 'none';
- }
+    function showStatus(type, msg){
+        const box = document.getElementById('status-box');
+        box.className = `status-box ${type}`;
+        box.textContent = msg;
+        box.style.display = 'block';
+    }
+    function hideStatus(){
+        document.getElementById('status-box').style.display = 'none';
+    }
 
- function switchTab(type){
-     document.getElementById('jwt-form').style.display     = type === 'jwt'     ? 'block' : 'none';
-     document.getElementById('session-form').style.display = type === 'session' ? 'block' : 'none';
-     document.getElementById('tab-jwt').classList.toggle('active',     type === 'jwt');
-     document.getElementById('tab-session').classList.toggle('active', type === 'session');
-     hideStatus();
- }
+    function switchTab(type){
+        document.getElementById('jwt-form').style.display    = type === 'jwt'     ? 'block' : 'none';
+        document.getElementById('session-form').style.display = type === 'session' ? 'block' : 'none';
+        document.getElementById('tab-jwt').classList.toggle('active',     type === 'jwt');
+        document.getElementById('tab-session').classList.toggle('active', type === 'session');
+        hideStatus();
+    }
 
- function redirectByRole(role){
-     const dest = DASHBOARDS[role];
-     if(!dest){
-         showStatus('error', 'This portal is for vendors only. Please use the main login page.');
-         return false;
-     }
-     showStatus('success', `Login successful! Redirecting to ${role === 'TECH_VENDOR' ? 'Tech Vendor' : 'Food Vendor'} dashboard...`);
-     setTimeout(() => window.location.href = dest, 700);
-     return true;
- }
+    function redirectByRole(role){
+        const dest = DASHBOARDS[role];
+        if(!dest){
+            showStatus('error', 'This portal is for vendors only. Please use the main login page.');
+            return false;
+        }
+        showStatus('success', `Login successful! Redirecting to ${role === 'TECH_VENDOR' ? 'Tech Vendor' : 'Food Vendor'} dashboard...`);
+        setTimeout(() => window.location.href = dest, 700);
+        return true;
+    }
 
- // ── JWT LOGIN ─────────────────────────────────────────────────────
- async function jwtLogin(){
-     const username = document.getElementById('jwt-username').value.trim();
-     const password = document.getElementById('jwt-password').value;
-     if(!username || !password){ showStatus('error', 'Please enter your email and password'); return; }
+    // ---- JWT LOGIN ----
+    async function jwtLogin(){
+        const username = document.getElementById('jwt-username').value.trim();
+        const password = document.getElementById('jwt-password').value;
+        if(!username || !password){ showStatus('error', 'Please enter your email and password'); return; }
 
-     const btn = document.getElementById('jwt-btn');
-     btn.classList.add('loading'); btn.textContent = 'Signing in...';
-     showStatus('loading', 'Authenticating...');
+        const btn = document.getElementById('jwt-btn');
+        btn.classList.add('loading'); btn.textContent = 'Signing in...';
+        showStatus('loading', 'Authenticating...');
 
-     try{
-         const res = await fetch(`${API}/Authenticate`, {
-             method:  'POST',
-             headers: {'Content-Type': 'application/json'},
-             body:    JSON.stringify({username, password})
-         });
+        try{
+            const res = await fetch(`${API}/Authenticate`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({username, password})
+            });
 
-         if(res.ok){
-             const data  = await res.json();
-             const token = data.accessToken || data.token;
-             const role  = getRoleFromJWT(token);
+            if(res.ok){
+                const data = await res.json();
 
-             if(!DASHBOARDS[role]){
-                 showStatus('error', 'This portal is for vendors only. Please use the main login page.');
-                 btn.classList.remove('loading'); btn.textContent = 'Sign In as Vendor';
-                 return;
-             }
+                // TOTP required — open modal
+                if(data.requiresTotp){
+                    _preAuthToken = data.preAuthToken;
+                    _activeLoginType = 'jwt';
+                    btn.classList.remove('loading'); btn.textContent = 'Sign In as Vendor';
+                    hideStatus();
+                    openTotpModal();
+                    return;
+                }
 
-             localStorage.setItem('jwt_token',     token);
-             localStorage.setItem('refresh_token', data.refreshToken || '');
-             localStorage.setItem('auth_type',     'jwt');
-             localStorage.setItem('last_role',     role);
-             localStorage.setItem('user_timezone', document.getElementById('tz-select').value);
+                const token = data.accessToken || data.token;
+                const role = getRoleFromJWT(token);
 
-             btn.textContent = 'Signed In ✓';
-             redirectByRole(role);
+                if(!DASHBOARDS[role]){
+                    showStatus('error', 'This portal is for vendors only. Please use the main login page.');
+                    btn.classList.remove('loading'); btn.textContent = 'Sign In as Vendor';
+                    return;
+                }
+                localStorage.setItem('jwt_token',    token);
+                localStorage.setItem('refresh_token', data.refreshToken || '');
+                localStorage.setItem('auth_type',    'jwt');
+                localStorage.setItem('last_role',    role);
+                localStorage.setItem('user_timezone', document.getElementById('tz-select').value);
+                btn.textContent = 'Signed In ✓';
+                redirectByRole(role);
+            } else {
+                const err = await res.text();
+                showStatus('error', 'Login failed: ' + (err || 'Invalid credentials'));
+                btn.classList.remove('loading'); btn.textContent = 'Sign In as Vendor';
+            }
+        } catch(e){
+            showStatus('error', 'Connection error: ' + e.message);
+            btn.classList.remove('loading'); btn.textContent = 'Sign In as Vendor';
+        }
+    }
 
-         }else{
-             const err = await res.text();
-             showStatus('error', 'Login failed: ' + (err || 'Invalid credentials'));
-             btn.classList.remove('loading'); btn.textContent = 'Sign In as Vendor';
-         }
-     }catch(e){
-         showStatus('error', 'Connection error: ' + e.message);
-         btn.classList.remove('loading'); btn.textContent = 'Sign In as Vendor';
-     }
- }
+    // ---- SESSION LOGIN ----
+    async function sessionLogin(){
+        const username = document.getElementById('session-username').value.trim();
+        const password = document.getElementById('session-password').value;
+        if(!username || !password){ showStatus('error', 'Please enter your email and password'); return; }
 
- // ── SESSION LOGIN ─────────────────────────────────────────────────
- async function sessionLogin(){
-     const username = document.getElementById('session-username').value.trim();
-     const password = document.getElementById('session-password').value;
-     if(!username || !password){ showStatus('error', 'Please enter your email and password'); return; }
+        const btn = document.getElementById('session-btn');
+        btn.classList.add('loading'); btn.textContent = 'Signing in...';
+        showStatus('loading', 'Authenticating...');
 
-     const btn = document.getElementById('session-btn');
-     btn.classList.add('loading'); btn.textContent = 'Signing in...';
-     showStatus('loading', 'Authenticating...');
+        try{
+            const res = await fetch(`${API}/session/login`, {
+                method:      'POST',
+                headers:     {'Content-Type': 'application/json'},
+                body:        JSON.stringify({username, password}),
+                credentials: 'include'
+            });
 
-     try{
-         const res = await fetch(`${API}/session/login`, {
-             method:      'POST',
-             headers:     {'Content-Type': 'application/json'},
-             body:        JSON.stringify({username, password}),
-             credentials: 'include'
-         });
+            if(res.ok){
+                const data = await res.json().catch(() => ({}));
 
-         if(res.ok){
-             // Session login — fetch /employee/me or /vendor/me to get role
-             try{
-                 const meRes = await fetch(`${API}/vendor/me`, {credentials: 'include'});
-                 if(meRes.ok){
-                     const me   = await meRes.json();
-                     const role = String(me.role || '').replace(/^ROLE_/, '').toUpperCase();
-                     localStorage.setItem('auth_type',     'session');
-                     localStorage.setItem('last_role',     role);
-                     localStorage.setItem('user_timezone', document.getElementById('tz-select').value);
-                     btn.textContent = 'Signed In ✓';
-                     redirectByRole(role);
-                     return;
-                 }
-             }catch(e){}
+                // TOTP required for session too
+                if(data.requiresTotp){
+                    _preAuthToken = data.preAuthToken;
+                    _activeLoginType = 'session';
+                    btn.classList.remove('loading'); btn.textContent = 'Sign In with Session';
+                    hideStatus();
+                    openTotpModal();
+                    return;
+                }
 
-             // Fallback if /vendor/me not available
-             showStatus('error', 'Could not determine vendor type. Please use JWT login.');
-             btn.classList.remove('loading'); btn.textContent = 'Sign In with Session';
+                // No TOTP — confirm identity via /vendor/me
+                try{
+                    const meRes = await fetch(`${API}/vendor/me`, {credentials: 'include'});
+                    if(meRes.ok){
+                        const me   = await meRes.json();
+                        const role = String(me.role || '').replace(/^ROLE_/, '').toUpperCase();
+                        localStorage.setItem('auth_type',    'session');
+                        localStorage.setItem('last_role',    role);
+                        localStorage.setItem('user_timezone', document.getElementById('tz-select').value);
+                        btn.textContent = 'Signed In ✓';
+                        redirectByRole(role);
+                        return;
+                    }
+                } catch(e){}
 
-         }else{
-             const err = await res.json().catch(()=>({}));
-             showStatus('error', 'Login failed: ' + (err.error || 'Invalid credentials'));
-             btn.classList.remove('loading'); btn.textContent = 'Sign In with Session';
-         }
-     }catch(e){
-         showStatus('error', 'Connection error: ' + e.message);
-         btn.classList.remove('loading'); btn.textContent = 'Sign In with Session';
-     }
- }
+                showStatus('error', 'Could not determine vendor type. Please use JWT login.');
+                btn.classList.remove('loading'); btn.textContent = 'Sign In with Session';
+            } else {
+                const err = await res.json().catch(() => ({}));
+                showStatus('error', 'Login failed: ' + (err.error || 'Invalid credentials'));
+                btn.classList.remove('loading'); btn.textContent = 'Sign In with Session';
+            }
+        } catch(e){
+            showStatus('error', 'Connection error: ' + e.message);
+            btn.classList.remove('loading'); btn.textContent = 'Sign In with Session';
+        }
+    }
 
- // ── TIMEZONE ──────────────────────────────────────────────────────
- function updateTz(){
-     localStorage.setItem('user_timezone', document.getElementById('tz-select').value);
-     refreshTzClock();
- }
- function refreshTzClock(){
-     const tz = document.getElementById('tz-select').value;
-     document.getElementById('tz-time').textContent =
-         new Date().toLocaleTimeString('en-GB', {timeZone: tz, hour12: false});
- }
+    // ============================================================
+    //  TOTP MODAL
+    // ============================================================
+    let _preAuthToken    = null;
+    let _activeLoginType = 'jwt'; // 'jwt' | 'session'
+    let _totpTimer       = null;
 
- document.addEventListener('keydown', e => {
-     if(e.key !== 'Enter') return;
-     if(document.getElementById('jwt-form').style.display !== 'none') jwtLogin();
-     else sessionLogin();
- });
+    function openTotpModal(){
+        // Reset digit boxes
+        for(let i = 0; i < 6; i++){
+            const d = document.getElementById('d' + i);
+            d.value = '';
+            d.classList.remove('filled');
+        }
+        document.getElementById('totp-error').style.display = 'none';
+        document.getElementById('totp-verify-btn').classList.remove('loading');
+        document.getElementById('totp-verify-btn').textContent = 'Verify Code';
 
- window.onload = () => {
-     const savedTz = localStorage.getItem('user_timezone') || 'Asia/Kolkata';
-     document.getElementById('tz-select').value = savedTz;
-     refreshTzClock();
-     setInterval(refreshTzClock, 1000);
- };
+        // Start countdown progress bar
+        startTotpProgress();
+
+        document.getElementById('totp-overlay').classList.add('open');
+        setTimeout(() => document.getElementById('d0').focus(), 120);
+    }
+
+    function cancelTotp(){
+        _preAuthToken    = null;
+        _activeLoginType = 'jwt';
+        clearInterval(_totpTimer);
+        document.getElementById('totp-overlay').classList.remove('open');
+    }
+
+    // 30-second TOTP cycle progress bar
+    function startTotpProgress(){
+        clearInterval(_totpTimer);
+        const bar = document.getElementById('totp-progress');
+        function tick(){
+            const now  = Math.floor(Date.now() / 1000);
+            const secs = 30 - (now % 30);
+            const pct  = (secs / 30) * 100;
+            bar.style.width = pct + '%';
+            // Warn when < 7 seconds remaining
+            if(secs <= 7){
+                bar.style.background = 'linear-gradient(90deg,#f87171,#fca5a5)';
+            } else {
+                bar.style.background = 'linear-gradient(90deg,var(--red),#fb923c)';
+            }
+        }
+        tick();
+        _totpTimer = setInterval(tick, 1000);
+    }
+
+    // ---- Digit input navigation ----
+    function initDigitInputs(){
+        const digits = Array.from({length: 6}, (_, i) => document.getElementById('d' + i));
+
+        digits.forEach((inp, idx) => {
+            inp.addEventListener('input', e => {
+                const val = inp.value.replace(/\D/g, '');
+                inp.value = val ? val[val.length - 1] : '';
+                inp.classList.toggle('filled', !!inp.value);
+                if(inp.value && idx < 5) digits[idx + 1].focus();
+                // Auto-submit when all filled
+                if(digits.every(d => d.value)) submitTotp();
+            });
+
+            inp.addEventListener('keydown', e => {
+                if(e.key === 'Backspace'){
+                    if(!inp.value && idx > 0){
+                        digits[idx - 1].value = '';
+                        digits[idx - 1].classList.remove('filled');
+                        digits[idx - 1].focus();
+                    } else {
+                        inp.value = '';
+                        inp.classList.remove('filled');
+                    }
+                } else if(e.key === 'ArrowLeft' && idx > 0){
+                    digits[idx - 1].focus();
+                } else if(e.key === 'ArrowRight' && idx < 5){
+                    digits[idx + 1].focus();
+                } else if(e.key === 'Enter'){
+                    submitTotp();
+                }
+            });
+
+            // Handle paste of 6-digit code
+            inp.addEventListener('paste', e => {
+                e.preventDefault();
+                const pasted = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '');
+                if(pasted.length >= 6){
+                    for(let i = 0; i < 6; i++){
+                        digits[i].value = pasted[i] || '';
+                        digits[i].classList.toggle('filled', !!digits[i].value);
+                    }
+                    digits[5].focus();
+                    if(pasted.length >= 6) submitTotp();
+                }
+            });
+        });
+    }
+
+    function getTotpCode(){
+        return Array.from({length: 6}, (_, i) => document.getElementById('d' + i).value).join('');
+    }
+
+    async function submitTotp(){
+        const code  = getTotpCode();
+        const errEl = document.getElementById('totp-error');
+        errEl.style.display = 'none';
+
+        if(code.length !== 6){
+            errEl.textContent    = 'Please enter all 6 digits.';
+            errEl.style.display  = 'block';
+            return;
+        }
+
+        const btn = document.getElementById('totp-verify-btn');
+        btn.classList.add('loading'); btn.textContent = 'Verifying...';
+
+        try{
+            // JWT TOTP endpoint
+            if(_activeLoginType === 'jwt'){
+                const res = await fetch(`${API}/Authenticate/totp`, {
+                    method:  'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body:    JSON.stringify({ preAuthToken: _preAuthToken, code })
+                });
+                if(res.ok){
+                    const data  = await res.json();
+                    const token = data.accessToken || data.token;
+                    const role  = getRoleFromJWT(token);
+                    clearInterval(_totpTimer);
+                    document.getElementById('totp-overlay').classList.remove('open');
+                    _preAuthToken = null;
+                    localStorage.setItem('jwt_token',    token);
+                    localStorage.setItem('refresh_token', data.refreshToken || '');
+                    localStorage.setItem('auth_type',    'jwt');
+                    localStorage.setItem('last_role',    role);
+                    localStorage.setItem('user_timezone', document.getElementById('tz-select').value);
+                    showStatus('success', 'Verified! Redirecting...');
+                    setTimeout(() => redirectByRole(role), 600);
+                } else {
+                    const err = await res.json().catch(() => ({}));
+                    errEl.textContent   = err.error || 'Invalid code. Try again.';
+                    errEl.style.display = 'block';
+                    btn.classList.remove('loading'); btn.textContent = 'Verify Code';
+                }
+
+            } else {
+                // Session TOTP endpoint
+                const res = await fetch(`${API}/session/totp`, {
+                    method:      'POST',
+                    headers:     {'Content-Type': 'application/json'},
+                    body:        JSON.stringify({ preAuthToken: _preAuthToken, code }),
+                    credentials: 'include'
+                });
+                if(res.ok){
+                    clearInterval(_totpTimer);
+                    document.getElementById('totp-overlay').classList.remove('open');
+                    _preAuthToken = null;
+                    // Re-confirm via /vendor/me
+                    try{
+                        const meRes = await fetch(`${API}/vendor/me`, {credentials: 'include'});
+                        if(meRes.ok){
+                            const me   = await meRes.json();
+                            const role = String(me.role || '').replace(/^ROLE_/, '').toUpperCase();
+                            localStorage.setItem('auth_type',    'session');
+                            localStorage.setItem('last_role',    role);
+                            localStorage.setItem('user_timezone', document.getElementById('tz-select').value);
+                            showStatus('success', 'Verified! Redirecting...');
+                            setTimeout(() => redirectByRole(role), 600);
+                            return;
+                        }
+                    } catch(e){}
+                    showStatus('error', 'Verified but could not determine vendor type.');
+                } else {
+                    const err = await res.json().catch(() => ({}));
+                    errEl.textContent   = err.error || 'Invalid code. Try again.';
+                    errEl.style.display = 'block';
+                    btn.classList.remove('loading'); btn.textContent = 'Verify Code';
+                }
+            }
+        } catch(e){
+            errEl.textContent   = 'Connection error. Try again.';
+            errEl.style.display = 'block';
+            btn.classList.remove('loading'); btn.textContent = 'Verify Code';
+        }
+    }
+
+    // ---- Timezone ----
+    function updateTz(){
+        localStorage.setItem('user_timezone', document.getElementById('tz-select').value);
+        refreshTzClock();
+    }
+    function refreshTzClock(){
+        const tz = document.getElementById('tz-select').value;
+        document.getElementById('tz-time').textContent =
+            new Date().toLocaleTimeString('en-GB', {timeZone: tz, hour12: false});
+    }
+
+    // ---- Enter key support ----
+    document.addEventListener('keydown', e => {
+        if(e.key !== 'Enter') return;
+        if(document.getElementById('totp-overlay').classList.contains('open')){
+            submitTotp(); return;
+        }
+        if(document.getElementById('jwt-form').style.display !== 'none') jwtLogin();
+        else sessionLogin();
+    });
+
+    // ---- Init ----
+    window.onload = () => {
+        const savedTz = localStorage.getItem('user_timezone') || 'Asia/Kolkata';
+        document.getElementById('tz-select').value = savedTz;
+        refreshTzClock();
+        setInterval(refreshTzClock, 1000);
+        initDigitInputs();
+    };
 </script>
 </body>
 </html>

@@ -8,6 +8,7 @@ import com.example.EmployeeManagementSystem.Entity.RefreshToken;
 import com.example.EmployeeManagementSystem.Entity.Vendor;
 import com.example.EmployeeManagementSystem.Repository.EmployeeRepo;
 import com.example.EmployeeManagementSystem.Repository.RefreshTokenRepository;
+import com.example.EmployeeManagementSystem.Repository.VendorRepo;
 import com.example.EmployeeManagementSystem.Service.RefreshTokenService;
 import com.example.EmployeeManagementSystem.Service.TotpService;
 import com.example.EmployeeManagementSystem.Util.JWTUtil;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -33,6 +35,7 @@ public class AuthController {
     private final RefreshTokenRepository refreshTokenRepository;
     private final TotpService totpService;
     private final EmployeeRepo employeeRepo;
+    private final VendorRepo vendorRepo;
 
     // Temporary store for pre-auth tokens (username -> pre-auth token)
     // In production, use Redis or DB-backed store with TTL
@@ -45,13 +48,15 @@ public class AuthController {
                           RefreshTokenService refreshTokenService,
                           RefreshTokenRepository refreshTokenRepository,
                           TotpService totpService,
-                          EmployeeRepo employeeRepo) {
+                          EmployeeRepo employeeRepo,
+                          VendorRepo vendorRepo) {
         this.authenticationManager = authenticationManager;
         this.jwtUtil = jwtUtil;
         this.refreshTokenService = refreshTokenService;
         this.refreshTokenRepository = refreshTokenRepository;
         this.totpService = totpService;
         this.employeeRepo = employeeRepo;
+        this.vendorRepo=vendorRepo;
     }
 
     /**
@@ -77,8 +82,20 @@ public class AuthController {
                     .map(a -> a.substring("ROLE_".length()))
                     .orElseThrow(() -> new RuntimeException("Role not found"));
 
-            // Handle Vendor login — no TOTP, issue tokens directly
+            // Handle Vendor login — with TOTP support
             if (user instanceof Vendor vendor) {
+                if (vendor.isTotpEnabled()) {
+                    String preAuthToken = UUID.randomUUID().toString();
+                    PRE_AUTH_STORE.put(preAuthToken, new PreAuthEntry(
+                            vendor.getEmail(),
+                            role,
+                            System.currentTimeMillis() + 5 * 60 * 1000L
+                    ));
+                    return ResponseEntity.ok(Map.of(
+                            "requiresTotp", true,
+                            "preAuthToken", preAuthToken
+                    ));
+                }
                 return ResponseEntity.ok(issueTokens(vendor, role));
             }
 
@@ -119,22 +136,33 @@ public class AuthController {
             return ResponseEntity.badRequest().body(Map.of("error", "preAuthToken and code are required"));
         }
 
+        // In completeTotpLogin(), after the existing employee lookup:
         PreAuthEntry entry = PRE_AUTH_STORE.get(preAuthToken);
         if (entry == null || entry.expiresAt() < System.currentTimeMillis()) {
             PRE_AUTH_STORE.remove(preAuthToken);
-            return ResponseEntity.status(401).body(Map.of("error", "Pre-auth token expired or invalid. Please login again."));
+            return ResponseEntity.status(401).body(Map.of("error","token expired"));
         }
 
-        Employee employee = employeeRepo.findByEmail(entry.username())
-                .orElseThrow(() -> new RuntimeException("Employee not found"));
+// Try employee first, then vendor
+        UserDetails subject;
+        String secret;
+        Optional<Employee> empOpt = employeeRepo.findByEmail(entry.username());
+        if (empOpt.isPresent()) {
+            Employee employee = empOpt.get();
+            secret = employee.getTotpSecret();
+            subject = employee;
+        } else {
+            Vendor vendor = vendorRepo.findByEmail(entry.username())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+            secret = vendor.getTotpSecret();
+            subject = vendor;
+        }
 
-        if (!totpService.verifyCode(employee.getTotpSecret(), code)) {
+        if (!totpService.verifyCode(secret, code)) {
             return ResponseEntity.status(401).body(Map.of("error", "Invalid TOTP code"));
         }
-
-        // TOTP verified — consume the pre-auth token and issue JWT
         PRE_AUTH_STORE.remove(preAuthToken);
-        return ResponseEntity.ok(issueTokens(employee, entry.role()));
+        return ResponseEntity.ok(issueTokens(subject, entry.role()));
     }
 
     /**

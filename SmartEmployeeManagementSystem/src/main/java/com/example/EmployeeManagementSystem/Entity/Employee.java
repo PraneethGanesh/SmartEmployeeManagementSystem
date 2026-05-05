@@ -17,7 +17,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Entity
-public class Employee implements UserDetails {
+public class Employee implements UserDetails, TotpUser {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long employeeId;
