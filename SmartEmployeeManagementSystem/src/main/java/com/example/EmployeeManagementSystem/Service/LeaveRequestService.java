@@ -11,6 +11,8 @@ import com.example.EmployeeManagementSystem.Repository.LeaveRequestRepo;
 import com.example.EmployeeManagementSystem.Repository.LeaveTypeRepository;
 import com.example.EmployeeManagementSystem.Util.AuthUtil;
 import org.slf4j.Logger;
+import com.example.EmployeeManagementSystem.Enum.LeaveType;   // the Enum — used everywhere in logic
+// Entity LeaveType is always referenced fully qualified in the code below — no import needed
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -99,24 +101,80 @@ public class LeaveRequestService {
             return ResponseEntity.badRequest()
                     .body(Map.of("error", "Leave cannot exceed 30 consecutive days"));
         }
-        //optional
+        // ---------------- SICK ----------------
         if (requestDTO.getLeaveType() == LeaveType.SICK) {
-            // Only 1 sick day allowed per calendar month
-            long sickDaysUsedThisMonth = leaveRequestRepo.countApprovedSickDaysInMonth(
-                    employee, today.getYear(), today.getMonthValue());
-
-            if (sickDaysUsedThisMonth >= 1) {
-                return ResponseEntity.badRequest()
-                        .body(Map.of(
-                                "error", "You have already used your sick leave for this month. Please apply for Unpaid leave instead."
-                        ));
-            }
 
             if (daysRequested > 1) {
                 return ResponseEntity.badRequest()
                         .body(Map.of("error", "Sick leave is limited to 1 day per month."));
             }
+
+            long sickDaysUsedThisMonth = leaveRequestRepo.countApprovedSickDaysInMonth(
+                    employee, today.getYear(), today.getMonthValue());
+
+            var sickLeaveType = leaveTypeRepository.findByName("SICK")
+                    .orElseThrow(() -> new RuntimeException("SICK leave type not configured"));
+
+            var entitlement = leaveEntitlementRepository
+                    .findByEmployeeEmployeeIdAndLeaveTypeIdAndYear(
+                            employee.getEmployeeId(),
+                            sickLeaveType.getId(),
+                            today.getYear())
+                    .orElse(null);
+
+            boolean noBalance = (entitlement == null) ||
+                    entitlement.getClosingBalance().compareTo(BigDecimal.ZERO) <= 0;
+
+            if (sickDaysUsedThisMonth >= 1 || noBalance) {
+                requestDTO.setLeaveType(LeaveType.UNPAID);
+            }
         }
+
+
+// ---------------- CASUAL ----------------
+        if (requestDTO.getLeaveType() == LeaveType.CASUAL) {
+
+            if (daysRequested > 1) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error", "Casual leave is limited to 1 day per month."));
+            }
+
+            long casualDaysUsedThisMonth = leaveRequestRepo.countCasualDaysInMonth(
+                    employee, today.getYear(), today.getMonthValue());
+
+            var casualLeaveType = leaveTypeRepository.findByName("CASUAL")
+                    .orElseThrow(() -> new RuntimeException("CASUAL leave type not configured"));
+
+            var entitlement = leaveEntitlementRepository
+                    .findByEmployeeEmployeeIdAndLeaveTypeIdAndYear(
+                            employee.getEmployeeId(),
+                            casualLeaveType.getId(),
+                            today.getYear())
+                    .orElse(null);
+
+            boolean noBalance = (entitlement == null) ||
+                    entitlement.getClosingBalance().compareTo(BigDecimal.ZERO) <= 0;
+
+            if (casualDaysUsedThisMonth >= 1 || noBalance) {
+                requestDTO.setLeaveType(LeaveType.UNPAID);
+            }
+        }
+
+        // ---------------- UNPAID cap ----------------
+        // An employee may take at most 1 unpaid day per month — the same quota
+        // as the leave type it replaces. This applies whether the employee
+        // submitted UNPAID directly or was auto-downgraded from SICK/CASUAL.
+        if (requestDTO.getLeaveType() == LeaveType.UNPAID) {
+            long unpaidDaysThisMonth = leaveRequestRepo.countUnpaidDaysInMonth(
+                    employee, today.getYear(), today.getMonthValue());
+            if (unpaidDaysThisMonth >= 1) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error",
+                                "Unpaid leave limit (1 day/month) already reached. "
+                                        + "No further leave can be taken this month."));
+            }
+        }
+
         long duplicateCount= leaveRequestRepo.checkDuplicate(
                 employee.getEmployeeId(),
                 requestDTO.getStartDate(),
@@ -143,6 +201,7 @@ public class LeaveRequestService {
              return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                      .body("Leave type is required..");
          }
+        LeaveType originalLeaveType = requestDTO.getLeaveType();
          leaveRequest.setLeaveType(requestDTO.getLeaveType());
          if(requestDTO.getReason()!=null){
              leaveRequest.setReason(requestDTO.getReason());
@@ -153,7 +212,7 @@ public class LeaveRequestService {
         if (manager != null) {
             notificationService.notify(
                     manager,
-                    employee.getName() + " has submitted a leave request.",
+                    employee.getName() + " submitted a " + savedRequest.getLeaveType() ,
                     "LEAVE_REQUEST"
             );
         }
@@ -166,7 +225,15 @@ public class LeaveRequestService {
                         "LEAVE_REQUEST"
                 )
         );
-         return ResponseEntity.status(HttpStatus.CREATED).body(convertToDTO(savedRequest));
+        LeaveResponseDTO responseDTO = convertToDTO(savedRequest);
+        if (savedRequest.getLeaveType() == LeaveType.UNPAID && savedRequest.getLeaveType() != originalLeaveType) {
+            Map<String, Object> body = new java.util.LinkedHashMap<>();
+            body.put("leave", responseDTO);
+            body.put("warning", "Your " + originalLeaveType.name().toLowerCase() +
+                    " leave quota for this month is exhausted. Request recorded as Unpaid leave.");
+            return ResponseEntity.status(HttpStatus.CREATED).body(body);
+        }
+        return ResponseEntity.status(HttpStatus.CREATED).body(responseDTO);
     }
 
     //Only for manager
@@ -422,7 +489,7 @@ public class LeaveRequestService {
     private void updateUsedLeave(LeaveRequest leaveRequest, BigDecimal delta) {
         int year = leaveRequest.getStartDate().getYear();
         String leaveTypeName = leaveRequest.getLeaveType().name();
-        com.example.EmployeeManagementSystem.Entity.LeaveType leaveType = leaveTypeRepository
+        var leaveType = leaveTypeRepository
                 .findByName(leaveTypeName)
                 .orElseThrow(() -> new IllegalStateException(
                         "Leave type not configured: " + leaveTypeName));
@@ -432,8 +499,18 @@ public class LeaveRequestService {
                         leaveRequest.getEmployee().getEmployeeId(), leaveType.getId(), year)
                 .orElseGet(() -> createEntitlement(leaveRequest.getEmployee(), leaveType, year));
 
-        BigDecimal used = entitlement.getUsedThisYear().add(delta);
-        entitlement.setUsedThisYear(used.max(BigDecimal.ZERO));
+        BigDecimal newUsed = entitlement.getUsedThisYear().add(delta);
+
+// Prevent negative
+        newUsed = newUsed.max(BigDecimal.ZERO);
+
+// Prevent exceeding available balance
+        BigDecimal closing = entitlement.getClosingBalance();
+        if (newUsed.compareTo(closing) > 0) {
+            newUsed = closing;
+        }
+
+        entitlement.setUsedThisYear(newUsed);
         leaveEntitlementRepository.save(entitlement);
     }
 

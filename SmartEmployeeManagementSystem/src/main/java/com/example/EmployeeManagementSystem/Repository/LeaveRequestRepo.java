@@ -84,6 +84,24 @@ public interface LeaveRequestRepo extends JpaRepository<LeaveRequest, Long> {
             @Param("year") int year,
             @Param("month") int month);
 
+    @Query("""
+    SELECT COALESCE(SUM(DATEDIFF(lr.endDate, lr.startDate) + 1), 0)
+    FROM LeaveRequest lr
+    WHERE lr.employee = :employee
+    AND lr.leaveType = com.example.EmployeeManagementSystem.Enum.LeaveType.CASUAL
+    AND lr.status IN (
+        com.example.EmployeeManagementSystem.Enum.LeaveStatus.APPROVED,
+        com.example.EmployeeManagementSystem.Enum.LeaveStatus.PENDING
+    )
+    AND YEAR(lr.startDate) = :year
+    AND MONTH(lr.startDate) = :month
+    """)
+    long countCasualDaysInMonth(
+            @Param("employee") Employee employee,
+            @Param("year") int year,
+            @Param("month") int month
+    );
+
     @Query("SELECT COUNT(l) > 0 FROM LeaveRequest l " +
             "WHERE l.employee = :employee " +
             "AND l.leaveType = :leaveType " +
@@ -94,5 +112,22 @@ public interface LeaveRequestRepo extends JpaRepository<LeaveRequest, Long> {
             @Param("leaveType") LeaveType leaveType,
             @Param("year") int year,
             @Param("statuses") List<LeaveStatus> statuses
+    );
+    @Query("""
+    SELECT COALESCE(SUM(DATEDIFF(lr.endDate, lr.startDate) + 1), 0)
+    FROM LeaveRequest lr
+    WHERE lr.employee = :employee
+    AND lr.leaveType = com.example.EmployeeManagementSystem.Enum.LeaveType.UNPAID
+    AND lr.status IN (
+        com.example.EmployeeManagementSystem.Enum.LeaveStatus.APPROVED,
+        com.example.EmployeeManagementSystem.Enum.LeaveStatus.PENDING
+    )
+    AND YEAR(lr.startDate) = :year
+    AND MONTH(lr.startDate) = :month
+    """)
+    long countUnpaidDaysInMonth(
+            @Param("employee") Employee employee,
+            @Param("year") int year,
+            @Param("month") int month
     );
 }

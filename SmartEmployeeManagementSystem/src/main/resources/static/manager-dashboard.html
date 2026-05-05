@@ -166,6 +166,7 @@
         .alert{position:fixed;top:20px;right:20px;padding:12px 20px;border-radius:10px;z-index:1100;animation:slideIn 0.3s ease;font-size:13px;font-weight:500}
         .alert-success{background:var(--green-dim);color:var(--green);border:1px solid rgba(52,211,153,0.3)}
         .alert-error{background:var(--red-dim);color:var(--red);border:1px solid rgba(248,113,113,0.3)}
+        .alert-warning{background:var(--amber-dim);color:var(--amber);border:1px solid rgba(251,191,36,0.3)}
         @keyframes slideIn{from{transform:translateX(120%);opacity:0}to{transform:translateX(0);opacity:1}}
         .empty-state{text-align:center;color:var(--text3);font-style:italic;padding:30px}
 
@@ -673,6 +674,9 @@
                                 </select>
                                 <div id="sick-leave-hint" style="display:none;margin-top:6px;font-size:11px;color:var(--amber);background:var(--amber-dim);border:1px solid rgba(251,191,36,0.2);border-radius:6px;padding:8px 12px;">
                                     ⚠️ Sick leave is limited to <strong>1 day per month</strong>. If already used this month, please select Unpaid Leave.
+                                </div>
+                                <div id="casual-leave-hint" style="display:none; margin-top:6px; font-size:11px; color:var(--amber); background:var(--amber-dim); border:1px solid rgba(251,191,36,0.2); border-radius:6px; padding:6px 10px;">
+                                    Casual leave is limited to <strong>1 day per month</strong>. If already used this month, it will be automatically recorded as <strong>Unpaid Leave</strong>.
                                 </div>
                             </div>
                             <div class="form-group">
@@ -1404,29 +1408,39 @@ async function rejectLeave(id) {
         return;
     }
 
-    try {
-        const res = await fetch(`${API}/leave_requests`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
-            credentials: 'include',
-            body: JSON.stringify({ leaveType, reason, startDate, endDate })
-        });
+        try {
+            const res = await fetch(`${API}/leave_requests`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+                credentials: 'include',
+                body: JSON.stringify({ leaveType, reason, startDate, endDate })
+            });
 
-        if (res.ok) {
-            showAlert('Leave request submitted successfully!', 'success');
-            clearLeaveForm();
-            loadMyLeaves();
-        } else {
             const text = await res.text();
-            showAlert('Failed: ' + text, 'error');
+
+            if (res.ok) {
+                let data = null;
+                try { data = JSON.parse(text); } catch {}
+
+                if (data && data.warning) {
+                    showAlert(data.warning, 'warning');
+                } else {
+                    showAlert('Leave request submitted successfully!', 'success');
+                }
+                clearLeaveForm();
+                loadMyLeaves();
+            } else {
+                showAlert('Failed: ' + text, 'error');
+            }
+        } catch(e) {
+            showAlert('Error: ' + e.message, 'error');
         }
-    } catch(e) {
-        showAlert('Error: ' + e.message, 'error');
-    }
 }
-    document.getElementById('leave-type').addEventListener('change', function(){
+    document.getElementById('leave-type').addEventListener('change', function() {
         document.getElementById('sick-leave-hint').style.display =
             this.value === 'SICK' ? 'block' : 'none';
+        document.getElementById('casual-leave-hint').style.display =
+            this.value === 'CASUAL' ? 'block' : 'none';
     });
 
 function clearLeaveForm() {
