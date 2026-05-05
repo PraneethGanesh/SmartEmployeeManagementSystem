@@ -159,7 +159,7 @@ public class JWTAuthConfig {
                         .requestMatchers("/vendor-dashboard.html").permitAll()
 
                         // API key generation requires authentication
-                        .requestMatchers("/api-keys/generate").authenticated()
+                        .requestMatchers("/api-keys/**").authenticated()
                         .requestMatchers("/manager/createAdmin").permitAll()
                         //totp
                         .requestMatchers("/totp/**").authenticated()

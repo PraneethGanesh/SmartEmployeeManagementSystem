@@ -23,9 +23,6 @@ public class ApiKeyFilter extends OncePerRequestFilter {
     public ApiKeyFilter(AuthenticationManager authenticationManager) {
         this.authenticationManager = authenticationManager;
     }
-//    @Autowired
-//    @Qualifier("apiKeyAuthenticationManager")  // or just use ProviderManager directly
-//    private AuthenticationManager authenticationManager;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,

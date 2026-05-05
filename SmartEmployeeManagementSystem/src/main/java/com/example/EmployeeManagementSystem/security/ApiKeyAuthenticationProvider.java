@@ -5,6 +5,7 @@ import com.example.EmployeeManagementSystem.Entity.ApiKey;
 import com.example.EmployeeManagementSystem.Entity.Employee;
 import com.example.EmployeeManagementSystem.Entity.Vendor;
 import com.example.EmployeeManagementSystem.Repository.ApiKeyRepository;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -70,7 +71,7 @@ public class ApiKeyAuthenticationProvider implements AuthenticationProvider {
             authorities.add(new SimpleGrantedAuthority("ROLE_" + key.getEmployee().getRole().name()));
         } else if (key.getVendor() != null) {
             principal = key.getVendor();
-            authorities.add(new SimpleGrantedAuthority("ROLE_VENDOR"));
+            authorities.add(new SimpleGrantedAuthority("ROLE_" + key.getVendor().getRole().name()));
         } else {
             throw new RuntimeException("No user associated with API key");
         }
