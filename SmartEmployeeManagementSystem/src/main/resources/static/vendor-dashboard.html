@@ -11,11 +11,13 @@
             --bg:#08100a;--bg2:#0c160e;--bg3:#101c12;
             --panel:#131f15;--panel2:#182219;
             --border:rgba(52,211,153,0.08);--border2:rgba(52,211,153,0.18);
-            --text: #0a41ce;--text2:#6b9474;--text3:#3d5e44;
+            --text:#e8f0ea;--text2:#8aaa92;--text3:#3d5e44;
             --accent:#34d399;--accent-dim:rgba(52,211,153,0.1);
             --amber:#fbbf24;--amber-dim:rgba(251,191,36,0.1);
             --red:#f87171;--red-dim:rgba(248,113,113,0.1);
             --blue:#60a5fa;--blue-dim:rgba(96,165,250,0.1);
+            --green:#34d399;--green-dim:rgba(52,211,153,0.1);
+            --cyan:#22d3ee;
             --font:'DM Sans',sans-serif;--mono:'Space Mono',monospace;
             --sidebar:245px;
         }
@@ -36,6 +38,7 @@
         .nav-item{display:flex;align-items:center;gap:10px;padding:10px 20px;margin:2px 8px;border-radius:6px;cursor:pointer;transition:all 0.2s;color:var(--text2);font-size:13px;font-weight:500}
         .nav-item:hover{background:var(--accent-dim);color:var(--accent)}
         .nav-item.active{background:var(--accent-dim);color:var(--accent);border-left:2px solid var(--accent);margin-left:6px}
+        .nav-icon{width:16px;height:16px;flex-shrink:0}
         .sidebar-footer{padding:16px 20px;border-top:1px solid var(--border)}
         .user-card{display:flex;align-items:center;gap:10px}
         .avatar{width:34px;height:34px;background:linear-gradient(135deg,#16a34a,var(--accent));border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0;font-family:var(--mono)}
@@ -85,12 +88,12 @@
         .chip{display:inline-flex;align-items:center;padding:3px 8px;border-radius:4px;font-size:10px;font-weight:700;font-family:var(--mono);letter-spacing:0.5px}
         .chip.active{background:var(--accent-dim);color:var(--accent);border:1px solid rgba(52,211,153,0.2)}
         .chip.inactive{background:var(--red-dim);color:var(--red);border:1px solid rgba(248,113,113,0.2)}
-        .chip.pending{background:var(--amber-dim);color:var(--amber)}
-        .chip.delivered{background:var(--accent-dim);color:var(--accent)}
-        .chip.processing{background:var(--blue-dim);color:var(--blue)}
-        .chip.breakfast{background:var(--amber-dim);color:var(--amber)}
-        .chip.lunch{background:var(--accent-dim);color:var(--accent)}
-        .chip.dinner{background:var(--blue-dim);color:var(--blue)}
+        .chip.pending{background:var(--amber-dim);color:var(--amber);border:1px solid rgba(251,191,36,0.2)}
+        .chip.delivered{background:var(--accent-dim);color:var(--accent);border:1px solid rgba(52,211,153,0.2)}
+        .chip.processing{background:var(--blue-dim);color:var(--blue);border:1px solid rgba(96,165,250,0.2)}
+        .chip.breakfast{background:var(--amber-dim);color:var(--amber);border:1px solid rgba(251,191,36,0.2)}
+        .chip.lunch{background:var(--accent-dim);color:var(--accent);border:1px solid rgba(52,211,153,0.2)}
+        .chip.dinner{background:var(--blue-dim);color:var(--blue);border:1px solid rgba(96,165,250,0.2)}
 
         /* BUTTONS */
         .btn{padding:8px 16px;border-radius:6px;border:none;font-family:var(--mono);font-size:11px;font-weight:700;cursor:pointer;transition:all 0.2s;letter-spacing:0.5px;text-transform:uppercase}
@@ -114,7 +117,7 @@
         input,select,textarea{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:9px 12px;color:var(--text);font-family:var(--font);font-size:13px;transition:border-color 0.2s;width:100%}
         input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent)}
         input::placeholder,textarea::placeholder{color:var(--text3)}
-        select option{background:var(--bg2)}
+        select option{background:var(--bg2);color:var(--text)}
         .form-actions{display:flex;gap:10px;margin-top:18px}
 
         /* ALERT */
@@ -133,58 +136,22 @@
         .rest-name{font-weight:700;color:var(--text);margin-bottom:6px;font-size:14px}
         .rest-meta{font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:12px}
         .rest-actions{display:flex;gap:8px}
-        .card {
-            background: var(--panel);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            overflow: hidden;
-        }
 
-        .card-head {
-            padding: 14px 20px;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+        /* CARD */
+        .card{background:var(--panel);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+        .card-head{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+        .card-title{font-size:13px;font-weight:700;color:var(--text);font-family:var(--mono)}
+        .card-sub{font-size:11px;color:var(--text3);margin-top:2px}
+        .card-body{padding:20px}
+        .form-label{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;font-family:var(--mono)}
+        .form-input{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:9px 12px;color:var(--text);font-family:var(--font);font-size:13px;transition:border-color 0.2s;width:100%}
+        .form-input:focus{outline:none;border-color:var(--accent)}
 
-        .card-title {
-            font-size: 13px;
-            font-weight: 700;
-            color: var(--text);
-            font-family: var(--mono);
-        }
-
-        .card-sub {
-            font-size: 11px;
-            color: var(--text3);
-            margin-top: 2px;
-        }
-
-        .card-body {
-            padding: 20px;
-        }
-
-        .form-label {
-            font-size: 10px;
-            font-weight: 700;
-            color: var(--text3);
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            font-family: var(--mono);
-        }
-
-        .form-input {
-            background: var(--bg3);
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            padding: 9px 12px;
-            color: var(--text);
-            font-family: var(--font);
-            font-size: 13px;
-            transition: border-color 0.2s;
-            width: 100%;
-        }
+        /* SCROLLBAR */
+        ::-webkit-scrollbar{width:6px}
+        ::-webkit-scrollbar-track{background:var(--bg)}
+        ::-webkit-scrollbar-thumb{background:var(--text3);border-radius:3px}
+        ::-webkit-scrollbar-thumb:hover{background:var(--text2)}
     </style>
 </head>
 <body>
@@ -265,14 +232,14 @@
                     <div class="section">
                         <div class="section-head">
                             <div><div class="section-title">// my_restaurants</div></div>
-                            <button class="btn btn-secondary btn-sm" onclick="showView('my-restaurants',null)">view →</button>
+                            <button class="btn btn-secondary btn-sm" onclick="showView('my-restaurants',document.querySelectorAll('.nav-item')[1])">view →</button>
                         </div>
                         <div id="dash-restaurants" style="padding:4px 0"></div>
                     </div>
                     <div class="section">
                         <div class="section-head">
                             <div><div class="section-title">// recent_deliveries</div></div>
-                            <button class="btn btn-secondary btn-sm" onclick="showView('deliveries',null)">view →</button>
+                            <button class="btn btn-secondary btn-sm" onclick="showView('deliveries',document.querySelectorAll('.nav-item')[4])">view →</button>
                         </div>
                         <div class="tablewrap">
                             <table>
@@ -307,27 +274,24 @@
                                 <label>Restaurant Name</label>
                                 <input id="rest-name" placeholder="My Restaurant Name">
                             </div>
-
                             <div class="form-group full">
                                 <label>Address</label>
                                 <input id="rest-address" placeholder="Street, area, city">
                             </div>
-
                             <div class="form-group full">
                                 <label>Meal Slots</label>
                                 <div style="display:flex;gap:14px;flex-wrap:wrap;padding:10px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:6px">
-                                    <label style="display:flex;align-items:center;gap:8px;color:var(--text);font-family:var(--font);text-transform:none;letter-spacing:0;font-size:13px">
-                                        <input type="checkbox" class="rest-slot-check" value="BREAKFAST" style="width:auto"> Breakfast
+                                    <label style="display:flex;align-items:center;gap:8px;color:var(--text);font-family:var(--font);text-transform:none;letter-spacing:0;font-size:13px;cursor:pointer">
+                                        <input type="checkbox" class="rest-slot-check" value="BREAKFAST" style="width:auto;cursor:pointer"> Breakfast
                                     </label>
-                                    <label style="display:flex;align-items:center;gap:8px;color:var(--text);font-family:var(--font);text-transform:none;letter-spacing:0;font-size:13px">
-                                        <input type="checkbox" class="rest-slot-check" value="LUNCH" style="width:auto"> Lunch
+                                    <label style="display:flex;align-items:center;gap:8px;color:var(--text);font-family:var(--font);text-transform:none;letter-spacing:0;font-size:13px;cursor:pointer">
+                                        <input type="checkbox" class="rest-slot-check" value="LUNCH" style="width:auto;cursor:pointer"> Lunch
                                     </label>
-                                    <label style="display:flex;align-items:center;gap:8px;color:var(--text);font-family:var(--font);text-transform:none;letter-spacing:0;font-size:13px">
-                                        <input type="checkbox" class="rest-slot-check" value="DINNER" style="width:auto"> Dinner
+                                    <label style="display:flex;align-items:center;gap:8px;color:var(--text);font-family:var(--font);text-transform:none;letter-spacing:0;font-size:13px;cursor:pointer">
+                                        <input type="checkbox" class="rest-slot-check" value="DINNER" style="width:auto;cursor:pointer"> Dinner
                                     </label>
                                 </div>
                             </div>
-
                             <div class="form-group full">
                                 <label>Description (optional)</label>
                                 <textarea id="rest-desc" rows="2" placeholder="Brief description of your restaurant..."></textarea>
@@ -373,78 +337,47 @@
                 </div>
             </div>
 
+            <!-- TWO-FACTOR -->
             <div id="two-factor-view" class="view">
                 <div class="card" style="max-width:560px">
                     <div class="card-head">
                         <div>
                             <div class="card-title">Two-Factor Authentication</div>
-                            <div class="card-sub">secure your account with an authenticator app</div>
+                            <div class="card-sub">Secure your account with an authenticator app</div>
                         </div>
                         <span id="totp-status-chip" class="chip">checking...</span>
                     </div>
                     <div class="card-body">
-
-                        <!-- DISABLED — setup flow -->
+                        <!-- SETUP FLOW -->
                         <div id="totp-setup-section">
-                            <p style="font-size:12px;color:var(--text2);margin-bottom:16px;
-                           line-height:1.7;font-family:var(--mono)">
+                            <p style="font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.7;font-family:var(--mono)">
                                 Use Google Authenticator, Authy, or any TOTP app.<br>
                                 Scan the QR code, then enter the 6-digit code to activate.
                             </p>
-                            <button class="btn btn-primary" onclick="generateTotpQr()"
-                                    id="generate-qr-btn">
+                            <button class="btn btn-primary" onclick="generateTotpQr()" id="generate-qr-btn">
                                 Generate QR Code
                             </button>
-
                             <div id="qr-area" style="display:none;margin-top:24px;text-align:center">
-                                <img id="qr-img" src="" alt="QR Code"
-                                     style="width:180px;height:180px;border-radius:8px;
-                                border:1px solid var(--border2);display:block;margin:0 auto">
-                                <div style="margin-top:12px;font-size:10px;color:var(--text3);
-                                font-family:var(--mono);letter-spacing:0.5px">
+                                <img id="qr-img" src="" alt="QR Code" style="width:180px;height:180px;border-radius:8px;border:1px solid var(--border2);display:block;margin:0 auto">
+                                <div style="margin-top:12px;font-size:10px;color:var(--text3);font-family:var(--mono);letter-spacing:0.5px">
                                     CAN'T SCAN? ENTER KEY MANUALLY:
                                 </div>
-                                <div id="totp-secret-display"
-                                     style="font-family:var(--mono);font-size:12px;color:var(--cyan);
-                                background:var(--bg3);border:1px solid var(--border2);
-                                border-radius:6px;padding:8px 12px;margin-top:6px;
-                                word-break:break-all;text-align:center"></div>
-
+                                <div id="totp-secret-display" style="font-family:var(--mono);font-size:12px;color:var(--cyan);background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:8px 12px;margin-top:6px;word-break:break-all;text-align:center"></div>
                                 <div style="margin-top:20px;text-align:left">
-                                    <label class="form-label" style="display:block;margin-bottom:8px">
-                                        Enter 6-digit code to activate
-                                    </label>
-                                    <input id="totp-verify-input" type="text"
-                                           inputmode="numeric" maxlength="6"
-                                           placeholder="000000"
-                                           class="form-input"
-                                           style="text-align:center;font-size:20px;
-                                      letter-spacing:10px;padding:12px"
-                                           oninput="this.value=this.value.replace(/\D/g,'')">
-                                    <button class="btn btn-primary"
-                                            onclick="verifyAndActivateTotp()"
-                                            style="width:100%;margin-top:10px">
-                                        Activate 2FA
-                                    </button>
-                                    <div id="totp-verify-error"
-                                         style="display:none;margin-top:8px;font-size:11px;
-                                    color:var(--red);font-family:var(--mono)"></div>
+                                    <label class="form-label" style="display:block;margin-bottom:8px">Enter 6-digit code to activate</label>
+                                    <input id="totp-verify-input" type="text" inputmode="numeric" maxlength="6" placeholder="000000" class="form-input" style="text-align:center;font-size:20px;letter-spacing:10px;padding:12px" oninput="this.value=this.value.replace(/\D/g,'')">
+                                    <button class="btn btn-primary" onclick="verifyAndActivateTotp()" style="width:100%;margin-top:10px">Activate 2FA</button>
+                                    <div id="totp-verify-error" style="display:none;margin-top:8px;font-size:11px;color:var(--red);font-family:var(--mono)"></div>
                                 </div>
                             </div>
                         </div>
-
-                        <!-- ENABLED — disable option -->
+                        <!-- DISABLE OPTION -->
                         <div id="totp-disable-section" style="display:none">
-                            <div style="background:var(--green-dim);border:1px solid rgba(16,212,142,0.2);
-                            border-radius:6px;padding:12px 16px;font-size:12px;
-                            color:var(--green);font-family:var(--mono);margin-bottom:16px">
+                            <div style="background:var(--green-dim);border:1px solid rgba(52,211,153,0.2);border-radius:6px;padding:12px 16px;font-size:12px;color:var(--green);font-family:var(--mono);margin-bottom:16px">
                                 ✓ TWO-FACTOR AUTHENTICATION IS ACTIVE
                             </div>
-                            <button class="btn btn-danger" onclick="disableTotp()">
-                                Disable 2FA
-                            </button>
+                            <button class="btn btn-danger" onclick="disableTotp()">Disable 2FA</button>
                         </div>
-
                     </div>
                 </div>
             </div>
@@ -467,196 +400,317 @@
 </div>
 
 <script>
-    const API='http://localhost:8080';
-    let vendorId=null;
+    const API = 'http://localhost:8080';
+    let vendorId = null;
 
-    (function(){
-        const token=localStorage.getItem('jwt_token');
-        const authType=localStorage.getItem('auth_type');
-        if(!token&&authType!=='session'){window.location.href='/login.html';return;}
-        if(token){
-            try{
-                const p=JSON.parse(atob(token.split('.')[1]));
-                const roles=p.roles||p.authorities||'';
-                if(roles.includes('ROLE_VENDOR')) { initUser(); return; }
-                if(roles.includes('ROLE_EMPLOYEE')){window.location.href='/employee-dashboard.html';return;}
-                if(roles.includes('ROLE_MANAGER')){window.location.href='/manager-dashboard.html';return;}
-                if(roles.includes('ROLE_ADMIN')){window.location.href='/dashboard.html';return;}
-            }catch(e){}
+    // Auth check
+    (function() {
+        const token = localStorage.getItem('jwt_token');
+        const authType = localStorage.getItem('auth_type');
+        if (!token && authType !== 'session') {
+            window.location.href = '/login.html';
+            return;
+        }
+        if (token) {
+            try {
+                const p = JSON.parse(atob(token.split('.')[1]));
+                const roles = p.roles || p.authorities || '';
+                if (typeof roles === 'string') {
+                    if (roles.includes('ROLE_EMPLOYEE')) { window.location.href = '/employee-dashboard.html'; return; }
+                    if (roles.includes('ROLE_MANAGER')) { window.location.href = '/manager-dashboard.html'; return; }
+                    if (roles.includes('ROLE_ADMIN')) { window.location.href = '/dashboard.html'; return; }
+                } else if (Array.isArray(roles)) {
+                    const roleStr = roles.join(',');
+                    if (roleStr.includes('ROLE_EMPLOYEE')) { window.location.href = '/employee-dashboard.html'; return; }
+                    if (roleStr.includes('ROLE_MANAGER')) { window.location.href = '/manager-dashboard.html'; return; }
+                    if (roleStr.includes('ROLE_ADMIN')) { window.location.href = '/dashboard.html'; return; }
+                }
+            } catch(e) {
+                console.error('Token parse error', e);
+            }
         }
         initUser();
     })();
 
-    function getAuthHeader(){const t=localStorage.getItem('jwt_token');return t?{'Authorization':`Bearer ${t}`}:{};}
-    async function apiFetch(path,opts={}){
-        const res=await fetch(`${API}${path}`,{...opts,headers:{'Content-Type':'application/json',...getAuthHeader(),...(opts.headers||{})},credentials:'include'});
-        if(res.status===401){localStorage.removeItem('jwt_token');localStorage.removeItem('auth_type');showAlert('SESSION EXPIRED','error');setTimeout(()=>window.location.href='/login.html',1500);throw new Error('Unauthorized');}
-        const text=await res.text();return text?JSON.parse(text):null;
+    function getAuthHeader() {
+        const t = localStorage.getItem('jwt_token');
+        return t ? { 'Authorization': `Bearer ${t}` } : {};
     }
 
-    async function initUser(){
-        const token=localStorage.getItem('jwt_token');
-        let email='';
-        if(token){try{const p=JSON.parse(atob(token.split('.')[1]));email=p.sub||p.email||'';}catch(e){}}
-        document.getElementById('avatar-initials').textContent=(email||'V').charAt(0).toUpperCase();
-        document.getElementById('sidebar-name').textContent=(email.split('@')[0]||'Vendor');
-        document.getElementById('topbar-email').textContent=email;
-        document.getElementById('p-email').textContent=email;
+    async function apiFetch(path, opts = {}) {
+        const res = await fetch(`${API}${path}`, {
+            ...opts,
+            headers: {
+                'Content-Type': 'application/json',
+                ...getAuthHeader(),
+                ...(opts.headers || {})
+            },
+            credentials: 'include'
+        });
+        if (res.status === 401) {
+            localStorage.removeItem('jwt_token');
+            localStorage.removeItem('auth_type');
+            showAlert('SESSION EXPIRED', 'error');
+            setTimeout(() => window.location.href = '/login.html', 1500);
+            throw new Error('Unauthorized');
+        }
+        const text = await res.text();
+        return text ? JSON.parse(text) : null;
+    }
 
-        try{
+    async function initUser() {
+        const token = localStorage.getItem('jwt_token');
+        let email = '';
+        if (token) {
+            try {
+                const p = JSON.parse(atob(token.split('.')[1]));
+                email = p.sub || p.email || '';
+            } catch(e) {}
+        }
+
+        const displayName = email ? email.split('@')[0] : 'Vendor';
+        document.getElementById('avatar-initials').textContent = (displayName || 'V').charAt(0).toUpperCase();
+        document.getElementById('sidebar-name').textContent = displayName;
+        document.getElementById('topbar-email').textContent = email;
+        document.getElementById('p-email').textContent = email || '—';
+
+        try {
             const me = await apiFetch('/vendors/me');
-            if(me){
+            if (me) {
                 vendorId = me.id || me.vendorId || null;
-                document.getElementById('p-name').textContent = me.name || '—';
+                document.getElementById('p-name').textContent = me.name || displayName || '—';
                 document.getElementById('p-id').textContent = vendorId || '—';
+                if (me.name) {
+                    document.getElementById('sidebar-name').textContent = me.name;
+                    document.getElementById('avatar-initials').textContent = me.name.charAt(0).toUpperCase();
+                }
             }
-        }catch(e){
+        } catch(e) {
             console.error('Could not load vendor profile', e);
         }
 
         loadDashboard();
     }
 
-    function showView(name,el){
-        document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
-        document.getElementById(`${name}-view`).classList.add('active');
-        document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-        if(el)el.classList.add('active');
-        document.getElementById('pageTitle').textContent='// '+name.replace(/-/g,'_');
-        const loaders={dashboard:loadDashboard,'my-restaurants':loadMyRestaurants,'add-restaurant':()=>{},'subscriptions':loadSubscriptions,'deliveries':loadDeliveries,'profile':()=>{}};
-        if(loaders[name])loaders[name]();
+    // View loader mapping
+    const viewLoaders = {
+        'dashboard': loadDashboard,
+        'my-restaurants': loadMyRestaurants,
+        'add-restaurant': () => {},
+        'subscriptions': loadSubscriptions,
+        'deliveries': loadDeliveries,
+        'profile': () => {},
+        'two-factor': loadTotpStatus
+    };
+
+    function showView(name, el) {
+        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+        const targetView = document.getElementById(`${name}-view`);
+        if (targetView) targetView.classList.add('active');
+
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        if (el) el.classList.add('active');
+
+        document.getElementById('pageTitle').textContent = '// ' + name.replace(/-/g, '_');
+
+        if (viewLoaders[name]) viewLoaders[name]();
     }
 
-    async function loadDashboard(){
-        try{
-            const [rests,subs,deliveries]=await Promise.all([
-                apiFetch('/restaurants/vendor').catch(()=>[]),
-                apiFetch('/subscriptions').catch(()=>[]),
-                apiFetch('/deliveries').catch(()=>[])
+    async function loadDashboard() {
+        try {
+            const [rests, subs, deliveries] = await Promise.all([
+                apiFetch('/restaurants/vendor').catch(() => []),
+                apiFetch('/subscriptions').catch(() => []),
+                apiFetch('/deliveries').catch(() => [])
             ]);
 
-            const restArr=rests||[];
-            const subArr=subs||[];
-            const delArr=deliveries||[];
+            const restArr = rests || [];
+            const subArr = subs || [];
+            const delArr = deliveries || [];
 
-            document.getElementById('stat-restaurants').textContent=restArr.filter(r=>r.active!==false).length;
-            document.getElementById('stat-subs').textContent=subArr.length;
-            document.getElementById('stat-deliveries').textContent=delArr.length;
-            document.getElementById('stat-pending').textContent=delArr.filter(d=>d.status==='PENDING').length;
+            document.getElementById('stat-restaurants').textContent = restArr.filter(r => r.active !== false).length;
+            document.getElementById('stat-subs').textContent = subArr.length;
+            document.getElementById('stat-deliveries').textContent = delArr.length;
+            document.getElementById('stat-pending').textContent = delArr.filter(d => d.status === 'PENDING').length;
 
-            document.getElementById('dash-restaurants').innerHTML=restArr.length
-                ? restArr.slice(0,4).map(r=>`<div style="padding:12px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center"><div><div style="font-weight:600;color:var(--text);font-size:13px">${r.name||'—'}</div><div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-top:2px">${r.supportedMealSlots?.join(', ')||'—'}</div></div><span class="chip ${r.active===true?'active':'inactive'}">${r.active===true?'LIVE':'OFF'}</span></div>`).join('')
+            document.getElementById('dash-restaurants').innerHTML = restArr.length
+                ? restArr.slice(0, 4).map(r => `
+                    <div style="padding:12px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+                        <div>
+                            <div style="font-weight:600;color:var(--text);font-size:13px">${escHtml(r.name || '—')}</div>
+                            <div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-top:2px">${escHtml((r.supportedMealSlots || []).join(', '))}</div>
+                        </div>
+                        <span class="chip ${r.active === true ? 'active' : 'inactive'}">${r.active === true ? 'LIVE' : 'OFF'}</span>
+                    </div>`).join('')
                 : '<div class="empty-state">no restaurants yet</div>';
 
-            document.getElementById('dash-deliveries').innerHTML=delArr.length
-                ? delArr.slice(0,5).map(d=>`<tr><td>${d.restaurantName||d.restaurantId||'—'}</td><td><span class="chip ${(d.mealSlot||'').toLowerCase()}">${d.mealSlot||'—'}</span></td><td><span class="chip ${(d.status||'pending').toLowerCase()}">${d.status||'—'}</span></td></tr>`).join('')
+            document.getElementById('dash-deliveries').innerHTML = delArr.length
+                ? delArr.slice(0, 5).map(d => `
+                    <tr>
+                        <td>${escHtml(d.restaurantName || d.restaurantId || '—')}</td>
+                        <td><span class="chip ${(d.mealSlot || '').toLowerCase()}">${escHtml(d.mealSlot || '—')}</span></td>
+                        <td><span class="chip ${(d.status || 'pending').toLowerCase()}">${escHtml(d.status || '—')}</span></td>
+                    </tr>`).join('')
                 : '<tr><td colspan="3" class="empty-state">no deliveries</td></tr>';
-        }catch(e){console.error(e);}
-    }
-
-
-    async function loadMyRestaurants(){
-        try{
-            const rests=await apiFetch('/restaurants/vendor');
-            const arr=rests||[];
-            document.getElementById('restaurants-grid').innerHTML=arr.length
-                ? arr.map(r=>`<div class="restaurant-card ${r.active===false?'inactive':''}">
-      <div class="rest-name">${r.name||'—'}</div>
-      <div class="rest-meta">${r.supportedMealSlots?.join(', ')||'—'} · ID: ${r.id||r.restaurantId||'—'}</div>
-      <div style="font-size:12px;color:var(--text2);margin-bottom:8px">${r.address||'—'}</div>
-      <div style="font-size:11px;color:var(--text3);margin-bottom:12px">${r.description||''}</div>
-      <div class="rest-actions">
-        ${r.active!==false
-                    ? `<button class="btn btn-warning btn-sm" onclick="deactivateRestaurant(${r.id||r.restaurantId})">DEACTIVATE</button>`
-                    : `<span style="font-size:10px;color:var(--red);font-family:var(--mono)">INACTIVE</span>`}
-      </div>
-    </div>`).join('')
-                : '<div class="empty-state">no restaurants found. create one!</div>';
-        }catch(e){
-            document.getElementById('restaurants-grid').innerHTML='<div class="empty-state">could not load restaurants</div>';
+        } catch(e) {
+            console.error('Dashboard load error', e);
         }
     }
 
+    async function loadMyRestaurants() {
+        try {
+            const rests = await apiFetch('/restaurants/vendor');
+            const arr = rests || [];
+            document.getElementById('restaurants-grid').innerHTML = arr.length
+                ? arr.map(r => {
+                    const rid = r.id || r.restaurantId;
+                    return `
+                    <div class="restaurant-card ${r.active === false ? 'inactive' : ''}">
+                        <div class="rest-name">${escHtml(r.name || '—')}</div>
+                        <div class="rest-meta">${escHtml((r.supportedMealSlots || []).join(', '))} · ID: ${rid || '—'}</div>
+                        <div style="font-size:12px;color:var(--text2);margin-bottom:8px">${escHtml(r.address || '—')}</div>
+                        <div style="font-size:11px;color:var(--text3);margin-bottom:12px">${escHtml(r.description || '')}</div>
+                        <div class="rest-actions">
+                            ${r.active !== false
+                        ? `<button class="btn btn-warning btn-sm" onclick="deactivateRestaurant('${rid}')">DEACTIVATE</button>`
+                        : `<button class="btn btn-primary btn-sm" onclick="activateRestaurant('${rid}')">ACTIVATE</button>`
+                    }
+                        </div>
+                    </div>`;
+                }).join('')
+                : '<div class="empty-state">no restaurants found. create one!</div>';
+        } catch(e) {
+            document.getElementById('restaurants-grid').innerHTML = '<div class="empty-state">could not load restaurants</div>';
+        }
+    }
 
-    async function addRestaurant(){
-        const name=document.getElementById('rest-name').value.trim();
-        const address=document.getElementById('rest-address').value.trim();
-        const description=document.getElementById('rest-desc').value.trim();
-        const supportedMealSlots=Array.from(document.querySelectorAll('.rest-slot-check:checked')).map(el=>el.value);
+    async function deactivateRestaurant(id) {
+        try {
+            await apiFetch(`/restaurants/${id}/deactivate`, { method: 'PUT' });
+            showAlert('RESTAURANT DEACTIVATED', 'success');
+            loadMyRestaurants();
+            loadDashboard();
+        } catch(e) {
+            showAlert('FAILED: ' + e.message, 'error');
+        }
+    }
 
-        if(!name || !address || supportedMealSlots.length===0){
-            showAlert('NAME, ADDRESS AND AT LEAST ONE MEAL SLOT REQUIRED','error');
+    async function activateRestaurant(id) {
+        try {
+            await apiFetch(`/restaurants/${id}/activate`, { method: 'PUT' });
+            showAlert('RESTAURANT ACTIVATED', 'success');
+            loadMyRestaurants();
+            loadDashboard();
+        } catch(e) {
+            showAlert('FAILED: ' + e.message, 'error');
+        }
+    }
+
+    async function addRestaurant() {
+        const name = document.getElementById('rest-name').value.trim();
+        const address = document.getElementById('rest-address').value.trim();
+        const description = document.getElementById('rest-desc').value.trim();
+        const supportedMealSlots = Array.from(document.querySelectorAll('.rest-slot-check:checked')).map(el => el.value);
+
+        if (!name || !address || supportedMealSlots.length === 0) {
+            showAlert('NAME, ADDRESS AND AT LEAST ONE MEAL SLOT REQUIRED', 'error');
             return;
         }
 
-        try{
-            await apiFetch('/restaurants',{
-                method:'POST',
-                body:JSON.stringify({name,address,description,supportedMealSlots})
+        try {
+            await apiFetch('/restaurants', {
+                method: 'POST',
+                body: JSON.stringify({ name, address, description, supportedMealSlots })
             });
-            showAlert('RESTAURANT CREATED!','success');
+            showAlert('RESTAURANT CREATED!', 'success');
             clearRestForm();
-            loadMyRestaurants();
-            loadDashboard();
-        }catch(e){
-            showAlert('FAILED: '+e.message,'error');
+            showView('my-restaurants', document.querySelectorAll('.nav-item')[1]);
+        } catch(e) {
+            showAlert('FAILED: ' + e.message, 'error');
         }
     }
 
-
-    function clearRestForm(){
-        ['rest-name','rest-address','rest-desc'].forEach(id=>document.getElementById(id).value='');
-        document.querySelectorAll('.rest-slot-check').forEach(el=>el.checked=false);
+    function clearRestForm() {
+        ['rest-name', 'rest-address', 'rest-desc'].forEach(id => document.getElementById(id).value = '');
+        document.querySelectorAll('.rest-slot-check').forEach(el => el.checked = false);
     }
 
-    async function loadSubscriptions(){
-        try{
-            const data=await apiFetch('/subscriptions');
-            document.getElementById('subscriptions-list').innerHTML=(data||[]).length
-                ? data.map(s=>`<tr><td style="font-family:var(--mono);font-size:12px">${s.employeeEmail||s.employeeId||'—'}</td><td>${s.restaurantName||s.restaurantId||'—'}</td><td><span class="chip ${(s.mealSlot||'').toLowerCase()}">${s.mealSlot||'—'}</span></td><td>${s.startDate||'—'}</td><td>${s.endDate||'—'}</td><td><span class="chip active">${s.status||'ACTIVE'}</span></td></tr>`).join('')
+    async function loadSubscriptions() {
+        try {
+            const data = await apiFetch('/subscriptions');
+            document.getElementById('subscriptions-list').innerHTML = (data || []).length
+                ? data.map(s => `
+                    <tr>
+                        <td style="font-family:var(--mono);font-size:12px">${escHtml(s.employeeEmail || s.employeeId || '—')}</td>
+                        <td>${escHtml(s.restaurantName || s.restaurantId || '—')}</td>
+                        <td><span class="chip ${(s.mealSlot || '').toLowerCase()}">${escHtml(s.mealSlot || '—')}</span></td>
+                        <td>${escHtml(s.startDate || '—')}</td>
+                        <td>${escHtml(s.endDate || '—')}</td>
+                        <td><span class="chip active">${escHtml(s.status || 'ACTIVE')}</span></td>
+                    </tr>`).join('')
                 : '<tr><td colspan="6" class="empty-state">no subscriptions found</td></tr>';
-        }catch(e){document.getElementById('subscriptions-list').innerHTML='<tr><td colspan="6" class="empty-state">could not load subscriptions</td></tr>';}
+        } catch(e) {
+            document.getElementById('subscriptions-list').innerHTML = '<tr><td colspan="6" class="empty-state">could not load subscriptions</td></tr>';
+        }
     }
 
-    async function loadDeliveries(){
-        try{
-            const data=await apiFetch('/deliveries');
-            document.getElementById('deliveries-list').innerHTML=(data||[]).length
-                ? data.map(d=>`<tr><td style="font-family:var(--mono);font-size:11px">#${d.id||'—'}</td><td>${d.restaurantName||d.restaurantId||'—'}</td><td><span class="chip ${(d.mealSlot||'').toLowerCase()}">${d.mealSlot||'—'}</span></td><td>${d.deliveryDate||'—'}</td><td><span class="chip ${(d.status||'pending').toLowerCase()}">${d.status||'—'}</span></td><td>${d.status==='PENDING'?`<button class="btn btn-primary btn-sm" onclick="markDelivered(${d.id})">MARK DELIVERED</button>`:'—'}</td></tr>`).join('')
+    async function loadDeliveries() {
+        try {
+            const data = await apiFetch('/deliveries');
+            document.getElementById('deliveries-list').innerHTML = (data || []).length
+                ? data.map(d => {
+                    const did = d.id || d.deliveryId;
+                    return `
+                    <tr>
+                        <td style="font-family:var(--mono);font-size:11px">#${did || '—'}</td>
+                        <td>${escHtml(d.restaurantName || d.restaurantId || '—')}</td>
+                        <td><span class="chip ${(d.mealSlot || '').toLowerCase()}">${escHtml(d.mealSlot || '—')}</span></td>
+                        <td>${escHtml(d.deliveryDate || '—')}</td>
+                        <td><span class="chip ${(d.status || 'pending').toLowerCase()}">${escHtml(d.status || '—')}</span></td>
+                        <td>${d.status === 'PENDING' ? `<button class="btn btn-primary btn-sm" onclick="markDelivered('${did}')">MARK DELIVERED</button>` : '—'}</td>
+                    </tr>`;
+                }).join('')
                 : '<tr><td colspan="6" class="empty-state">no deliveries found</td></tr>';
-        }catch(e){document.getElementById('deliveries-list').innerHTML='<tr><td colspan="6" class="empty-state">could not load deliveries</td></tr>';}
+        } catch(e) {
+            document.getElementById('deliveries-list').innerHTML = '<tr><td colspan="6" class="empty-state">could not load deliveries</td></tr>';
+        }
     }
 
-    async function markDelivered(id){
-        try{await apiFetch(`/deliveries/${id}/delivered`,{method:'PUT'});showAlert('MARKED AS DELIVERED','success');loadDeliveries();}
-        catch(e){showAlert('FAILED','error');}
+    async function markDelivered(id) {
+        try {
+            await apiFetch(`/deliveries/${id}/delivered`, { method: 'PUT' });
+            showAlert('MARKED AS DELIVERED', 'success');
+            loadDeliveries();
+            loadDashboard();
+        } catch(e) {
+            showAlert('FAILED', 'error');
+        }
     }
 
-    function logout(){
-        // Clear all localStorage
+    function logout() {
         localStorage.removeItem('jwt_token');
         localStorage.removeItem('refresh_token');
         localStorage.removeItem('auth_type');
         localStorage.removeItem('last_role');
 
-        // Call server logout to invalidate session
         fetch(`${API}/session/logout`, {
             method: 'POST',
             credentials: 'include'
         }).finally(() => {
-            // Force expire the session cookie on client side
             document.cookie = 'JSESSIONID=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-            window.location.href = '/google.html';
+            window.location.href = '/login.html';
         });
     }
 
-    function showAlert(msg,type){
-        const el=document.createElement('div');
-        el.className=`alert alert-${type}`;el.textContent=msg;
-        document.body.appendChild(el);setTimeout(()=>el.remove(),3000);
+    function showAlert(msg, type) {
+        const el = document.createElement('div');
+        el.className = `alert alert-${type}`;
+        el.textContent = msg;
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 3000);
     }
-    // Add these functions to your script section
 
+    // TOTP Functions
     async function loadTotpStatus() {
         try {
             const status = await apiFetch('/vendors/totp/status');
@@ -666,32 +720,36 @@
                 document.getElementById('totp-setup-section').style.display = 'none';
                 document.getElementById('totp-disable-section').style.display = 'block';
                 document.getElementById('totp-status-chip').textContent = '✓ ACTIVE';
-                document.getElementById('totp-status-chip').classList.add('active');
+                document.getElementById('totp-status-chip').className = 'chip active';
             } else {
                 document.getElementById('totp-setup-section').style.display = 'block';
                 document.getElementById('totp-disable-section').style.display = 'none';
                 document.getElementById('totp-status-chip').textContent = 'DISABLED';
-                document.getElementById('totp-status-chip').classList.add('inactive');
+                document.getElementById('totp-status-chip').className = 'chip inactive';
+                // Reset UI state
+                document.getElementById('qr-area').style.display = 'none';
+                document.getElementById('generate-qr-btn').style.display = 'inline-block';
+                document.getElementById('totp-verify-input').value = '';
+                document.getElementById('totp-verify-error').style.display = 'none';
             }
-        } catch (e) {
+        } catch(e) {
             console.error('Failed to load TOTP status', e);
+            document.getElementById('totp-status-chip').textContent = 'ERROR';
+            document.getElementById('totp-status-chip').className = 'chip inactive';
         }
     }
 
     async function generateTotpQr() {
         try {
-            const response = await apiFetch('/vendors/totp/generate', {
-                method: 'POST'
-            });
+            const response = await apiFetch('/vendors/totp/generate', { method: 'POST' });
 
-            // Response should contain: { qrCodeDataUrl, secret }
             if (response?.qrCodeDataUrl) {
                 document.getElementById('qr-img').src = response.qrCodeDataUrl;
                 document.getElementById('totp-secret-display').textContent = response.secret;
                 document.getElementById('qr-area').style.display = 'block';
                 document.getElementById('generate-qr-btn').style.display = 'none';
             }
-        } catch (e) {
+        } catch(e) {
             showAlert('Failed to generate QR code: ' + e.message, 'error');
         }
     }
@@ -706,6 +764,8 @@
             return;
         }
 
+        errorDiv.style.display = 'none';
+
         try {
             const response = await apiFetch('/vendors/totp/verify', {
                 method: 'POST',
@@ -714,15 +774,12 @@
 
             if (response?.verified) {
                 showAlert('2FA successfully activated!', 'success');
-                await loadTotpStatus();
-                document.getElementById('qr-area').style.display = 'none';
-                document.getElementById('generate-qr-btn').style.display = 'block';
-                document.getElementById('totp-verify-input').value = '';
+                loadTotpStatus();
             } else {
                 errorDiv.textContent = 'Invalid code. Please try again.';
                 errorDiv.style.display = 'block';
             }
-        } catch (e) {
+        } catch(e) {
             errorDiv.textContent = 'Verification failed: ' + e.message;
             errorDiv.style.display = 'block';
         }
@@ -734,31 +791,21 @@
         }
 
         try {
-            await apiFetch('/vendors/totp/disable', {
-                method: 'DELETE'
-            });
+            await apiFetch('/vendors/totp/disable', { method: 'DELETE' });
             showAlert('2FA has been disabled', 'success');
-            await loadTotpStatus();
-        } catch (e) {
+            loadTotpStatus();
+        } catch(e) {
             showAlert('Failed to disable 2FA: ' + e.message, 'error');
         }
     }
 
-    // Update your showView function to load TOTP status when switching to two-factor view
-    // Add this to the loaders object in showView:
-    const loaders = {
-        dashboard: loadDashboard,
-        'my-restaurants': loadMyRestaurants,
-        'add-restaurant': () => {},
-        subscriptions: loadSubscriptions,
-        deliveries: loadDeliveries,
-        profile: () => {},
-        'two-factor': loadTotpStatus  // Add this line
-    };
-
-    // Also make sure the two-factor view is added to the HTML correctly
-    // You have the HTML structure but need to ensure the card CSS exists:
-    // Add these missing CSS classes if not present:
+    // HTML escape utility to prevent XSS
+    function escHtml(str) {
+        if (!str) return '';
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
 </script>
 </body>
 </html>
