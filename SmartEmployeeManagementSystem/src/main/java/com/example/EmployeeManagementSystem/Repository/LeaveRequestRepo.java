@@ -130,4 +130,19 @@ public interface LeaveRequestRepo extends JpaRepository<LeaveRequest, Long> {
             @Param("year") int year,
             @Param("month") int month
     );
+
+    // In LeaveRequestRepository
+    @Query("""
+    SELECT COUNT(lr) > 0 FROM LeaveRequest lr
+    WHERE lr.employee.employeeId = :employeeId
+      AND lr.leaveType = 'SICK'
+      AND lr.status = 'APPROVED'
+      AND YEAR(lr.startDate) = :year
+      AND MONTH(lr.startDate) = :month
+""")
+    boolean existsApprovedSickLeaveForMonth(
+            @Param("employeeId") Long employeeId,
+            @Param("year") int year,
+            @Param("month") int month
+    );
 }
