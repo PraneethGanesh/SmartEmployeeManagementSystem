@@ -2,6 +2,7 @@ package com.example.EmployeeManagementSystem.Service;
 
 import com.example.EmployeeManagementSystem.DTO.*;
 import com.example.EmployeeManagementSystem.Entity.Employee;
+import com.example.EmployeeManagementSystem.Entity.LeaveEntitlement;
 import com.example.EmployeeManagementSystem.Entity.LeaveRequest;
 import com.example.EmployeeManagementSystem.Enum.*;
 import com.example.EmployeeManagementSystem.Exception.*;
@@ -108,7 +109,20 @@ public class LeaveRequestService {
             }
             long sickDaysUsedThisMonth = leaveRequestRepo.countApprovedSickDaysInMonth(
                     employee, today.getYear(), today.getMonthValue());
-            if (sickDaysUsedThisMonth >= 1) {
+
+            var sickLeaveType = leaveTypeRepository.findByName("SICK")
+                    .orElseThrow(() -> new RuntimeException("SICK leave type not configured"));
+
+            var entitlement = leaveEntitlementRepository
+                    .findByEmployeeEmployeeIdAndLeaveTypeIdAndYear(
+                            employee.getEmployeeId(),
+                            sickLeaveType.getId(),
+                            today.getYear())
+                    .orElseGet(() -> createEntitlement(employee, sickLeaveType, today.getYear()));
+
+            BigDecimal availableSick = entitlement.getAvailableBalance();
+
+            if (sickDaysUsedThisMonth >= 1 || availableSick.compareTo(BigDecimal.ONE) < 0) {
                 requestDTO.setLeaveType(LeaveType.UNPAID);
             }
         }
@@ -116,29 +130,33 @@ public class LeaveRequestService {
 
 // ---------------- CASUAL ----------------
         if (requestDTO.getLeaveType() == LeaveType.CASUAL) {
-            var casualLeaveType = leaveTypeRepository.findByName("CASUAL")
-                    .orElseThrow(() -> new RuntimeException("CASUAL leave type not configured"));
-            var entitlement = leaveEntitlementRepository
-                    .findByEmployeeEmployeeIdAndLeaveTypeIdAndYear(
-                            employee.getEmployeeId(),
-                            casualLeaveType.getId(),
-                            today.getYear())
-                    .orElse(null);
 
-            BigDecimal casualAvailable = (entitlement == null)
-                    ? BigDecimal.ZERO
-                    : entitlement.getAvailableBalance();
+            com.example.EmployeeManagementSystem.Entity.LeaveType leaveType=leaveTypeRepository.findByName("CASUAL").orElseThrow(
+                    ()->new RuntimeException("Leave type Not found")
+            );
 
-            if (casualAvailable.compareTo(BigDecimal.ZERO) <= 0) {
-                // No casual balance — downgrade to UNPAID
-                requestDTO.setLeaveType(LeaveType.UNPAID);
-            } else if (BigDecimal.valueOf(daysRequested).compareTo(casualAvailable) > 0) {
-                // Requesting more days than available
+            int leaveYear=requestDTO.getStartDate().getYear();
+            LeaveEntitlement leaveEntitlement=leaveEntitlementRepository.findByEmployeeEmployeeIdAndLeaveTypeIdAndYear(
+                    employee.getEmployeeId(),
+                    leaveType.getId(),
+                    leaveYear
+            ).orElseGet(()->createEntitlement(employee,leaveType,leaveYear));
+
+            BigDecimal availableCasual = leaveEntitlement.getAvailableBalance(); // opening + accrued - used
+            BigDecimal requestedCasual = BigDecimal.valueOf(daysRequested);
+            if (availableCasual.compareTo(BigDecimal.ZERO) <= 0) {
                 return ResponseEntity.badRequest()
-                        .body(Map.of("error",
-                                "You only have " + casualAvailable.toPlainString()
-                                        + " casual day(s) available."));
+                        .body(Map.of("error", "No casual leave balance available."));
             }
+
+            if (requestedCasual.compareTo(availableCasual) > 0) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of(
+                                "error",
+                                "Requested casual leave exceeds available balance. Available: " + availableCasual
+                        ));
+            }
+
         }
 
         // ---------------- UNPAID cap ----------------
@@ -424,6 +442,7 @@ public class LeaveRequestService {
         if (leaveRequest.getLeaveType() == LeaveType.MATERNITY) {
             grantAndDeductMaternity(leaveRequest);  // special maternity flow
         } else {
+            ensureSufficientBalanceForApproval(leaveRequest);
             updateUsedLeave(leaveRequest, requestedDays(leaveRequest)); // existing flow
         }
     }
@@ -495,11 +514,11 @@ public class LeaveRequestService {
         BigDecimal newUsed = entitlement.getUsedThisYear().add(delta);
 // Prevent negative
         newUsed = newUsed.max(BigDecimal.ZERO);
-// Prevent exceeding available — use live figure, not stale closingBalance
-        BigDecimal maxPossibleUsed = entitlement.getOpeningBalance()
-                .add(entitlement.getAccruedThisYear());
-        if (newUsed.compareTo(maxPossibleUsed) > 0) {
-            newUsed = maxPossibleUsed;
+
+// Cap used days to the actual entitled total for the year
+        BigDecimal totalEntitled = entitlement.getOpeningBalance().add(entitlement.getAccruedThisYear());
+        if (newUsed.compareTo(totalEntitled) > 0) {
+            newUsed = totalEntitled;
         }
         entitlement.setUsedThisYear(newUsed);
 // Keep closingBalance in sync so it never shows stale/negative values
@@ -508,6 +527,29 @@ public class LeaveRequestService {
                         .add(entitlement.getAccruedThisYear())
                         .subtract(newUsed)
         );
+    }
+
+    private void ensureSufficientBalanceForApproval(LeaveRequest leaveRequest) {
+        int year = leaveRequest.getStartDate().getYear();
+        String leaveTypeName = leaveRequest.getLeaveType().name();
+        var leaveType = leaveTypeRepository
+                .findByName(leaveTypeName)
+                .orElseThrow(() -> new IllegalStateException(
+                        "Leave type not configured: " + leaveTypeName));
+
+        var entitlement = leaveEntitlementRepository
+                .findByEmployeeEmployeeIdAndLeaveTypeIdAndYear(
+                        leaveRequest.getEmployee().getEmployeeId(), leaveType.getId(), year)
+                .orElseGet(() -> createEntitlement(leaveRequest.getEmployee(), leaveType, year));
+
+        BigDecimal availableBalance = entitlement.getAvailableBalance();
+        BigDecimal requestedDays = requestedDays(leaveRequest);
+
+        if (requestedDays.compareTo(availableBalance) > 0) {
+            throw new IllegalStateException(
+                    "Insufficient " + leaveTypeName.toLowerCase() + " leave balance for approval. " +
+                            "Available: " + availableBalance + ", requested: " + requestedDays);
+        }
     }
 
     private com.example.EmployeeManagementSystem.Entity.LeaveEntitlement createEntitlement(

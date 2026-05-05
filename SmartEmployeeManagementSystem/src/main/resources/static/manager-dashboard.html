@@ -675,8 +675,8 @@
                                 <div id="sick-leave-hint" style="display:none;margin-top:6px;font-size:11px;color:var(--amber);background:var(--amber-dim);border:1px solid rgba(251,191,36,0.2);border-radius:6px;padding:8px 12px;">
                                     ⚠️ Sick leave is limited to <strong>1 day per month</strong>. If already used this month, please select Unpaid Leave.
                                 </div>
-                                <div id="casual-leave-hint" style="display:none; margin-top:6px; font-size:11px; color:var(--amber); background:var(--amber-dim); border:1px solid rgba(251,191,36,0.2); border-radius:6px; padding:6px 10px;">
-                                    Casual leave is limited to <strong>1 day per month</strong>. If already used this month, it will be automatically recorded as <strong>Unpaid Leave</strong>.
+                                <div id="casual-leave-hint" style="display:none; margin-top:6px; font-size:11px; color:var(--accent); background:var(--accent-dim); border:1px solid rgba(167,139,250,0.2); border-radius:6px; padding:6px 10px;">
+                                    You have <strong id="casual-balance-text">...</strong> casual leave days available.
                                 </div>
                             </div>
                             <div class="form-group">
@@ -1408,40 +1408,49 @@ async function rejectLeave(id) {
         return;
     }
 
-        try {
-            const res = await fetch(`${API}/leave_requests`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
-                credentials: 'include',
-                body: JSON.stringify({ leaveType, reason, startDate, endDate })
-            });
-
-            const text = await res.text();
-
-            if (res.ok) {
-                let data = null;
-                try { data = JSON.parse(text); } catch {}
-
-                if (data && data.warning) {
-                    showAlert(data.warning, 'warning');
-                } else {
-                    showAlert('Leave request submitted successfully!', 'success');
-                }
-                clearLeaveForm();
-                loadMyLeaves();
-            } else {
-                showAlert('Failed: ' + text, 'error');
-            }
-        } catch(e) {
-            showAlert('Error: ' + e.message, 'error');
+    try {
+        const data = await apiFetch('/leave_requests', {
+            method: 'POST',
+            body: JSON.stringify({ leaveType, reason, startDate, endDate })
+        });
+        if (data && data.warning) {
+            showAlert(data.warning, 'warning');
+        } else {
+            showAlert('Leave request submitted successfully!', 'success');
         }
+        clearLeaveForm();
+        loadMyLeaves();
+    } catch(e) {
+        let msg = e.message;
+        try {
+            const parsed = JSON.parse(msg);
+            if(parsed.error) msg = parsed.error;
+        } catch(_) {}
+        showAlert(msg, 'error');
+    }
 }
-    document.getElementById('leave-type').addEventListener('change', function() {
-        document.getElementById('sick-leave-hint').style.display =
-            this.value === 'SICK' ? 'block' : 'none';
-        document.getElementById('casual-leave-hint').style.display =
-            this.value === 'CASUAL' ? 'block' : 'none';
-    });
+    document.getElementById('leave-type').addEventListener('change', async function() {
+    document.getElementById('sick-leave-hint').style.display =
+        this.value === 'SICK' ? 'block' : 'none';
+
+    const casualHint = document.getElementById('casual-leave-hint');
+    if(this.value === 'CASUAL') {
+        casualHint.style.display = 'block';
+        document.getElementById('casual-balance-text').textContent = 'loading...';
+        try {
+            const dashboard = await apiFetch('/api/employees/me/leave-dashboard');
+            const balances  = dashboard?.leaveBalances || {};
+            const cas       = balances['CASUAL'] || balances['casual'] || {};
+            const available = Number(cas.available ?? cas.availableBalance ?? 0);
+            document.getElementById('casual-balance-text').textContent =
+                available > 0 ? `${available}` : '0 (no balance remaining)';
+        } catch(e) {
+            document.getElementById('casual-balance-text').textContent = 'unavailable';
+        }
+    } else {
+        casualHint.style.display = 'none';
+    }
+   });
 
 function clearLeaveForm() {
     document.getElementById('leave-type').value  = 'SICK';
