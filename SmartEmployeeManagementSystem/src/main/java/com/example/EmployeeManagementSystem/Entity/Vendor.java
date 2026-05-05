@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
  */
 @Entity
 @Table(name = "vendor")
-public class Vendor implements UserDetails {
+public class Vendor implements UserDetails, TotpUser {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -33,7 +33,11 @@ public class Vendor implements UserDetails {
 
     @Column(unique = true, nullable = false)
     private String email;
+    @Column(name = "totp_secret")
+    private String totpSecret;
 
+    @Column(name = "totp_enabled", nullable = false)
+    private boolean totpEnabled = false;
     @Column(nullable = false)
     private String phone;
 
@@ -52,6 +56,11 @@ public class Vendor implements UserDetails {
         }
     }
 
+    public String getTotpSecret() { return totpSecret; }
+    public void setTotpSecret(String totpSecret) { this.totpSecret = totpSecret; }
+
+    public boolean isTotpEnabled() { return totpEnabled; }
+    public void setTotpEnabled(boolean totpEnabled) { this.totpEnabled = totpEnabled; }
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
