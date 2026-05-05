@@ -68,6 +68,13 @@ public class LeaveAccrualService {
                         entitlement.getAccruedThisYear().add(ONE_DAY)
                 );
 
+// Keep closingBalance in sync so balance checks are never stale
+                entitlement.setClosingBalance(
+                        entitlement.getOpeningBalance()
+                                .add(entitlement.getAccruedThisYear())
+                                .subtract(entitlement.getUsedThisYear())
+                );
+
                 entitlementRepository.save(entitlement);
                 log.debug("Accrued 1 {} day for employee {} (year {})",
                         leaveType.getName(), employee.getEmployeeId(), year);
