@@ -102,29 +102,13 @@ public class LeaveRequestService {
         }
         // ---------------- SICK ----------------
         if (requestDTO.getLeaveType() == LeaveType.SICK) {
-
             if (daysRequested > 1) {
                 return ResponseEntity.badRequest()
                         .body(Map.of("error", "Sick leave is limited to 1 day per month."));
             }
-
             long sickDaysUsedThisMonth = leaveRequestRepo.countApprovedSickDaysInMonth(
                     employee, today.getYear(), today.getMonthValue());
-
-            var sickLeaveType = leaveTypeRepository.findByName("SICK")
-                    .orElseThrow(() -> new RuntimeException("SICK leave type not configured"));
-
-            var entitlement = leaveEntitlementRepository
-                    .findByEmployeeEmployeeIdAndLeaveTypeIdAndYear(
-                            employee.getEmployeeId(),
-                            sickLeaveType.getId(),
-                            today.getYear())
-                    .orElse(null);
-
-            boolean noBalance = (entitlement == null) ||
-                    entitlement.getClosingBalance().compareTo(BigDecimal.ZERO) <= 0;
-
-            if (sickDaysUsedThisMonth >= 1 || noBalance) {
+            if (sickDaysUsedThisMonth >= 1) {
                 requestDTO.setLeaveType(LeaveType.UNPAID);
             }
         }
@@ -132,18 +116,8 @@ public class LeaveRequestService {
 
 // ---------------- CASUAL ----------------
         if (requestDTO.getLeaveType() == LeaveType.CASUAL) {
-
-            if (daysRequested > 1) {
-                return ResponseEntity.badRequest()
-                        .body(Map.of("error", "Casual leave is limited to 1 day per month."));
-            }
-
-            long casualDaysUsedThisMonth = leaveRequestRepo.countCasualDaysInMonth(
-                    employee, today.getYear(), today.getMonthValue());
-
             var casualLeaveType = leaveTypeRepository.findByName("CASUAL")
                     .orElseThrow(() -> new RuntimeException("CASUAL leave type not configured"));
-
             var entitlement = leaveEntitlementRepository
                     .findByEmployeeEmployeeIdAndLeaveTypeIdAndYear(
                             employee.getEmployeeId(),
@@ -151,26 +125,46 @@ public class LeaveRequestService {
                             today.getYear())
                     .orElse(null);
 
-            boolean noBalance = (entitlement == null) ||
-                    entitlement.getClosingBalance().compareTo(BigDecimal.ZERO) <= 0;
+            BigDecimal casualAvailable = (entitlement == null)
+                    ? BigDecimal.ZERO
+                    : entitlement.getAvailableBalance();
 
-            if (casualDaysUsedThisMonth >= 1 || noBalance) {
+            if (casualAvailable.compareTo(BigDecimal.ZERO) <= 0) {
+                // No casual balance — downgrade to UNPAID
                 requestDTO.setLeaveType(LeaveType.UNPAID);
+            } else if (BigDecimal.valueOf(daysRequested).compareTo(casualAvailable) > 0) {
+                // Requesting more days than available
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error",
+                                "You only have " + casualAvailable.toPlainString()
+                                        + " casual day(s) available."));
             }
         }
 
         // ---------------- UNPAID cap ----------------
-        // An employee may take at most 1 unpaid day per month — the same quota
-        // as the leave type it replaces. This applies whether the employee
-        // submitted UNPAID directly or was auto-downgraded from SICK/CASUAL.
         if (requestDTO.getLeaveType() == LeaveType.UNPAID) {
+            // Max unpaid days = number of leave types exhausted this month
+            // (1 for exhausted sick + 1 for exhausted casual = max 2)
+            long sickUsedThisMonth = leaveRequestRepo.countApprovedSickDaysInMonth(
+                    employee, today.getYear(), today.getMonthValue());
+            long casualBalance = getCasualBalance(employee, today.getYear());
+
+            int maxUnpaid = 0;
+            if (sickUsedThisMonth >= 1) maxUnpaid++;   // sick exhausted
+            if (casualBalance <= 0) maxUnpaid++;        // casual exhausted
+
             long unpaidDaysThisMonth = leaveRequestRepo.countUnpaidDaysInMonth(
                     employee, today.getYear(), today.getMonthValue());
-            if (unpaidDaysThisMonth >= 1) {
+
+            if (maxUnpaid == 0) {
                 return ResponseEntity.badRequest()
                         .body(Map.of("error",
-                                "Unpaid leave limit (1 day/month) already reached. "
-                                        + "No further leave can be taken this month."));
+                                "You still have paid leave available. Please use sick or casual leave first."));
+            }
+            if (unpaidDaysThisMonth >= maxUnpaid) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error",
+                                "Unpaid leave limit (" + maxUnpaid + " day(s) this month) already reached."));
             }
         }
 
@@ -499,18 +493,21 @@ public class LeaveRequestService {
                 .orElseGet(() -> createEntitlement(leaveRequest.getEmployee(), leaveType, year));
 
         BigDecimal newUsed = entitlement.getUsedThisYear().add(delta);
-
 // Prevent negative
         newUsed = newUsed.max(BigDecimal.ZERO);
-
-// Prevent exceeding available balance
-        BigDecimal closing = entitlement.getClosingBalance();
-        if (newUsed.compareTo(closing) > 0) {
-            newUsed = closing;
+// Prevent exceeding available — use live figure, not stale closingBalance
+        BigDecimal maxPossibleUsed = entitlement.getOpeningBalance()
+                .add(entitlement.getAccruedThisYear());
+        if (newUsed.compareTo(maxPossibleUsed) > 0) {
+            newUsed = maxPossibleUsed;
         }
-
         entitlement.setUsedThisYear(newUsed);
-        leaveEntitlementRepository.save(entitlement);
+// Keep closingBalance in sync so it never shows stale/negative values
+        entitlement.setClosingBalance(
+                entitlement.getOpeningBalance()
+                        .add(entitlement.getAccruedThisYear())
+                        .subtract(newUsed)
+        );
     }
 
     private com.example.EmployeeManagementSystem.Entity.LeaveEntitlement createEntitlement(
@@ -537,5 +534,13 @@ public class LeaveRequestService {
     private BigDecimal requestedDays(LeaveRequest leaveRequest) {
         long days = ChronoUnit.DAYS.between(leaveRequest.getStartDate(), leaveRequest.getEndDate()) + 1;
         return BigDecimal.valueOf(days);
+    }
+    private long getCasualBalance(Employee employee, int year) {
+        return leaveTypeRepository.findByName("CASUAL")
+                .flatMap(lt -> leaveEntitlementRepository
+                        .findByEmployeeEmployeeIdAndLeaveTypeIdAndYear(
+                                employee.getEmployeeId(), lt.getId(), year))
+                .map(e -> e.getAvailableBalance().longValue())
+                .orElse(0L);
     }
 }
