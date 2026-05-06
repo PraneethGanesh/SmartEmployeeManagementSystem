@@ -344,7 +344,7 @@
                 </div>
                 <div class="table-wrap">
                     <table>
-                        <thead><tr><th>ID</th><th>Employee ID</th><th>Type</th><th>Start</th><th>End</th><th>Days</th><th>Status</th><th>Actions</th></tr></thead>
+                        <thead><tr><th>ID</th><th>Employee ID</th><th>Type</th><th>Start</th><th>End</th><th>Days</th><th>Status</th></tr></thead>
                         <tbody id="all-leaves-list"></tbody>
                     </table>
                 </div>
@@ -780,12 +780,6 @@
         <td>${l.endDate || '—'}</td>
         <td>${daysBetween(l.startDate, l.endDate)}</td>
         <td>${chip(l.status)}</td>
-        <td class="action-row">
-          ${l.status === 'PENDING'
-                ? `<button class="btn btn-success btn-sm" onclick="openActionModal(${l.leaveRequestId},'APPROVED')">Approve</button>
-               <button class="btn btn-danger btn-sm"  onclick="openActionModal(${l.leaveRequestId},'REJECTED')">Reject</button>`
-                : '—'}
-        </td>
       </tr>`).join('')
             : `<tr><td colspan="8" class="empty-state">No leave requests found</td></tr>`;
     }
