@@ -537,7 +537,7 @@
 
     async function loadPendingCount() {
         try {
-            const leaves = await apiFetch('/leave_requests/pending').catch(() => []);
+            const leaves = await apiFetch('/admin/leaves/pending').catch(() => []);
             const count = Array.isArray(leaves) ? leaves.filter(l => l.status === 'PENDING').length : 0;
             const el = document.getElementById('pending-count');
             if (count > 0) { el.textContent = count; el.style.display = 'inline'; }
@@ -700,7 +700,7 @@
     // ─── Pending Approvals ─────────────────────────────────────────────────────
     async function loadPendingLeaves() {
         try {
-            const leaves = await apiFetch('/leave_requests/pending');
+            const leaves = await apiFetch('/admin/leaves/pending');
             const arr = Array.isArray(leaves) ? leaves : [];
             const count = arr.filter(l => l.status === 'PENDING').length;
             const el = document.getElementById('pending-count');
