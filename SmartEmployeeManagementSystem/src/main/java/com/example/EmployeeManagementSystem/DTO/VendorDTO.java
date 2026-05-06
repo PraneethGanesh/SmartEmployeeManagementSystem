@@ -1,5 +1,7 @@
 package com.example.EmployeeManagementSystem.DTO;
 
+import com.example.EmployeeManagementSystem.Enum.Role;
+
 import java.time.LocalDate;
 
 public class VendorDTO {
@@ -7,6 +9,7 @@ public class VendorDTO {
     private String name;
     private String email;
     private String phone;
+    private Role role;
     private LocalDate registeredAt;
 
     public Long getId() { return id; }
@@ -20,6 +23,9 @@ public class VendorDTO {
 
     public String getPhone() { return phone; }
     public void setPhone(String phone) { this.phone = phone; }
+
+    public Role getRole() { return role; }
+    public void setRole(Role role) { this.role = role; }
 
     public LocalDate getRegisteredAt() { return registeredAt; }
     public void setRegisteredAt(LocalDate registeredAt) { this.registeredAt = registeredAt; }

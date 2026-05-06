@@ -473,9 +473,9 @@
                     return;
                 }
 
-                // No TOTP — confirm identity via /vendor/me
+                // No TOTP — confirm identity via /vendors/me
                 try{
-                    const meRes = await fetch(`${API}/vendor/me`, {credentials: 'include'});
+                    const meRes = await fetch(`${API}/vendors/me`, {credentials: 'include'});
                     if(meRes.ok){
                         const me   = await meRes.json();
                         const role = String(me.role || '').replace(/^ROLE_/, '').toUpperCase();
@@ -661,9 +661,9 @@
                     clearInterval(_totpTimer);
                     document.getElementById('totp-overlay').classList.remove('open');
                     _preAuthToken = null;
-                    // Re-confirm via /vendor/me
+                    // Re-confirm via /vendors/me
                     try{
-                        const meRes = await fetch(`${API}/vendor/me`, {credentials: 'include'});
+                        const meRes = await fetch(`${API}/vendors/me`, {credentials: 'include'});
                         if(meRes.ok){
                             const me   = await meRes.json();
                             const role = String(me.role || '').replace(/^ROLE_/, '').toUpperCase();
