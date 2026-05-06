@@ -16,6 +16,7 @@ public enum Role {
             PROFILE_READ)),
     MANAGER(Set.of(LEAVE_UPDATE,
             LEAVE_WRITE,
+            LEAVE_CANCEL,
             SUBSCRIPTION_WRITE,
             RESTAURANTS_READ,
             SUBSCRIPTION_UPDATE,

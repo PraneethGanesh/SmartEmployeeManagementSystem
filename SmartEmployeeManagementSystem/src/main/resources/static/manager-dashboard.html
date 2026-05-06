@@ -710,7 +710,7 @@
                     </div>
                     <div class="tablewrap">
                         <table>
-                            <thead><tr><th>Type</th><th>From</th><th>To</th><th>Days</th><th>Status</th></tr></thead>
+                            <thead><tr><th>Type</th><th>From</th><th>To</th><th>Days</th><th>Status</th><th>Action</th></tr></thead>
                             <tbody id="my-leaves-list"><tr><td colspan="5" class="empty-state">Loading...</td></tr></tbody>
                         </table>
                     </div>
@@ -1537,14 +1537,47 @@ function clearLeaveForm() {
 }
 
     async function loadMyLeaves(){
-        try{
-            const data=await apiFetch('/leave_requests/employee');
-            const leaves=data?.requests||data||[];
-            document.getElementById('my-leaves-list').innerHTML=leaves.length
-                ? leaves.map(l=>`<tr><td><span class="chip ${(l.leaveType||'').toLowerCase()}">${l.leaveType}</span></td><td>${l.startDate}</td><td>${l.endDate}</td><td>${l.numberOfDays||'—'}</td><td><span class="chip ${(l.status||'').toLowerCase()}">${l.status}</span></td></tr>`).join('')
-                : '<tr><td colspan="5" class="empty-state">No leave requests</td></tr>';
-        }catch(e){document.getElementById('my-leaves-list').innerHTML='<tr><td colspan="5" class="empty-state">Could not load</td></tr>';}
+    try{
+        const data = await apiFetch('/leave_requests/employee');
+        const leaves = data?.requests || data || [];
+        const today = new Date().toISOString().split('T')[0];
+
+        document.getElementById('my-leaves-list').innerHTML = leaves.length
+            ? leaves.map(l => {
+                const canCancel = l.status === 'PENDING' || l.status === 'APPROVED';
+                const notStarted = l.startDate > today;
+                const showCancel = canCancel && notStarted;
+
+                return `<tr>
+                    <td><span class="chip ${(l.leaveType||'').toLowerCase()}">${l.leaveType}</span></td>
+                    <td>${l.startDate}</td>
+                    <td>${l.endDate}</td>
+                    <td>${l.numberOfDays || '—'}</td>
+                    <td><span class="chip ${(l.status||'').toLowerCase()}">${l.status}</span></td>
+                    <td>${showCancel
+                        ? `<button class="btn btn-reject btn-sm" onclick="cancelMyLeave(${l.leaveRequestId})">✕ Cancel</button>`
+                        : '<span style="color:var(--text3);font-size:12px">—</span>'
+                    }</td>
+                </tr>`;
+            }).join('')
+            : '<tr><td colspan="6" class="empty-state">No leave requests</td></tr>';
+    } catch(e) {
+        document.getElementById('my-leaves-list').innerHTML =
+            '<tr><td colspan="6" class="empty-state">Could not load</td></tr>';
     }
+}
+
+async function cancelMyLeave(leaveId) {
+    if (!confirm('Are you sure you want to cancel this leave request?')) return;
+    try {
+        await apiFetch(`/leave_requests/cancel/${leaveId}`, { method: 'PUT' });
+        showAlert('Leave request cancelled successfully', 'success');
+        loadMyLeaves();
+        loadDashboard(); // refresh pending count
+    } catch(e) {
+        showAlert('Failed to cancel: ' + e.message, 'error');
+    }
+}
 
     async function loadUsers(){
     try{
