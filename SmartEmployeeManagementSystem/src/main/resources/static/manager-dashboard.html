@@ -710,7 +710,7 @@
                     </div>
                     <div class="tablewrap">
                         <table>
-                            <thead><tr><th>Type</th><th>From</th><th>To</th><th>Days</th><th>Status</th></tr></thead>
+                            <thead><tr><th>Type</th><th>From</th><th>To</th><th>Days</th><th>Status</th><th>Action</th></tr></thead>
                             <tbody id="my-leaves-list"><tr><td colspan="5" class="empty-state">Loading...</td></tr></tbody>
                         </table>
                     </div>
@@ -731,35 +731,36 @@
                     </div>
 
                     <!-- Leave Balance Summary Cards -->
-                    <div class="leave-balance-grid">
+                    <div class="leave-balance-grid" style="grid-template-columns: 1fr 1fr;">
+
                         <!-- Sick Leave Card -->
                         <div class="leave-bal-card sick">
                             <span class="lbc-icon">🤒</span>
                             <span class="lbc-label">Sick Leave</span>
                             <span class="lbc-count" id="cal-sick-remaining">--</span>
-                            <span class="lbc-sub" id="cal-sick-sub">loading...</span>
+                            <span class="lbc-sub">day available this month</span>
+                            <div id="cal-sick-month-badge" style="
+                            display:inline-flex; align-items:center; gap:5px;
+                            margin-top:8px; padding:4px 10px;
+                            border-radius:20px; font-size:10px; font-weight:700;
+                            letter-spacing:0.8px; text-transform:uppercase;
+                            ">...</div>
+                            <span class="lbc-sub" id="cal-sick-accrued-sub" style="margin-top:4px"></span>
                         </div>
+
                         <!-- Casual Leave Card -->
                         <div class="leave-bal-card casual">
                             <span class="lbc-icon">🏖️</span>
                             <span class="lbc-label">Casual Leave</span>
                             <span class="lbc-count" id="cal-casual-remaining">--</span>
                             <span class="lbc-sub" id="cal-casual-sub">loading...</span>
+                            <div style="margin-top:10px;display:flex;flex-direction:column;gap:3px">
+                                <span class="lbc-sub" id="cal-casual-opening"></span>
+                                <span class="lbc-sub" id="cal-casual-accrued"></span>
+                                <span class="lbc-sub" id="cal-casual-used"></span>
+                            </div>
                         </div>
-                        <!-- Maternity Leave Card -->
-                        <div class="leave-bal-card mat">
-                            <span class="lbc-icon">👶</span>
-                            <span class="lbc-label">Maternity Leave</span>
-                            <span class="lbc-count" id="cal-mat-remaining">--</span>
-                            <span class="lbc-sub" id="cal-mat-sub">loading...</span>
-                        </div>
-                        <!-- Total Used Card -->
-                        <div class="leave-bal-card total">
-                            <span class="lbc-icon">📊</span>
-                            <span class="lbc-label">Total Used</span>
-                            <span class="lbc-count" id="cal-total-used">--</span>
-                            <span class="lbc-sub" id="cal-total-sub">loading...</span>
-                        </div>
+
                     </div>
 
                     <!-- Legend -->
@@ -1300,7 +1301,7 @@ const TYPE_LABEL = { SICK:'🤒 Sick', CASUAL:'🏖️ Casual', MATERNITY:'👶 
             document.getElementById('dash-pending').innerHTML = pending.length
             ? pending.slice(0, 5).map(l => {
                 const leaveId = l.leaveRequestId || 0;
-                const empName = empMap[l.employeeId] || `#${l.employeeId}`;
+                const empName = empMap[l.employeeName] || `#${l.employeeName}`;
                 return `<tr>
                     <td>${empName}</td>
                     <td><span class="chip ${(l.leaveType||'').toLowerCase()}">${l.leaveType}</span></td>
@@ -1536,14 +1537,47 @@ function clearLeaveForm() {
 }
 
     async function loadMyLeaves(){
-        try{
-            const data=await apiFetch('/leave_requests/employee');
-            const leaves=data?.requests||data||[];
-            document.getElementById('my-leaves-list').innerHTML=leaves.length
-                ? leaves.map(l=>`<tr><td><span class="chip ${(l.leaveType||'').toLowerCase()}">${l.leaveType}</span></td><td>${l.startDate}</td><td>${l.endDate}</td><td>${l.numberOfDays||'—'}</td><td><span class="chip ${(l.status||'').toLowerCase()}">${l.status}</span></td></tr>`).join('')
-                : '<tr><td colspan="5" class="empty-state">No leave requests</td></tr>';
-        }catch(e){document.getElementById('my-leaves-list').innerHTML='<tr><td colspan="5" class="empty-state">Could not load</td></tr>';}
+    try{
+        const data = await apiFetch('/leave_requests/employee');
+        const leaves = data?.requests || data || [];
+        const today = new Date().toISOString().split('T')[0];
+
+        document.getElementById('my-leaves-list').innerHTML = leaves.length
+            ? leaves.map(l => {
+                const canCancel = l.status === 'PENDING' || l.status === 'APPROVED';
+                const notStarted = l.startDate > today;
+                const showCancel = canCancel && notStarted;
+
+                return `<tr>
+                    <td><span class="chip ${(l.leaveType||'').toLowerCase()}">${l.leaveType}</span></td>
+                    <td>${l.startDate}</td>
+                    <td>${l.endDate}</td>
+                    <td>${l.numberOfDays || '—'}</td>
+                    <td><span class="chip ${(l.status||'').toLowerCase()}">${l.status}</span></td>
+                    <td>${showCancel
+                        ? `<button class="btn btn-reject btn-sm" onclick="cancelMyLeave(${l.leaveRequestId})">✕ Cancel</button>`
+                        : '<span style="color:var(--text3);font-size:12px">—</span>'
+                    }</td>
+                </tr>`;
+            }).join('')
+            : '<tr><td colspan="6" class="empty-state">No leave requests</td></tr>';
+    } catch(e) {
+        document.getElementById('my-leaves-list').innerHTML =
+            '<tr><td colspan="6" class="empty-state">Could not load</td></tr>';
     }
+}
+
+async function cancelMyLeave(leaveId) {
+    if (!confirm('Are you sure you want to cancel this leave request?')) return;
+    try {
+        await apiFetch(`/leave_requests/cancel/${leaveId}`, { method: 'PUT' });
+        showAlert('Leave request cancelled successfully', 'success');
+        loadMyLeaves();
+        loadDashboard(); // refresh pending count
+    } catch(e) {
+        showAlert('Failed to cancel: ' + e.message, 'error');
+    }
+}
 
     async function loadUsers(){
     try{
@@ -1731,56 +1765,58 @@ function clearSubscriptionForm(){
         }
     }
 
-    async function loadCalendarBalanceCards(){
-        // Default state
-        ['cal-sick-remaining','cal-casual-remaining','cal-mat-remaining','cal-total-used']
-            .forEach(id=>{ document.getElementById(id).textContent='--'; });
+ async function loadCalendarBalanceCards() {
+    try {
+        const [dashboard, sickMonthData] = await Promise.all([
+            apiFetch('/api/employees/me/leave-dashboard'),
+            apiFetch('/leave_requests/sick/used-this-month')
+        ]);
 
-        try{
-            const dashboard = await apiFetch('/api/employees/me/leave-dashboard');
-            const balances  = dashboard?.leaveBalances || {};
+        /* ── SICK ── */
+        const sickBadge = document.getElementById('cal-sick-month-badge');
+        const sick      = dashboard?.sick;
+        const sickAvail = Number(sick?.available ?? 0);
+        const usedThisMonth = sickMonthData?.usedThisMonth === true;
 
-            let totalUsed=0, totalAllowed=0;
-
-            // SICK
-            const sick = balances['SICK'] || balances['sick'] || {};
-            const sickRem   = Number(sick.available || 0);
-            const sickTotal = Number(sick.total     || 0);
-            const sickUsed  = sickTotal - sickRem;
-            document.getElementById('cal-sick-remaining').textContent = sickRem;
-            document.getElementById('cal-sick-sub').textContent       = `${sickUsed} used of ${sickTotal} days`;
-
-            // CASUAL
-            const cas = balances['CASUAL'] || balances['casual'] || {};
-            const casRem   = Number(cas.available || 0);
-            const casTotal = Number(cas.total     || 0);
-            const casUsed  = casTotal - casRem;
-            document.getElementById('cal-casual-remaining').textContent = casRem;
-            document.getElementById('cal-casual-sub').textContent       = `${casUsed} used of ${casTotal} days`;
-
-            // MATERNITY
-            const mat = balances['MATERNITY'] || balances['maternity'] || {};
-            const matRem   = Number(mat.available || 0);
-            const matTotal = Number(mat.total     || 0);
-            const matUsed  = matTotal - matRem;
-            document.getElementById('cal-mat-remaining').textContent = matRem;
-            document.getElementById('cal-mat-sub').textContent       = `${matUsed} used of ${matTotal} days`;
-
-            // TOTAL
-            Object.values(balances).forEach(b=>{
-                totalUsed    += (Number(b.total||0) - Number(b.available||0));
-                totalAllowed += Number(b.total||0);
-            });
-            document.getElementById('cal-total-used').textContent = totalUsed;
-            document.getElementById('cal-total-sub').textContent  = `out of ${totalAllowed} days total`;
-
-        }catch(e){
-            console.error('Could not load leave balance for calendar:', e);
-            ['cal-sick-sub','cal-casual-sub','cal-mat-sub','cal-total-sub']
-                .forEach(id=>{ document.getElementById(id).textContent='unavailable'; });
+        if (usedThisMonth) {
+            // Explicitly used this month
+            document.getElementById('cal-sick-remaining').textContent = '0';
+            sickBadge.textContent      = '✗ Used this month';
+            sickBadge.style.background = 'var(--red-dim)';
+            sickBadge.style.color      = 'var(--red)';
+            sickBadge.style.border     = '1px solid rgba(248,113,113,0.25)';
+        } else if (sickAvail === 0) {
+            // New employee — accrual hasn't run yet
+            document.getElementById('cal-sick-remaining').textContent = '0';
+            sickBadge.textContent      = '⏳ Accrual pending';
+            sickBadge.style.background = 'var(--amber-dim)';
+            sickBadge.style.color      = 'var(--amber)';
+            sickBadge.style.border     = '1px solid rgba(251,191,36,0.25)';
+        } else {
+            // Has balance and not used
+            document.getElementById('cal-sick-remaining').textContent = sickAvail;
+            sickBadge.textContent      = '✓ Available this month';
+            sickBadge.style.background = 'var(--green-dim)';
+            sickBadge.style.color      = 'var(--green)';
+            sickBadge.style.border     = '1px solid rgba(52,211,153,0.25)';
         }
-    }
 
+        /* ── CASUAL ── */
+        const cas      = dashboard?.casual;
+        const casAvail = Number(cas?.available ?? 0);
+        const casTotal = Number(cas?.opening   ?? 0) + Number(cas?.accrued ?? 0);
+        const casUsed  = Number(cas?.used      ?? 0);
+
+        document.getElementById('cal-casual-remaining').textContent = casAvail;
+        document.getElementById('cal-casual-sub').textContent =
+            `${casUsed} used · ${casTotal} total this year`;
+
+    } catch(e) {
+        console.error('Could not load leave balances:', e);
+        document.getElementById('cal-sick-remaining').textContent   = '--';
+        document.getElementById('cal-casual-remaining').textContent = '--';
+    }
+}
     async function buildCalendarEvents(){
         const events = [];
         try{
