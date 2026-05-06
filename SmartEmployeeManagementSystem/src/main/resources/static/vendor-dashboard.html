@@ -408,7 +408,7 @@
         const token = localStorage.getItem('jwt_token');
         const authType = localStorage.getItem('auth_type');
         if (!token && authType !== 'session') {
-            window.location.href = '/login.html';
+            window.location.href = '/google.html';
             return;
         }
         if (token) {
@@ -437,6 +437,7 @@
         return t ? { 'Authorization': `Bearer ${t}` } : {};
     }
 
+    // FIX 1: apiFetch now throws on any non-2xx response, surfacing real errors
     async function apiFetch(path, opts = {}) {
         const res = await fetch(`${API}${path}`, {
             ...opts,
@@ -447,15 +448,35 @@
             },
             credentials: 'include'
         });
+
         if (res.status === 401) {
             localStorage.removeItem('jwt_token');
             localStorage.removeItem('auth_type');
             showAlert('SESSION EXPIRED', 'error');
-            setTimeout(() => window.location.href = '/login.html', 1500);
+            setTimeout(() => window.location.href = '/google.html', 1500);
             throw new Error('Unauthorized');
         }
+
         const text = await res.text();
-        return text ? JSON.parse(text) : null;
+
+        // FIX 1: Throw for all other non-OK statuses with the response body as the message
+        if (!res.ok) {
+            let errMsg = `HTTP ${res.status}`;
+            try {
+                const errBody = JSON.parse(text);
+                errMsg += ': ' + (errBody.message || errBody.error || JSON.stringify(errBody));
+            } catch {
+                if (text) errMsg += ': ' + text;
+            }
+            throw new Error(errMsg);
+        }
+
+        try {
+            return text ? JSON.parse(text) : null;
+        } catch {
+            // Response was OK but not valid JSON — return raw text
+            return text || null;
+        }
     }
 
     async function initUser() {
@@ -698,7 +719,7 @@
             credentials: 'include'
         }).finally(() => {
             document.cookie = 'JSESSIONID=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-            window.location.href = '/login.html';
+            window.location.href = '/google.html';
         });
     }
 
@@ -710,78 +731,75 @@
         setTimeout(() => el.remove(), 3000);
     }
 
-    // TOTP Functions
-    async function loadTotpStatus() {
-        try {
-            const status = await apiFetch('/vendors/totp/status');
-            const isEnabled = status?.enabled || false;
+    // ─── TOTP FUNCTIONS ──────────────────────────────────────────────────────
 
-            if (isEnabled) {
+    async function loadTotpStatus() {
+        const chipEl = document.getElementById('totp-status-chip');
+        chipEl.textContent = 'checking...';
+        chipEl.className = 'chip';
+        // Reset QR area on every load
+        document.getElementById('qr-area').style.display = 'none';
+        document.getElementById('totp-verify-input').value = '';
+        document.getElementById('totp-verify-error').style.display = 'none';
+        document.getElementById('generate-qr-btn').textContent = 'Generate QR Code';
+        document.getElementById('generate-qr-btn').disabled = false;
+        try {
+            const data = await apiFetch('/totp/status');
+            if (data.totpEnabled) {
+                chipEl.textContent = '✓ ACTIVE';
+                chipEl.className = 'chip active';
                 document.getElementById('totp-setup-section').style.display = 'none';
                 document.getElementById('totp-disable-section').style.display = 'block';
-                document.getElementById('totp-status-chip').textContent = '✓ ACTIVE';
-                document.getElementById('totp-status-chip').className = 'chip active';
             } else {
+                chipEl.textContent = 'DISABLED';
+                chipEl.className = 'chip inactive';
                 document.getElementById('totp-setup-section').style.display = 'block';
                 document.getElementById('totp-disable-section').style.display = 'none';
-                document.getElementById('totp-status-chip').textContent = 'DISABLED';
-                document.getElementById('totp-status-chip').className = 'chip inactive';
-                // Reset UI state
-                document.getElementById('qr-area').style.display = 'none';
-                document.getElementById('generate-qr-btn').style.display = 'inline-block';
-                document.getElementById('totp-verify-input').value = '';
-                document.getElementById('totp-verify-error').style.display = 'none';
             }
         } catch(e) {
-            console.error('Failed to load TOTP status', e);
-            document.getElementById('totp-status-chip').textContent = 'ERROR';
-            document.getElementById('totp-status-chip').className = 'chip inactive';
+            chipEl.textContent = 'ERROR';
+            chipEl.className = 'chip inactive';
         }
     }
 
     async function generateTotpQr() {
+        const btn = document.getElementById('generate-qr-btn');
+        btn.textContent = 'Generating...';
+        btn.disabled = true;
         try {
-            const response = await apiFetch('/vendors/totp/generate', { method: 'POST' });
-
-            if (response?.qrCodeDataUrl) {
-                document.getElementById('qr-img').src = response.qrCodeDataUrl;
-                document.getElementById('totp-secret-display').textContent = response.secret;
-                document.getElementById('qr-area').style.display = 'block';
-                document.getElementById('generate-qr-btn').style.display = 'none';
-            }
+            const data = await apiFetch('/totp/setup', { method: 'POST' });
+            document.getElementById('totp-secret-display').textContent = data.secret || '';
+            const qrUri = encodeURIComponent(data.qrCodeUri || '');
+            document.getElementById('qr-img').src =
+                `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${qrUri}`;
+            document.getElementById('qr-area').style.display = 'block';
         } catch(e) {
-            showAlert('Failed to generate QR code: ' + e.message, 'error');
+            showAlert('Failed to generate QR: ' + e.message, 'error');
+        } finally {
+            btn.textContent = 'Regenerate QR Code';
+            btn.disabled = false;
         }
     }
 
     async function verifyAndActivateTotp() {
-        const code = document.getElementById('totp-verify-input').value;
-        const errorDiv = document.getElementById('totp-verify-error');
-
+        const code = document.getElementById('totp-verify-input').value.trim();
+        const errEl = document.getElementById('totp-verify-error');
+        errEl.style.display = 'none';
         if (code.length !== 6) {
-            errorDiv.textContent = 'Please enter a 6-digit code';
-            errorDiv.style.display = 'block';
+            errEl.textContent = 'Please enter a 6-digit code.';
+            errEl.style.display = 'block';
             return;
         }
-
-        errorDiv.style.display = 'none';
-
         try {
-            const response = await apiFetch('/vendors/totp/verify', {
+            await apiFetch('/totp/verify-setup', {
                 method: 'POST',
                 body: JSON.stringify({ code })
             });
-
-            if (response?.verified) {
-                showAlert('2FA successfully activated!', 'success');
-                loadTotpStatus();
-            } else {
-                errorDiv.textContent = 'Invalid code. Please try again.';
-                errorDiv.style.display = 'block';
-            }
+            showAlert('2FA activated — required on next login', 'success');
+            loadTotpStatus();
         } catch(e) {
-            errorDiv.textContent = 'Verification failed: ' + e.message;
-            errorDiv.style.display = 'block';
+            errEl.textContent = 'Invalid code. Try again.';
+            errEl.style.display = 'block';
         }
     }
 
@@ -789,9 +807,8 @@
         if (!confirm('Are you sure you want to disable two-factor authentication? Your account will be less secure.')) {
             return;
         }
-
         try {
-            await apiFetch('/vendors/totp/disable', { method: 'DELETE' });
+            await apiFetch('/totp/disable', { method: 'DELETE' });
             showAlert('2FA has been disabled', 'success');
             loadTotpStatus();
         } catch(e) {
