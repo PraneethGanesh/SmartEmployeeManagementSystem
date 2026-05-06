@@ -170,6 +170,7 @@ public class DeliveryService {
             dto.setName(vendor.getName());
             dto.setEmail(vendor.getEmail());
             dto.setPhone(vendor.getPhone());
+            dto.setRole(vendor.getRole());
             dto.setRegisteredAt(vendor.getRegisteredAt());
             return dto;
         }
