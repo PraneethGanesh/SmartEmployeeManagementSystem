@@ -956,7 +956,7 @@
         const token = localStorage.getItem('jwt_token');
         const authType = localStorage.getItem('auth_type');
         if (!token && authType !== 'session') {
-            window.location.href = '/login.html';
+            window.location.href = '/google.html';
             return;
         }
 
@@ -966,8 +966,8 @@
                 credentials: 'include'
             });
 
-            if (response.status === 401) { window.location.href = '/login.html'; return; }
-            if (!response.ok) { window.location.href = '/login.html'; return; }
+            if (response.status === 401) { window.location.href = '/google.html'; return; }
+            if (!response.ok) { window.location.href = '/google.html'; return; }
 
             const employee = await response.json();
             const role = employee.role || 'EMPLOYEE';
@@ -984,7 +984,7 @@
             document.getElementById('cancel-email').value = employee.email || '';
             loadDashboard();
         } catch (e) {
-            window.location.href = '/login.html';
+            window.location.href = '/google.html';
         }
     })();
 
@@ -1009,7 +1009,7 @@
                 localStorage.removeItem('jwt_token');
                 localStorage.removeItem('auth_type');
                 showAlert('Session expired. Please login again.', 'error');
-                setTimeout(() => window.location.href = '/login.html', 1500);
+                setTimeout(() => window.location.href = '/google.html', 1500);
                 throw new Error('Unauthorized');
             }
 
