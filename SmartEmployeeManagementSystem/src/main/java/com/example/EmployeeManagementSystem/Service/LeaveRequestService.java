@@ -381,8 +381,12 @@ public class LeaveRequestService {
                 "requests", response
         ));
     }
-    public List<LeaveResponseDTO> getPendingLeaves() {
-        List<LeaveRequest> pendingRequests = leaveRequestRepo.findByStatus(LeaveStatus.PENDING);
+    public List<LeaveResponseDTO> getPendingLeaves(Authentication authentication) {
+        String email=AuthUtil.extractEmail(authentication);
+        Employee employee=employeeRepo.findByEmail(email).orElseThrow(
+                ()->new EmployeeNotFound("Employee not found")
+        );
+        List<LeaveRequest> pendingRequests = leaveRequestRepo.findByStatusAndEmployeeNot(LeaveStatus.PENDING,employee);
         return pendingRequests.stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
