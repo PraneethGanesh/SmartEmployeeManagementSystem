@@ -2,6 +2,7 @@ package com.example.EmployeeManagementSystem.DTO;
 
 import com.example.EmployeeManagementSystem.Enum.DeviceType;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public class DeviceDTO {
@@ -9,6 +10,7 @@ public class DeviceDTO {
     private String brand;
     private DeviceType deviceType;
     private LocalDate warrantyExpiryDate;
+    private BigDecimal rentPerMonth;
 
     public String getDeviceName() {
         return deviceName;
@@ -40,5 +42,13 @@ public class DeviceDTO {
 
     public void setWarrantyExpiryDate(LocalDate warrantyExpiryDate) {
         this.warrantyExpiryDate = warrantyExpiryDate;
+    }
+
+    public BigDecimal getRentPerMonth() {
+        return rentPerMonth;
+    }
+
+    public void setRentPerMonth(BigDecimal rentPerMonth) {
+        this.rentPerMonth = rentPerMonth;
     }
 }
