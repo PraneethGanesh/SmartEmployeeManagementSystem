@@ -1189,7 +1189,7 @@
         }
     }
 
-    async function loadCalendarBalanceCards() {
+       async function loadCalendarBalanceCards() {
     try {
         const [dashboard, sickMonthData] = await Promise.all([
             apiFetch('/api/employees/me/leave-dashboard'),
@@ -1197,25 +1197,36 @@
         ]);
 
         /* ── SICK ── */
-        const usedThisMonth = sickMonthData?.usedThisMonth === true;
         const sickBadge = document.getElementById('cal-sick-month-badge');
+        const sick      = dashboard?.sick;
+        const sickAvail = Number(sick?.available ?? 0);
+        const usedThisMonth = sickMonthData?.usedThisMonth === true;
 
         if (usedThisMonth) {
+            // Explicitly used this month
             document.getElementById('cal-sick-remaining').textContent = '0';
             sickBadge.textContent      = '✗ Used this month';
             sickBadge.style.background = 'var(--red-dim)';
             sickBadge.style.color      = 'var(--red)';
             sickBadge.style.border     = '1px solid rgba(248,113,113,0.25)';
+        } else if (sickAvail === 0) {
+            // New employee — accrual hasn't run yet
+            document.getElementById('cal-sick-remaining').textContent = '0';
+            sickBadge.textContent      = '⏳ Accrual pending';
+            sickBadge.style.background = 'var(--amber-dim)';
+            sickBadge.style.color      = 'var(--amber)';
+            sickBadge.style.border     = '1px solid rgba(251,191,36,0.25)';
         } else {
-            document.getElementById('cal-sick-remaining').textContent = '1';
+            // Has balance and not used
+            document.getElementById('cal-sick-remaining').textContent = sickAvail;
             sickBadge.textContent      = '✓ Available this month';
             sickBadge.style.background = 'var(--green-dim)';
             sickBadge.style.color      = 'var(--green)';
             sickBadge.style.border     = '1px solid rgba(52,211,153,0.25)';
         }
 
-        /* ── CASUAL ── use dashboard.casual directly ── */
-        const cas      = dashboard?.casual;          // LeaveBalanceDto
+        /* ── CASUAL ── */
+        const cas      = dashboard?.casual;
         const casAvail = Number(cas?.available ?? 0);
         const casTotal = Number(cas?.opening   ?? 0) + Number(cas?.accrued ?? 0);
         const casUsed  = Number(cas?.used      ?? 0);
