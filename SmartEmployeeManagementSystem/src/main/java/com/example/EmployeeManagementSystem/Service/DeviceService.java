@@ -52,6 +52,7 @@ public class DeviceService {
         Device device = new Device();
         device.setDeviceName(deviceDTO.getDeviceName());
         device.setWarrantyExpiryDate(deviceDTO.getWarrantyExpiryDate());
+        device.setRentPerMonth(deviceDTO.getRentPerMonth());
         device.setBrand(deviceDTO.getBrand());
         device.setDeviceStatus(DeviceStatus.AVAILABLE);
         device.setDeviceType(deviceDTO.getDeviceType());
@@ -139,6 +140,7 @@ public class DeviceService {
         response.setDeviceName(device.getDeviceName());
         response.setBrand(device.getBrand());
         response.setWarrantyExpiryDate(device.getWarrantyExpiryDate());
+        response.setRentPerMonth(device.getRentPerMonth());
         response.setDeviceType(device.getDeviceType());
         response.setDeviceStatus(device.getDeviceStatus());
 

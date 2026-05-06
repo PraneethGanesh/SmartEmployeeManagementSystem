@@ -5,6 +5,7 @@ import com.example.EmployeeManagementSystem.Enum.DeviceStatus;
 import com.example.EmployeeManagementSystem.Enum.DeviceType;
 import jakarta.persistence.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -31,6 +32,8 @@ public class Device {
     private LocalDateTime createdAt;
 
     private LocalDate warrantyExpiryDate;
+
+    private BigDecimal rentPerMonth;
 
     public Long getId() {
         return id;
@@ -102,5 +105,13 @@ public class Device {
 
     public void setWarrantyExpiryDate(LocalDate warrantyExpiryDate) {
         this.warrantyExpiryDate = warrantyExpiryDate;
+    }
+
+    public BigDecimal getRentPerMonth() {
+        return rentPerMonth;
+    }
+
+    public void setRentPerMonth(BigDecimal rentPerMonth) {
+        this.rentPerMonth = rentPerMonth;
     }
 }

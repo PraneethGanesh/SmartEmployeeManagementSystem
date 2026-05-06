@@ -5,6 +5,7 @@ import com.example.EmployeeManagementSystem.Entity.Vendor;
 import com.example.EmployeeManagementSystem.Enum.DeviceStatus;
 import com.example.EmployeeManagementSystem.Enum.DeviceType;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public class DeviceResponseDTO {
@@ -19,6 +20,7 @@ public class DeviceResponseDTO {
     private LocalDate assignedDate;
 
     private LocalDate warrantyExpiryDate;
+    private BigDecimal rentPerMonth;
 
     public Long getId() {
         return id;
@@ -98,5 +100,13 @@ public class DeviceResponseDTO {
 
     public void setWarrantyExpiryDate(LocalDate warrantyExpiryDate) {
         this.warrantyExpiryDate = warrantyExpiryDate;
+    }
+
+    public BigDecimal getRentPerMonth() {
+        return rentPerMonth;
+    }
+
+    public void setRentPerMonth(BigDecimal rentPerMonth) {
+        this.rentPerMonth = rentPerMonth;
     }
 }
