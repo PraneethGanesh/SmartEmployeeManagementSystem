@@ -582,7 +582,7 @@
     async function loadOverview() {
         try {
             const [allDevices, requests] = await Promise.all([
-                apiFetch('/devices/vendor/me'),
+                apiFetch('/devices/all'),
                 apiFetch('/service-requests/open')
             ]);
 
@@ -629,9 +629,12 @@
                         : `<span style="color:var(--red)">Expired ${escapeHtml(d.warrantyExpiryDate)}</span>`)
                     : '<span style="color:var(--text3)">--</span>';
 
-                const actions = d.deviceStatus === 'AVAILABLE'
-                    ? `<button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); openAssignModal(${d.id}, '${escapeJs(d.deviceName)}')">Assign</button>`
-                    : '';
+                let actions = '';
+if (d.deviceStatus === 'AVAILABLE') {
+    actions = `<button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); openAssignModal(${d.id}, '${escapeJs(d.deviceName)}')">Assign</button>`;
+} else if (d.deviceStatus === 'REPAIR_DONE') {
+    actions = `<button class="btn btn-sm" style="background:var(--violet-dim);color:var(--violet);border:1px solid rgba(167,139,250,0.3)" onclick="event.stopPropagation(); reassignRepairedDevice(${d.id}, '${escapeJs(d.deviceName)}')">Reassign</button>`;
+}
 
                 return `<div class="device-card" onclick="openDeviceDetail(${d.id})">
                     <div class="device-card-head">
@@ -724,7 +727,7 @@
     // ============ MY DEVICES ============
     async function loadMyAssignedDevices() {
         try {
-            const devices = await apiFetch('/devices/my');
+            const devices = await apiFetch('/devices');
             const tbody = document.getElementById('my-devices-list');
             if (!devices || !devices.length) {
                 tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No devices assigned to you</td></tr>';
@@ -933,6 +936,18 @@
         document.getElementById('assign-device-id').value = '';
         document.getElementById('assign-device-name').value = '';
     }
+
+    async function reassignRepairedDevice(deviceId, deviceName) {
+    if (!confirm(`Reassign "${deviceName}" back to the previous employee?`)) return;
+    try {
+        const device = await apiFetch(`/devices/${deviceId}/mark-assigned`, { method: 'PUT' });
+        showAlert(`Device reassigned to ${device.assignedEmployeeName} successfully!`, 'success');
+        loadAllDevices();
+        loadOverview();
+    } catch (e) {
+        showAlert('Failed: ' + e.message, 'error');
+    }
+}
 
     // ============ ADD DEVICE ============
     async function loadVendorsForDevice() {
