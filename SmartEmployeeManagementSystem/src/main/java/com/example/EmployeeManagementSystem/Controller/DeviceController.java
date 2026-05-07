@@ -1,6 +1,7 @@
 package com.example.EmployeeManagementSystem.Controller;
 
 import com.example.EmployeeManagementSystem.DTO.AssignDeviceRequest;
+import com.example.EmployeeManagementSystem.DTO.DeviceActivityDTO;
 import com.example.EmployeeManagementSystem.DTO.DeviceAssignmentResponseDTO;
 import com.example.EmployeeManagementSystem.DTO.DeviceDTO;
 import com.example.EmployeeManagementSystem.DTO.DeviceResponseDTO;
@@ -49,6 +50,26 @@ public class DeviceController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<DeviceResponseDTO>> getUnassignedDevices() {
         return ResponseEntity.ok(deviceService.getUnassignedDevices());
+    }
+
+    @GetMapping("/all")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<DeviceResponseDTO>> getAllDevices() {
+        return ResponseEntity.ok(deviceService.getAllDevices());
+    }
+
+    @GetMapping("/{deviceId}")
+    @PreAuthorize("hasAnyRole('ADMIN','TECH_VENDOR','EMPLOYEE','MANAGER')")
+    public ResponseEntity<DeviceResponseDTO> getDeviceDetails(@PathVariable Long deviceId,
+                                                              Authentication authentication) {
+        return ResponseEntity.ok(deviceService.getDeviceDetails(deviceId, authentication));
+    }
+
+    @GetMapping("/{deviceId}/activity")
+    @PreAuthorize("hasAnyRole('ADMIN','TECH_VENDOR','EMPLOYEE','MANAGER')")
+    public ResponseEntity<List<DeviceActivityDTO>> getDeviceActivity(@PathVariable Long deviceId,
+                                                                     Authentication authentication) {
+        return ResponseEntity.ok(deviceService.getDeviceActivity(deviceId, authentication));
     }
 
     @PostMapping("/{deviceId}/assign")

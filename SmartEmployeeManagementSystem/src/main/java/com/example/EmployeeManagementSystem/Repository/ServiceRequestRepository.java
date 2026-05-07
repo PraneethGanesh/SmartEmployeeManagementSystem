@@ -3,6 +3,7 @@ package com.example.EmployeeManagementSystem.Repository;
 
 import com.example.EmployeeManagementSystem.Entity.ServiceRequest;
 import com.example.EmployeeManagementSystem.Entity.Employee;
+import com.example.EmployeeManagementSystem.Entity.Device;
 import com.example.EmployeeManagementSystem.Entity.Vendor;
 import com.example.EmployeeManagementSystem.Enum.ServiceRequestStatus;
 import jdk.dynalink.linker.LinkerServices;
@@ -14,6 +15,7 @@ public interface ServiceRequestRepository extends JpaRepository<ServiceRequest,L
 
     List<ServiceRequest> findByStatus(ServiceRequestStatus status);
     List<ServiceRequest> findByRaisedByOrderByRaisedAtDesc(Employee employee);
+    List<ServiceRequest> findByDeviceOrderByRaisedAtDesc(Device device);
     List<ServiceRequest> findByDeviceTechVendorAndStatus(
             Vendor vendor,
             ServiceRequestStatus status

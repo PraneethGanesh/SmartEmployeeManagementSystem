@@ -1,6 +1,7 @@
 package com.example.EmployeeManagementSystem.Service;
 
 import com.example.EmployeeManagementSystem.DTO.AssignDeviceRequest;
+import com.example.EmployeeManagementSystem.DTO.DeviceActivityDTO;
 import com.example.EmployeeManagementSystem.DTO.DeviceAssignmentResponseDTO;
 import com.example.EmployeeManagementSystem.DTO.DeviceDTO;
 import com.example.EmployeeManagementSystem.DTO.DeviceResponseDTO;
@@ -19,14 +20,19 @@ import com.example.EmployeeManagementSystem.Repository.DeviceAssignmentRepo;
 import com.example.EmployeeManagementSystem.Repository.DeviceRepository;
 import com.example.EmployeeManagementSystem.Repository.EmployeeRepo;
 import com.example.EmployeeManagementSystem.Repository.RepairLogRepository;
+import com.example.EmployeeManagementSystem.Repository.ServiceRequestRepository;
 import com.example.EmployeeManagementSystem.Repository.VendorRepo;
 import com.example.EmployeeManagementSystem.Util.AuthUtil;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 
@@ -37,17 +43,20 @@ public class DeviceService {
     private final DeviceAssignmentRepo deviceAssignmentRepo;
     private final EmployeeRepo employeeRepo;
     private final RepairLogRepository repairLogRepository;
+    private final ServiceRequestRepository serviceRequestRepository;
 
     public DeviceService(DeviceRepository deviceRepository,
                          VendorRepo vendorRepo,
                          DeviceAssignmentRepo deviceAssignmentRepo,
                          EmployeeRepo employeeRepo,
-                         RepairLogRepository repairLogRepository) {
+                         RepairLogRepository repairLogRepository,
+                         ServiceRequestRepository serviceRequestRepository) {
         this.deviceRepository = deviceRepository;
         this.vendorRepo = vendorRepo;
         this.deviceAssignmentRepo = deviceAssignmentRepo;
         this.employeeRepo = employeeRepo;
         this.repairLogRepository = repairLogRepository;
+        this.serviceRequestRepository = serviceRequestRepository;
     }
 
     public Device addDevice(DeviceDTO deviceDTO, Authentication authentication) {
@@ -92,6 +101,80 @@ public class DeviceService {
     public List<DeviceResponseDTO> getUnassignedDevices() {
         return deviceRepository.findByDeviceStatus(DeviceStatus.AVAILABLE).stream()
                 .map(this::toDeviceResponse)
+                .toList();
+    }
+
+    public List<DeviceResponseDTO> getAllDevices() {
+        return deviceRepository.findAll().stream()
+                .map(this::toDeviceResponse)
+                .toList();
+    }
+
+    public DeviceResponseDTO getDeviceDetails(Long deviceId, Authentication authentication) {
+        Device device = getAuthorizedDevice(deviceId, authentication);
+        return toDeviceResponse(device);
+    }
+
+    public List<DeviceActivityDTO> getDeviceActivity(Long deviceId, Authentication authentication) {
+        Device device = getAuthorizedDevice(deviceId, authentication);
+        List<DeviceActivityDTO> activities = new ArrayList<>();
+
+        if (device.getCreatedAt() != null) {
+            activities.add(activity(device.getCreatedAt(), "DEVICE_CREATED", "Device registered",
+                    device.getBrand() + " " + device.getDeviceName() + " was added to inventory",
+                    device.getTechVendor() != null ? device.getTechVendor().getName() : null,
+                    device.getDeviceStatus() != null ? device.getDeviceStatus().name() : null));
+        }
+
+        deviceAssignmentRepo.findByDeviceIdOrderByAssignedDateDescIdDesc(deviceId).forEach(assignment -> {
+            LocalDateTime occurredAt = assignment.getAssignedDate() != null
+                    ? assignment.getAssignedDate().atStartOfDay()
+                    : null;
+            Employee assignedTo = assignment.getAssignedTo();
+            activities.add(activity(occurredAt, "ASSIGNMENT", "Assigned to employee",
+                    assignedTo != null ? "Assigned to " + assignedTo.getName() : "Device assignment updated",
+                    assignedTo != null ? assignedTo.getName() : null,
+                    assignment.getStatus() != null ? assignment.getStatus().name() : null));
+        });
+
+        serviceRequestRepository.findByDeviceOrderByRaisedAtDesc(device).forEach(request -> {
+            activities.add(activity(request.getRaisedAt(), "SERVICE_REQUEST", "Service request raised",
+                    request.getIssueDescription(),
+                    request.getRaisedBy() != null ? request.getRaisedBy().getName() : null,
+                    request.getStatus() != null ? request.getStatus().name() : null));
+
+            if (request.getAdminRemarks() != null && !request.getAdminRemarks().isBlank()) {
+                activities.add(activity(request.getRaisedAt(), "ADMIN_REVIEW", "Admin reviewed request",
+                        request.getAdminRemarks(),
+                        request.getReviewedBy() != null ? request.getReviewedBy().getName() : null,
+                        request.getStatus() != null ? request.getStatus().name() : null));
+            }
+
+            if (request.getResolvedAt() != null) {
+                activities.add(activity(request.getResolvedAt(), "RESOLUTION", "Request resolved",
+                        request.getResolution(),
+                        request.getDevice() != null && request.getDevice().getTechVendor() != null
+                                ? request.getDevice().getTechVendor().getName()
+                                : null,
+                        request.getStatus() != null ? request.getStatus().name() : null));
+            }
+        });
+
+        repairLogRepository.findByDeviceIdOrderByRepairDateDescIdDesc(deviceId).forEach(repairLog -> {
+            LocalDateTime occurredAt = repairLog.getRepairDate() != null
+                    ? repairLog.getRepairDate().atTime(LocalTime.NOON)
+                    : null;
+            activities.add(activity(occurredAt, "REPAIR_LOG", "Repair log updated",
+                    repairLog.getRepairAction() != null ? repairLog.getRepairAction() : repairLog.getRemarks(),
+                    repairLog.getRepairedBy(),
+                    repairLog.getServiceRequest() != null && repairLog.getServiceRequest().getStatus() != null
+                            ? repairLog.getServiceRequest().getStatus().name()
+                            : null));
+        });
+
+        return activities.stream()
+                .sorted(Comparator.comparing(DeviceActivityDTO::getOccurredAt,
+                        Comparator.nullsLast(Comparator.reverseOrder())))
                 .toList();
     }
 
@@ -149,6 +232,7 @@ public class DeviceService {
         response.setRentPerMonth(device.getRentPerMonth());
         response.setDeviceType(device.getDeviceType());
         response.setDeviceStatus(device.getDeviceStatus());
+        response.setCreatedAt(device.getCreatedAt());
 
         if (device.getTechVendor() != null) {
             response.setVendorName(device.getTechVendor().getName());
@@ -166,6 +250,53 @@ public class DeviceService {
         }
 
         return response;
+    }
+
+    private Device getAuthorizedDevice(Long deviceId, Authentication authentication) {
+        Device device = deviceRepository.findById(deviceId)
+                .orElseThrow(() -> new RuntimeException("Device not found"));
+
+        if (hasAuthority(authentication, "ROLE_ADMIN")) {
+            return device;
+        }
+
+        String email = AuthUtil.extractEmail(authentication);
+        if (hasAuthority(authentication, "ROLE_TECH_VENDOR")) {
+            if (device.getTechVendor() != null && device.getTechVendor().getEmail().equals(email)) {
+                return device;
+            }
+            throw new AccessDeniedException("Unauthorized access to this device");
+        }
+
+        DeviceAssignment currentAssignment = device.getCurrentAssignment();
+        if (currentAssignment != null
+                && currentAssignment.getAssignedTo() != null
+                && currentAssignment.getAssignedTo().getEmail().equals(email)) {
+            return device;
+        }
+
+        throw new AccessDeniedException("Unauthorized access to this device");
+    }
+
+    private boolean hasAuthority(Authentication authentication, String authority) {
+        return authentication != null && authentication.getAuthorities().stream()
+                .anyMatch(grantedAuthority -> authority.equals(grantedAuthority.getAuthority()));
+    }
+
+    private DeviceActivityDTO activity(LocalDateTime occurredAt,
+                                       String type,
+                                       String title,
+                                       String description,
+                                       String actorName,
+                                       String status) {
+        DeviceActivityDTO dto = new DeviceActivityDTO();
+        dto.setOccurredAt(occurredAt);
+        dto.setType(type);
+        dto.setTitle(title);
+        dto.setDescription(description);
+        dto.setActorName(actorName);
+        dto.setStatus(status);
+        return dto;
     }
 
     public List<DeviceAssignmentResponseDTO> getDeviceAssignmentOfvendor(Authentication authentication) {

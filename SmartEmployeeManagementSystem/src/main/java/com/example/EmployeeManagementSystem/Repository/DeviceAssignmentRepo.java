@@ -12,6 +12,7 @@ import java.util.Optional;
 public interface DeviceAssignmentRepo extends JpaRepository<DeviceAssignment,Long> {
     Optional<DeviceAssignment> findByDeviceIdAndStatus(Long deviceId, AssignmentStatus status);
     List<DeviceAssignment> findByAssignedToEmployeeIdAndStatus(Long employeeId, AssignmentStatus status);
+    List<DeviceAssignment> findByDeviceIdOrderByAssignedDateDescIdDesc(Long deviceId);
 
     @Query(value = "SELECT da.* FROM device_assignment da JOIN device d ON da.device_id = d.id WHERE d.vendor_id = :vendorId",nativeQuery = true)
     List<DeviceAssignment> getAllAssignmentsByVendorId(@Param("vendorId") long vendorId);
