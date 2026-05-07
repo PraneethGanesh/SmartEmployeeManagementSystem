@@ -40,6 +40,12 @@ public class DeviceController {
         return ResponseEntity.ok(deviceService.getDevicesForLoggedInVendor(authentication));
     }
 
+    @GetMapping
+    @PreAuthorize("hasAnyRole('EMPLOYEE','MANAGER','ADMIN')")
+    public ResponseEntity<List<DeviceResponseDTO>> getMyDevices(Authentication authentication) {
+        return ResponseEntity.ok(deviceService.getDevicesForEmployee(authentication));
+    }
+
     @GetMapping("/my")
     @PreAuthorize("hasAnyRole('EMPLOYEE','MANAGER','ADMIN')")
     public ResponseEntity<List<DeviceResponseDTO>> getMyAssignedDevices(Authentication authentication) {
