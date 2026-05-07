@@ -6,6 +6,7 @@ import com.example.EmployeeManagementSystem.DTO.ServiceRequestDTO;
 import com.example.EmployeeManagementSystem.DTO.ServiceRequestResponseDTO;
 import com.example.EmployeeManagementSystem.Entity.Device;
 import com.example.EmployeeManagementSystem.Entity.Employee;
+import com.example.EmployeeManagementSystem.Entity.RepairLog;
 import com.example.EmployeeManagementSystem.Entity.ServiceRequest;
 import com.example.EmployeeManagementSystem.Entity.Vendor;
 import com.example.EmployeeManagementSystem.Enum.DeviceStatus;
@@ -14,29 +15,31 @@ import com.example.EmployeeManagementSystem.Exception.EmployeeNotFound;
 import com.example.EmployeeManagementSystem.Exception.VendorNotFoundException;
 import com.example.EmployeeManagementSystem.Repository.DeviceRepository;
 import com.example.EmployeeManagementSystem.Repository.EmployeeRepo;
+import com.example.EmployeeManagementSystem.Repository.RepairLogRepository;
 import com.example.EmployeeManagementSystem.Repository.ServiceRequestRepository;
 import com.example.EmployeeManagementSystem.Repository.VendorRepo;
 import com.example.EmployeeManagementSystem.Util.AuthUtil;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.w3c.dom.stylesheets.LinkStyle;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Vector;
 
 @Service
 public class ServiceRequestService {
     private final ServiceRequestRepository serviceRequestRepository;
     private final EmployeeRepo employeeRepo;
     private final DeviceRepository deviceRepository;
+    private final RepairLogRepository repairLogRepository;
     private final VendorRepo vendorRepo;
 
-    public ServiceRequestService(ServiceRequestRepository serviceRequestRepository, EmployeeRepo employeeRepo, DeviceRepository deviceRepository, VendorRepo vendorRepo) {
+    public ServiceRequestService(ServiceRequestRepository serviceRequestRepository, EmployeeRepo employeeRepo, DeviceRepository deviceRepository, RepairLogRepository repairLogRepository, VendorRepo vendorRepo) {
         this.serviceRequestRepository = serviceRequestRepository;
         this.employeeRepo = employeeRepo;
         this.deviceRepository = deviceRepository;
+        this.repairLogRepository = repairLogRepository;
         this.vendorRepo = vendorRepo;
     }
 
@@ -137,6 +140,7 @@ public class ServiceRequestService {
         if (actionDTO.getStatus() == ServiceRequestStatus.SENT_FOR_REPAIR) {
             device.setDeviceStatus(DeviceStatus.UNDER_REPAIR);
             deviceRepository.save(device);
+            createRepairLogIfMissing(serviceRequest, actionDTO.getAdminRemarks());
         } else if (actionDTO.getStatus() == ServiceRequestStatus.REJECTED) {
             device.setDeviceStatus(DeviceStatus.ASSIGNED);
         }
@@ -159,6 +163,7 @@ public class ServiceRequestService {
                 .toList();
     }
 
+    @Transactional
     public ServiceRequestResponseDTO updateServiceRequestByVendor(
             Authentication authentication, RepairDTO repairDTO
             ) {
@@ -183,25 +188,54 @@ public class ServiceRequestService {
         }
 
         Device device = request.getDevice();
+        RepairLog repairLog = repairLogRepository.findByServiceRequest(request)
+                .orElseThrow(() -> new RuntimeException("Repair log not found for request " + request.getId()));
+
+        if (repairDTO.getStatus() == null) {
+            throw new RuntimeException("Repair status is required");
+        }
 
         // 5. Update based on repair result
         if (repairDTO.getStatus()==ServiceRequestStatus.REPAIR_DONE) {
             request.setResolution(repairDTO.getResolution());
             request.setStatus(repairDTO.getStatus());
 
-            device.setDeviceStatus(DeviceStatus.ASSIGNED); // back to employee
+            device.setDeviceStatus(DeviceStatus.REPAIR_DONE);
+            repairLog.setRemarks("Repair completed successfully");
         } else {
             request.setResolution(repairDTO.getResolution());
-            request.setStatus(ServiceRequestStatus.REPAIR_DONE);
+            request.setStatus(repairDTO.getStatus());
 
-            device.setDeviceStatus(DeviceStatus.CONDEMNED); // not usable
+            device.setDeviceStatus(DeviceStatus.CONDEMNED);
+            repairLog.setRemarks("Repair closed without successful fix");
         }
 
         request.setResolvedAt(LocalDateTime.now());
+        repairLog.setRepairAction(repairDTO.getResolution());
+        repairLog.setRepairCost(repairDTO.getRepairCost());
+        repairLog.setRepairedBy(vendor.getName());
+        repairLog.setRepairDate(LocalDate.now());
 
+        repairLogRepository.save(repairLog);
         deviceRepository.save(device);
         ServiceRequest serviceRequest=serviceRequestRepository.save(request);
         return toServiceRequestResponseDTO(serviceRequest);
+    }
+
+    private void createRepairLogIfMissing(ServiceRequest serviceRequest, String adminRemarks) {
+        if (repairLogRepository.findByServiceRequest(serviceRequest).isPresent()) {
+            return;
+        }
+
+        RepairLog repairLog = new RepairLog();
+        repairLog.setDevice(serviceRequest.getDevice());
+        repairLog.setServiceRequest(serviceRequest);
+        repairLog.setIssueType(serviceRequest.getRequestType() != null
+                ? serviceRequest.getRequestType().name()
+                : null);
+        repairLog.setDamagedComponent(serviceRequest.getIssueDescription());
+        repairLog.setRemarks(adminRemarks);
+        repairLogRepository.save(repairLog);
     }
 }
 
