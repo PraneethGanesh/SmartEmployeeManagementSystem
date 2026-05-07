@@ -94,6 +94,18 @@ public class DeviceService {
         return deviceAssignmentRepo.findByAssignedToEmployeeIdAndStatus(employee.getEmployeeId(), AssignmentStatus.ACTIVE)
                 .stream()
                 .map(DeviceAssignment::getDevice)
+                .filter(device -> device.getDeviceStatus() == DeviceStatus.ASSIGNED)
+                .map(this::toDeviceResponse)
+                .toList();
+    }
+    public List<DeviceResponseDTO> getDevicesForEmployee(Authentication authentication) {
+        String email = AuthUtil.extractEmail(authentication);
+        Employee employee = employeeRepo.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Employee not found"));
+
+        return deviceAssignmentRepo.findByAssignedToEmployeeIdAndStatus(employee.getEmployeeId(), AssignmentStatus.ACTIVE)
+                .stream()
+                .map(DeviceAssignment::getDevice)
                 .map(this::toDeviceResponse)
                 .toList();
     }
