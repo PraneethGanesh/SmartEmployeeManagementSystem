@@ -74,6 +74,12 @@ public class DeviceController {
       return deviceService.getRepairedDevices();
     }
 
+    @PutMapping("/{deviceId}/mark-assigned")
+    @PreAuthorize("hasRole('ADMIN')")
+    public DeviceResponseDTO markDeviceAssignedAfterRepair(@PathVariable Long deviceId) {
+        return deviceService.markDeviceAssignedAfterRepair(deviceId);
+    }
+
     @GetMapping("/vendor/{deviceId}/repair-logs")
     @PreAuthorize("hasRole('TECH_VENDOR')")
     public List<RepairLogResponseDTO> getVendorRepairLogs(@PathVariable Long deviceId, Authentication authentication) {

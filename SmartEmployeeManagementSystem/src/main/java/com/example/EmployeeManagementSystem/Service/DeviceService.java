@@ -204,6 +204,20 @@ public class DeviceService {
                 .toList();
     }
 
+    @Transactional
+    public DeviceResponseDTO markDeviceAssignedAfterRepair(Long deviceId) {
+        Device device = deviceRepository.findById(deviceId)
+                .orElseThrow(() -> new RuntimeException("Device not found"));
+
+        if (device.getDeviceStatus() != DeviceStatus.REPAIR_DONE) {
+            throw new IllegalArgumentException("Only REPAIR_DONE devices can be moved to ASSIGNED");
+        }
+
+        device.setDeviceStatus(DeviceStatus.ASSIGNED);
+        Device savedDevice = deviceRepository.save(device);
+        return toDeviceResponse(savedDevice);
+    }
+
     public List<RepairLogResponseDTO> getRepairLogsForLoggedInVendorDevice(Long deviceId, Authentication authentication) {
         String email = AuthUtil.extractEmail(authentication);
         Vendor vendor = vendorRepo.findByEmail(email).orElseThrow(
