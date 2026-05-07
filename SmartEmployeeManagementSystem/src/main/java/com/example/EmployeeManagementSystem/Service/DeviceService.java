@@ -4,9 +4,11 @@ import com.example.EmployeeManagementSystem.DTO.AssignDeviceRequest;
 import com.example.EmployeeManagementSystem.DTO.DeviceAssignmentResponseDTO;
 import com.example.EmployeeManagementSystem.DTO.DeviceDTO;
 import com.example.EmployeeManagementSystem.DTO.DeviceResponseDTO;
+import com.example.EmployeeManagementSystem.DTO.RepairLogResponseDTO;
 import com.example.EmployeeManagementSystem.Entity.Device;
 import com.example.EmployeeManagementSystem.Entity.DeviceAssignment;
 import com.example.EmployeeManagementSystem.Entity.Employee;
+import com.example.EmployeeManagementSystem.Entity.RepairLog;
 import com.example.EmployeeManagementSystem.Entity.Vendor;
 import com.example.EmployeeManagementSystem.Enum.AssignmentStatus;
 import com.example.EmployeeManagementSystem.Enum.DeviceStatus;
@@ -16,6 +18,7 @@ import com.example.EmployeeManagementSystem.Exception.VendorNotFoundException;
 import com.example.EmployeeManagementSystem.Repository.DeviceAssignmentRepo;
 import com.example.EmployeeManagementSystem.Repository.DeviceRepository;
 import com.example.EmployeeManagementSystem.Repository.EmployeeRepo;
+import com.example.EmployeeManagementSystem.Repository.RepairLogRepository;
 import com.example.EmployeeManagementSystem.Repository.VendorRepo;
 import com.example.EmployeeManagementSystem.Util.AuthUtil;
 import org.springframework.security.core.Authentication;
@@ -33,15 +36,18 @@ public class DeviceService {
     private final VendorRepo vendorRepo;
     private final DeviceAssignmentRepo deviceAssignmentRepo;
     private final EmployeeRepo employeeRepo;
+    private final RepairLogRepository repairLogRepository;
 
     public DeviceService(DeviceRepository deviceRepository,
                          VendorRepo vendorRepo,
                          DeviceAssignmentRepo deviceAssignmentRepo,
-                         EmployeeRepo employeeRepo) {
+                         EmployeeRepo employeeRepo,
+                         RepairLogRepository repairLogRepository) {
         this.deviceRepository = deviceRepository;
         this.vendorRepo = vendorRepo;
         this.deviceAssignmentRepo = deviceAssignmentRepo;
         this.employeeRepo = employeeRepo;
+        this.repairLogRepository = repairLogRepository;
     }
 
     public Device addDevice(DeviceDTO deviceDTO, Authentication authentication) {
@@ -187,6 +193,57 @@ public class DeviceService {
         if (a.getAssignedTo() != null) {
             dto.setEmployeeId(a.getAssignedTo().getEmployeeId());
             dto.setEmployeeName(a.getAssignedTo().getName()); // adjust to your Employee field
+        }
+
+        return dto;
+    }
+
+    public List<DeviceResponseDTO> getRepairedDevices() {
+        return deviceRepository.findByDeviceStatus(DeviceStatus.REPAIR_DONE).stream()
+                .map(this::toDeviceResponse)
+                .toList();
+    }
+
+    public List<RepairLogResponseDTO> getRepairLogsForLoggedInVendorDevice(Long deviceId, Authentication authentication) {
+        String email = AuthUtil.extractEmail(authentication);
+        Vendor vendor = vendorRepo.findByEmail(email).orElseThrow(
+                () -> new VendorNotFoundException("Vendor:" + email + " not found")
+        );
+
+        Device device = deviceRepository.findById(deviceId)
+                .orElseThrow(() -> new RuntimeException("Device not found"));
+
+        if (device.getTechVendor() == null || !device.getTechVendor().getId().equals(vendor.getId())) {
+            throw new RuntimeException("Unauthorized access to device repair logs");
+        }
+
+        return repairLogRepository.findByDeviceIdAndDeviceTechVendorIdOrderByRepairDateDescIdDesc(deviceId, vendor.getId()).stream()
+                .map(this::toRepairLogResponseDTO)
+                .toList();
+    }
+
+    private RepairLogResponseDTO toRepairLogResponseDTO(RepairLog repairLog) {
+        RepairLogResponseDTO dto = new RepairLogResponseDTO();
+        dto.setId(repairLog.getId());
+        dto.setIssueType(repairLog.getIssueType());
+        dto.setDamagedComponent(repairLog.getDamagedComponent());
+        dto.setRepairAction(repairLog.getRepairAction());
+        dto.setReplacedComponent(repairLog.getReplacedComponent());
+        dto.setRepairCost(repairLog.getRepairCost());
+        dto.setRepairedBy(repairLog.getRepairedBy());
+        dto.setRepairDate(repairLog.getRepairDate());
+        dto.setRemarks(repairLog.getRemarks());
+
+        if (repairLog.getDevice() != null) {
+            dto.setDeviceId(repairLog.getDevice().getId());
+            dto.setDeviceName(repairLog.getDevice().getDeviceName());
+        }
+
+        if (repairLog.getServiceRequest() != null) {
+            dto.setServiceRequestId(repairLog.getServiceRequest().getId());
+            dto.setServiceRequestStatus(repairLog.getServiceRequest().getStatus() != null
+                    ? repairLog.getServiceRequest().getStatus().name()
+                    : null);
         }
 
         return dto;
