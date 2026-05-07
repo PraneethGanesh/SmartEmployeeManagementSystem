@@ -185,7 +185,7 @@
 
         .modal-overlay{display:none;position:fixed;inset:0;background:rgba(8,11,16,0.85);z-index:1500;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
         .modal-overlay.open{display:flex}
-        .modal{background:var(--panel2);border:1px solid var(--border2);border-radius:12px;width:560px;max-width:95%;max-height:85vh;overflow-y:auto;animation:modalIn 0.2s ease}
+        .modal{background:var(--panel2);border:1px solid var(--border2);border-radius:12px;width:680px;max-width:95%;max-height:85vh;overflow-y:auto;animation:modalIn 0.2s ease}
         @keyframes modalIn{from{opacity:0;transform:scale(0.96)}to{opacity:1;transform:scale(1)}}
         .modal-head{padding:20px 24px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
         .modal-title{font-size:16px;font-weight:700;color:var(--text)}
@@ -196,6 +196,15 @@
         .detail-item{display:flex;flex-direction:column;gap:4px}
         .detail-label{font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1.5px;font-family:var(--mono)}
         .detail-value{font-size:13px;color:var(--text);font-family:var(--mono)}
+
+        /* Repair log card inside modal */
+        .repair-log-card{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:10px;transition:border-color 0.2s}
+        .repair-log-card:hover{border-color:var(--border2)}
+        .repair-log-card:last-child{margin-bottom:0}
+        .repair-log-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px 20px;margin-bottom:10px}
+        .repair-log-remarks{padding:8px 12px;background:var(--panel);border:1px solid var(--border);border-radius:5px;font-size:11px;font-family:var(--mono);color:var(--text2);line-height:1.6;margin-top:8px}
+        .repair-log-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+        .repair-log-id{font-size:10px;font-family:var(--mono);color:var(--text3)}
     </style>
 </head>
 <body>
@@ -333,7 +342,7 @@
                                 <div class="card-title">Active Repairs</div>
                                 <div class="card-sub">currently being serviced</div>
                             </div>
-                            <button class="btn btn-ghost btn-sm" onclick="showView('repair-logs',null)">View all →</button>
+                            <button class="btn btn-ghost btn-sm" onclick="showView('service-requests',null)">View all →</button>
                         </div>
                         <div class="tablewrap">
                             <table>
@@ -408,7 +417,6 @@
                         </div>
                     </div>
                     <div class="card-body">
-                        <!-- Find this section in the ADD DEVICE view -->
                         <div class="form-grid">
                             <div class="form-group">
                                 <label class="form-label">Device Name</label>
@@ -436,7 +444,6 @@
                                 <label class="form-label">Warranty Expiry</label>
                                 <input class="form-input" type="date" id="d-warranty">
                             </div>
-                            <!-- ADD THIS NEW FIELD -->
                             <div class="form-group">
                                 <label class="form-label">Rent Per Month (₹)</label>
                                 <input class="form-input" type="number" id="d-rent" placeholder="5000" step="0.01" min="0">
@@ -450,31 +457,42 @@
                 </div>
             </div>
 
-            <!-- ═══════════════════════════════════════════════════════
-                 SERVICE REQUESTS  —  vendor repair queue
-                 GET  /service-requests/vendor/me   → SENT_FOR_REPAIR list
-                 PUT  /service-requests/vendor       → RepairDTO { requestId, resolution, status }
-                 status=REPAIR_DONE  → device becomes ASSIGNED
-                 status=anything else → device becomes CONDEMNED
-            ════════════════════════════════════════════════════════ -->
+            <!-- SERVICE REQUESTS -->
             <div id="service-requests-view" class="view">
                 <div class="card">
                     <div class="card-head">
                         <div>
-                            <div class="card-title">Repair Queue</div>
-                            <div class="card-sub">devices sent to you — mark as repaired or condemned</div>
+                            <div class="card-title">Service Requests</div>
+                            <div class="card-sub">all requests for your devices — expand to see repair log</div>
                         </div>
-                        <button class="btn btn-ghost btn-sm" onclick="loadServiceRequests()">↺ Refresh</button>
+                        <div class="action-row">
+                            <select class="form-input btn-sm" id="sr-filter" onchange="filterServiceRequests()" style="width:160px;padding:5px 10px;font-size:11px">
+                                <option value="">All Status</option>
+                                <option value="SENT_FOR_REPAIR">Sent for Repair</option>
+                                <option value="REPAIR_DONE">Repair Done</option>
+                                <option value="IRREPARABLE">Irreparable</option>
+                                <option value="OPEN">Open</option>
+                                <option value="ACKNOWLEDGED">Acknowledged</option>
+                                <option value="RESOLVED">Resolved</option>
+                                <option value="REJECTED">Rejected</option>
+                            </select>
+                            <button class="btn btn-ghost btn-sm" onclick="loadServiceRequests()">↺ Refresh</button>
+                        </div>
+                    </div>
+                    <div class="search-row">
+                        <input class="search-input" id="sr-search" placeholder="Search by device, type, description..." oninput="filterServiceRequests()">
                     </div>
                     <div class="tablewrap">
                         <table>
                             <thead>
                             <tr>
+                                <th></th>
                                 <th>ID</th>
                                 <th>Device</th>
-                                <th>Issue Type</th>
+                                <th>Type</th>
                                 <th>Description</th>
                                 <th>Urgent</th>
+                                <th>Status</th>
                                 <th>Raised</th>
                                 <th>Actions</th>
                             </tr>
@@ -484,7 +502,7 @@
                     </div>
                 </div>
 
-                <!-- ── INLINE REPAIR UPDATE PANEL ── -->
+                <!-- INLINE REPAIR UPDATE PANEL -->
                 <div class="card" id="vendor-repair-panel" style="max-width:640px;display:none">
                     <div class="card-head">
                         <div>
@@ -495,30 +513,26 @@
                     </div>
                     <div class="card-body">
                         <input type="hidden" id="vr-request-id">
-
                         <div class="form-grid">
-                            <!-- Outcome selector -->
                             <div class="form-group full">
                                 <label class="form-label">Repair Outcome</label>
                                 <select class="form-input" id="vr-status" onchange="onOutcomeChange()">
                                     <option value="REPAIR_DONE">✓ Repair Done — device returns to employee</option>
-                                    <option value="NOT_FIXABLE">✗ Could Not Repair — device will be condemned</option>
+                                    <option value="IRREPARABLE">✗ Could Not Repair — device will be condemned</option>
                                 </select>
                             </div>
-
-                            <!-- Resolution notes -->
-                            <div class="form-group full">
+                            <div class="form-group">
+                                <label class="form-label">Repair Cost (₹) <span style="color:var(--text3);font-weight:400">optional</span></label>
+                                <input class="form-input" id="vr-repair-cost" type="number" min="0" step="0.01" placeholder="e.g. 2500">
+                            </div>
+                            <div class="form-group">
                                 <label class="form-label">Resolution Notes</label>
-                                <input class="form-input" id="vr-resolution"
-                                       placeholder="Describe what was repaired, parts replaced, or why it could not be fixed…">
+                                <input class="form-input" id="vr-resolution" placeholder="What was repaired, parts replaced, or why it couldn't be fixed…">
                             </div>
                         </div>
-
-                        <!-- Dynamic outcome hint -->
                         <div id="vr-outcome-hint" class="outcome-hint success">
                             ✓ Device status → <strong>ASSIGNED</strong> — returned to the employee
                         </div>
-
                         <div class="form-actions">
                             <button class="btn btn-primary" onclick="submitRepairUpdate()">Submit Update</button>
                             <button class="btn btn-ghost" onclick="closeRepairPanel()">Cancel</button>
@@ -553,6 +567,7 @@
                     </div>
                 </div>
             </div>
+
             <!-- TWO-FACTOR AUTH -->
             <div id="two-factor-view" class="view">
                 <div class="card" style="max-width:560px">
@@ -564,71 +579,34 @@
                         <span id="totp-status-chip" class="chip">checking...</span>
                     </div>
                     <div class="card-body">
-
-                        <!-- DISABLED — setup flow -->
                         <div id="totp-setup-section">
-                            <p style="font-size:12px;color:var(--text2);margin-bottom:16px;
-                           line-height:1.7;font-family:var(--mono)">
+                            <p style="font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.7;font-family:var(--mono)">
                                 Use Google Authenticator, Authy, or any TOTP app.<br>
                                 Scan the QR code, then enter the 6-digit code to activate.
                             </p>
-                            <button class="btn btn-primary" onclick="generateTotpQr()"
-                                    id="generate-qr-btn">
-                                Generate QR Code
-                            </button>
-
+                            <button class="btn btn-primary" onclick="generateTotpQr()" id="generate-qr-btn">Generate QR Code</button>
                             <div id="qr-area" style="display:none;margin-top:24px;text-align:center">
-                                <img id="qr-img" src="" alt="QR Code"
-                                     style="width:180px;height:180px;border-radius:8px;
-                                border:1px solid var(--border2);display:block;margin:0 auto">
-                                <div style="margin-top:12px;font-size:10px;color:var(--text3);
-                                font-family:var(--mono);letter-spacing:0.5px">
-                                    CAN'T SCAN? ENTER KEY MANUALLY:
-                                </div>
-                                <div id="totp-secret-display"
-                                     style="font-family:var(--mono);font-size:12px;color:var(--cyan);
-                                background:var(--bg3);border:1px solid var(--border2);
-                                border-radius:6px;padding:8px 12px;margin-top:6px;
-                                word-break:break-all;text-align:center"></div>
-
+                                <img id="qr-img" src="" alt="QR Code" style="width:180px;height:180px;border-radius:8px;border:1px solid var(--border2);display:block;margin:0 auto">
+                                <div style="margin-top:12px;font-size:10px;color:var(--text3);font-family:var(--mono);letter-spacing:0.5px">CAN'T SCAN? ENTER KEY MANUALLY:</div>
+                                <div id="totp-secret-display" style="font-family:var(--mono);font-size:12px;color:var(--cyan);background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:8px 12px;margin-top:6px;word-break:break-all;text-align:center"></div>
                                 <div style="margin-top:20px;text-align:left">
-                                    <label class="form-label" style="display:block;margin-bottom:8px">
-                                        Enter 6-digit code to activate
-                                    </label>
-                                    <input id="totp-verify-input" type="text"
-                                           inputmode="numeric" maxlength="6"
-                                           placeholder="000000"
-                                           class="form-input"
-                                           style="text-align:center;font-size:20px;
-                                      letter-spacing:10px;padding:12px"
-                                           oninput="this.value=this.value.replace(/\D/g,'')">
-                                    <button class="btn btn-primary"
-                                            onclick="verifyAndActivateTotp()"
-                                            style="width:100%;margin-top:10px">
-                                        Activate 2FA
-                                    </button>
-                                    <div id="totp-verify-error"
-                                         style="display:none;margin-top:8px;font-size:11px;
-                                    color:var(--red);font-family:var(--mono)"></div>
+                                    <label class="form-label" style="display:block;margin-bottom:8px">Enter 6-digit code to activate</label>
+                                    <input id="totp-verify-input" type="text" inputmode="numeric" maxlength="6" placeholder="000000" class="form-input" style="text-align:center;font-size:20px;letter-spacing:10px;padding:12px" oninput="this.value=this.value.replace(/\D/g,'')">
+                                    <button class="btn btn-primary" onclick="verifyAndActivateTotp()" style="width:100%;margin-top:10px">Activate 2FA</button>
+                                    <div id="totp-verify-error" style="display:none;margin-top:8px;font-size:11px;color:var(--red);font-family:var(--mono)"></div>
                                 </div>
                             </div>
                         </div>
-
-                        <!-- ENABLED — disable option -->
                         <div id="totp-disable-section" style="display:none">
-                            <div style="background:var(--green-dim);border:1px solid rgba(16,212,142,0.2);
-                            border-radius:6px;padding:12px 16px;font-size:12px;
-                            color:var(--green);font-family:var(--mono);margin-bottom:16px">
+                            <div style="background:var(--green-dim);border:1px solid rgba(16,212,142,0.2);border-radius:6px;padding:12px 16px;font-size:12px;color:var(--green);font-family:var(--mono);margin-bottom:16px">
                                 ✓ TWO-FACTOR AUTHENTICATION IS ACTIVE
                             </div>
-                            <button class="btn btn-danger" onclick="disableTotp()">
-                                Disable 2FA
-                            </button>
+                            <button class="btn btn-danger" onclick="disableTotp()">Disable 2FA</button>
                         </div>
-
                     </div>
                 </div>
             </div>
+
             <!-- PROFILE -->
             <div id="profile-view" class="view">
                 <div class="card" style="max-width:600px">
@@ -661,14 +639,29 @@
 <div class="modal-overlay" id="device-modal">
     <div class="modal">
         <div class="modal-head">
-            <div class="modal-title" id="modal-device-name">Device Details</div>
+            <div>
+                <div class="modal-title" id="modal-device-name">Device Details</div>
+                <div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-top:2px" id="modal-device-id"></div>
+            </div>
             <button class="modal-close" onclick="closeModal()">✕</button>
         </div>
         <div class="modal-body">
             <div class="detail-grid" id="modal-detail-grid"></div>
+
+            <!-- REPAIR HISTORY SECTION -->
             <div style="margin-top:16px">
-                <div class="card-title" style="margin-bottom:12px;font-size:12px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:1px">Repair History</div>
-                <div id="modal-repair-history"></div>
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+                    <div style="font-size:10px;font-weight:700;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:1.5px">
+                        ⚙ Repair History
+                    </div>
+                    <button class="btn btn-ghost btn-xs" id="modal-refresh-logs-btn" onclick="refreshModalRepairLogs()">↺ Refresh</button>
+                </div>
+                <div id="modal-repair-history">
+                    <div class="empty" style="padding:20px">
+                        <div class="empty-icon">⚙</div>
+                        Loading repair history…
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -676,7 +669,8 @@
 
 <script>
     const API = 'http://localhost:8080';
-    let devicesCache = [], srCache = [], repairsCache = [], assignmentsCache = [];
+    let devicesCache = [], srCache = [], srAllCache = [], assignmentsCache = [];
+    let currentModalDeviceId = null; // track which device is open in modal
 
     // ── AUTH ──────────────────────────────────────────────────────────
     (function(){
@@ -728,10 +722,9 @@
         'dashboard': loadDashboard,
         'my-devices': loadMyDevices,
         'service-requests': loadServiceRequests,
-        'repair-logs': loadRepairLogs,
         'assignments': loadAssignments,
         'profile': loadProfile,
-          'two-factor': loadTotpStatus,
+        'two-factor': loadTotpStatus,
         'add-device': ()=>{}
       };
       if(loaders[name]) loaders[name]();
@@ -739,7 +732,7 @@
 
     // ── INIT ──────────────────────────────────────────────────────────
     async function initDashboard(){
-      await Promise.all([loadMyDevices(), loadServiceRequests(), loadRepairLogs(), loadAssignments()]);
+      await Promise.all([loadMyDevices(), loadServiceRequests(), loadAssignments()]);
       loadDashboard();
     }
 
@@ -762,13 +755,14 @@
         </tr>`).join('') ||
         `<tr><td colspan="3" class="empty">No pending repairs</td></tr>`;
 
-      document.getElementById('dash-repairs').innerHTML = repairsCache.filter(r=>r.repairStatus!=='FIXED'&&r.repairStatus!=='IRREPARABLE').slice(0,5).map(r=>`
+      const resolvedSrs = (srAllCache||[]).filter(s => s.status==='REPAIR_DONE' || s.status==='IRREPARABLE').slice(0,5);
+      document.getElementById('dash-repairs').innerHTML = resolvedSrs.map(r=>`
         <tr>
-          <td class="main-cell">${r.deviceName||'Device #'+r.deviceId}</td>
-          <td>${r.sentDate||'—'}</td>
-          <td>${chip(r.repairStatus)}</td>
+          <td class="main-cell">${r.deviceName||'—'}</td>
+          <td>${r.resolvedAt ? r.resolvedAt.split('T')[0] : '—'}</td>
+          <td>${chip(r.status)}</td>
         </tr>`).join('') ||
-        `<tr><td colspan="3" class="empty">No active repairs</td></tr>`;
+        `<tr><td colspan="3" class="empty">No completed repairs</td></tr>`;
 
       document.getElementById('dash-devices').innerHTML = devicesCache.slice(0,8).map(d=>`
         <tr>
@@ -790,29 +784,29 @@
     }
 
     function renderDevices(list){
-  document.getElementById('devices-list').innerHTML = list.length
-    ? list.map(d=>`<tr>
-        <td style="font-family:var(--mono);font-size:11px;color:var(--text3)">#${d.id}</td>
-        <td class="main-cell">${d.deviceName||'—'}</td>
-        <td>${d.brand||'—'}</td>
-        <td>${chip(d.deviceType)}</td>
-        <td style="font-size:11px;font-family:var(--mono)">
-          ${d.warrantyExpiryDate
-            ? (new Date(d.warrantyExpiryDate) > new Date()
-                ? `<span style="color:var(--green)">✓ ${d.warrantyExpiryDate}</span>`
-                : `<span style="color:var(--red)">✗ ${d.warrantyExpiryDate}</span>`)
-            : '<span style="color:var(--text3)">—</span>'}
-        </td>
-        <td style="font-family:var(--mono);color:var(--cyan)">
-          ${d.rentPerMonth ? '₹'+d.rentPerMonth : '<span style="color:var(--text3)">—</span>'}
-        </td>
-        <td>${chip(d.deviceStatus)}</td>
-        <td><div class="action-row">
-          <button class="btn btn-ghost btn-xs" onclick="viewDevice(${d.id})">Details</button>
-        </div></td>
-      </tr>`).join('')
-    : `<tr><td colspan="8"><div class="empty"><div class="empty-icon">⬡</div>No devices registered yet</div></td></tr>`;
-}
+      document.getElementById('devices-list').innerHTML = list.length
+        ? list.map(d=>`<tr>
+            <td style="font-family:var(--mono);font-size:11px;color:var(--text3)">#${d.id}</td>
+            <td class="main-cell">${d.deviceName||'—'}</td>
+            <td>${d.brand||'—'}</td>
+            <td>${chip(d.deviceType)}</td>
+            <td style="font-size:11px;font-family:var(--mono)">
+              ${d.warrantyExpiryDate
+                ? (new Date(d.warrantyExpiryDate) > new Date()
+                    ? `<span style="color:var(--green)">✓ ${d.warrantyExpiryDate}</span>`
+                    : `<span style="color:var(--red)">✗ ${d.warrantyExpiryDate}</span>`)
+                : '<span style="color:var(--text3)">—</span>'}
+            </td>
+            <td style="font-family:var(--mono);color:var(--cyan)">
+              ${d.rentPerMonth ? '₹'+d.rentPerMonth : '<span style="color:var(--text3)">—</span>'}
+            </td>
+            <td>${chip(d.deviceStatus)}</td>
+            <td><div class="action-row">
+              <button class="btn btn-ghost btn-xs" onclick="viewDevice(${d.id})">Details</button>
+            </div></td>
+          </tr>`).join('')
+        : `<tr><td colspan="8"><div class="empty"><div class="empty-icon">⬡</div>No devices registered yet</div></td></tr>`;
+    }
 
     function filterDevices(){
       const q = document.getElementById('device-search').value.toLowerCase();
@@ -825,65 +819,168 @@
     }
 
     async function addDevice(){
-  const body = {
-    deviceName: document.getElementById('d-name').value.trim(),
-    brand: document.getElementById('d-brand').value.trim(),
-    deviceType: document.getElementById('d-type').value,
-    warrantyExpiryDate: document.getElementById('d-warranty').value || null,
-    rentPerMonth: parseFloat(document.getElementById('d-rent').value) || null  // ADD THIS
-  };
-  if(!body.deviceName || !body.brand || !body.deviceType){
-    showAlert('Device name, brand and type are required','error'); return;
-  }
-  try{
-    await apiFetch('/devices', {method:'POST', body:JSON.stringify(body)});
-    showAlert('Device registered successfully!','success');
-    clearDeviceForm();
-    loadMyDevices();
-  }catch(e){ showAlert('Failed: '+e.message,'error'); }
-}
+      const body = {
+        deviceName: document.getElementById('d-name').value.trim(),
+        brand: document.getElementById('d-brand').value.trim(),
+        deviceType: document.getElementById('d-type').value,
+        warrantyExpiryDate: document.getElementById('d-warranty').value || null,
+        rentPerMonth: parseFloat(document.getElementById('d-rent').value) || null
+      };
+      if(!body.deviceName || !body.brand || !body.deviceType){
+        showAlert('Device name, brand and type are required','error'); return;
+      }
+      try{
+        await apiFetch('/devices', {method:'POST', body:JSON.stringify(body)});
+        showAlert('Device registered successfully!','success');
+        clearDeviceForm();
+        loadMyDevices();
+      }catch(e){ showAlert('Failed: '+e.message,'error'); }
+    }
 
     function clearDeviceForm(){
-  ['d-name','d-brand','d-warranty','d-rent'].forEach(id=>document.getElementById(id).value='');  // ADD 'd-rent'
-  document.getElementById('d-type').value='LAPTOP';
-}
+      ['d-name','d-brand','d-warranty','d-rent'].forEach(id=>document.getElementById(id).value='');
+      document.getElementById('d-type').value='LAPTOP';
+    }
 
-    // ── SERVICE REQUESTS (vendor repair queue) ────────────────────────
-    // GET  /service-requests/vendor/me  → list of SENT_FOR_REPAIR requests
-    // PUT  /service-requests/vendor     → { requestId, resolution, status }
-    //   REPAIR_DONE  → device becomes ASSIGNED (back to employee)
-    //   anything else → device becomes CONDEMNED
-    // ─────────────────────────────────────────────────────────────────
+    // ── SERVICE REQUESTS ──────────────────────────────────────────────
+    let expandedLogRow = null;
+
     async function loadServiceRequests(){
       try{
         const data = await apiFetch('/service-requests/vendor/me');
-        srCache = data || [];
-        renderServiceRequests(srCache);
-        // refresh badge
+        srAllCache = data || [];
+        srCache = srAllCache.filter(s => s.status === 'SENT_FOR_REPAIR');
         const badge = document.getElementById('sr-badge');
-        if(srCache.length){ badge.textContent=srCache.length; badge.style.display=''; }
-        else badge.style.display='none';
+        if(srCache.length){ badge.textContent = srCache.length; badge.style.display = ''; }
+        else badge.style.display = 'none';
+        filterServiceRequests();
       }catch(e){ renderServiceRequests([]); }
     }
 
+    function filterServiceRequests(){
+      const q = (document.getElementById('sr-search')?.value || '').toLowerCase();
+      const f = document.getElementById('sr-filter')?.value || '';
+      const filtered = srAllCache.filter(s => {
+        const matchQ = !q
+          || (s.deviceName||'').toLowerCase().includes(q)
+          || (s.requestType||'').toLowerCase().includes(q)
+          || (s.issueDescription||'').toLowerCase().includes(q);
+        const matchF = !f || s.status === f;
+        return matchQ && matchF;
+      });
+      renderServiceRequests(filtered);
+    }
+
     function renderServiceRequests(list){
+      expandedLogRow = null;
       document.getElementById('sr-list').innerHTML = list.length
-        ? list.map(s=>`<tr>
-            <td style="font-family:var(--mono);font-size:11px;color:var(--text3)">#${s.id}</td>
-            <td class="main-cell">${s.deviceName||'Device #'+s.deviceId}</td>
-            <td>${(s.requestType||'').toLowerCase().replace(/_/g,' ')}</td>
-            <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text2)">${s.issueDescription||'—'}</td>
-            <td>${s.urgent
-              ? '<span style="color:var(--red);font-family:var(--mono);font-size:10px;font-weight:700">⚠ URGENT</span>'
-              : '<span style="color:var(--text3);font-family:var(--mono);font-size:10px">—</span>'}</td>
-            <td style="font-size:10px;font-family:var(--mono);color:var(--text3)">${s.raisedAt ? s.raisedAt.split('T')[0] : '—'}</td>
-            <td>
-              <button class="btn btn-success btn-xs" onclick="openRepairPanel(${s.id}, '${(s.deviceName||'Device #'+s.deviceId).replace(/'/g,"\\'")}')">
-                ⚙ Update Repair
-              </button>
-            </td>
-          </tr>`).join('')
-        : `<tr><td colspan="7"><div class="empty"><div class="empty-icon">⚙</div>No devices in repair queue</div></td></tr>`;
+        ? list.map(s => {
+            const canUpdate = s.status === 'SENT_FOR_REPAIR';
+            return `<tr id="sr-row-${s.id}">
+              <td style="width:28px;padding:8px 6px 8px 12px">
+                <button class="btn btn-ghost btn-xs"
+                        style="padding:2px 6px;font-size:13px;line-height:1"
+                        title="View repair log"
+                        onclick="toggleRepairLog(${s.id}, this)">▶</button>
+              </td>
+              <td style="font-family:var(--mono);font-size:11px;color:var(--text3)">#${s.id}</td>
+              <td class="main-cell">${s.deviceName || 'Device #' + s.deviceId}</td>
+              <td>${(s.requestType||'').toLowerCase().replace(/_/g,' ')}</td>
+              <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text2)">${s.issueDescription||'—'}</td>
+              <td>${s.urgent
+                  ? '<span style="color:var(--red);font-family:var(--mono);font-size:10px;font-weight:700">⚠ URGENT</span>'
+                  : '<span style="color:var(--text3);font-family:var(--mono);font-size:10px">—</span>'}</td>
+              <td>${chip(s.status)}</td>
+              <td style="font-size:10px;font-family:var(--mono);color:var(--text3)">${s.raisedAt ? s.raisedAt.split('T')[0] : '—'}</td>
+              <td>
+                ${canUpdate
+                    ? `<button class="btn btn-success btn-xs" onclick="openRepairPanel(${s.id}, '${(s.deviceName||'Device #'+s.deviceId).replace(/'/g,"\\'")}')">⚙ Update Repair</button>`
+                    : `<span style="font-size:10px;font-family:var(--mono);color:var(--text3)">${s.resolvedAt ? s.resolvedAt.split('T')[0] : '—'}</span>`
+                }
+              </td>
+            </tr>
+            <tr id="sr-log-${s.id}" style="display:none">
+              <td colspan="9" style="padding:0;background:var(--bg3)">
+                <div id="sr-log-content-${s.id}" style="padding:16px 20px">
+                  <div style="color:var(--text3);font-family:var(--mono);font-size:11px">Loading repair log…</div>
+                </div>
+              </td>
+            </tr>`;
+          }).join('')
+        : `<tr><td colspan="9"><div class="empty"><div class="empty-icon">⚙</div>No service requests found</div></td></tr>`;
+    }
+
+    async function toggleRepairLog(srId, btn){
+      const logRow = document.getElementById(`sr-log-${srId}`);
+      const isOpen = logRow.style.display !== 'none';
+
+      if(expandedLogRow && expandedLogRow !== logRow){
+        expandedLogRow.style.display = 'none';
+        const prevId = expandedLogRow.id.replace('sr-log-','');
+        const prevBtn = document.querySelector(`#sr-row-${prevId} button`);
+        if(prevBtn) prevBtn.textContent = '▶';
+      }
+
+      if(isOpen){
+        logRow.style.display = 'none';
+        btn.textContent = '▶';
+        expandedLogRow = null;
+        return;
+      }
+
+      logRow.style.display = '';
+      btn.textContent = '▼';
+      expandedLogRow = logRow;
+
+      // Find the deviceId for this service request
+      const sr = srAllCache.find(s => s.id === srId);
+      if(!sr || !sr.deviceId){
+        document.getElementById(`sr-log-content-${srId}`).innerHTML =
+          `<span style="color:var(--text3);font-family:var(--mono);font-size:11px">No device ID found for this request.</span>`;
+        return;
+      }
+
+      // Fetch repair logs via the device-scoped vendor endpoint
+      try{
+        const logs = await apiFetch(`/devices/vendor/${sr.deviceId}/repair-logs`);
+        renderInlineRepairLog(srId, logs);
+      }catch(e){
+        document.getElementById(`sr-log-content-${srId}`).innerHTML =
+          `<span style="color:var(--text3);font-family:var(--mono);font-size:11px">Could not load repair log: ${e.message}</span>`;
+      }
+    }
+
+    function renderInlineRepairLog(srId, logs){
+      const el = document.getElementById(`sr-log-content-${srId}`);
+      if(!logs || !logs.length){
+        el.innerHTML = `<span style="color:var(--text3);font-family:var(--mono);font-size:11px">No repair log linked to this request yet.</span>`;
+        return;
+      }
+      el.innerHTML = logs.map(r => `
+        <div style="display:grid;grid-template-columns:repeat(4,1fr) auto;gap:12px 20px;align-items:start">
+          <div>
+            <div class="detail-label" style="font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1.5px;font-family:var(--mono);margin-bottom:4px">Repair Status</div>
+            <div>${chip(r.repairStatus || r.status)}</div>
+          </div>
+          <div>
+            <div class="detail-label" style="font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1.5px;font-family:var(--mono);margin-bottom:4px">Repaired By</div>
+            <div style="font-family:var(--mono);font-size:12px;color:var(--text)">${r.repairedBy || '—'}</div>
+          </div>
+          <div>
+            <div class="detail-label" style="font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1.5px;font-family:var(--mono);margin-bottom:4px">Repair Date</div>
+            <div style="font-family:var(--mono);font-size:12px;color:var(--text)">${r.repairDate || '—'}</div>
+          </div>
+          <div>
+            <div class="detail-label" style="font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1.5px;font-family:var(--mono);margin-bottom:4px">Repair Cost</div>
+            <div style="font-family:var(--mono);font-size:12px;color:var(--cyan)">${r.repairCost ? '₹' + r.repairCost : '—'}</div>
+          </div>
+          <div>
+            <div class="detail-label" style="font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1.5px;font-family:var(--mono);margin-bottom:4px">Action Taken</div>
+            <div style="font-family:var(--mono);font-size:12px;color:var(--text)">${r.repairAction || '—'}</div>
+          </div>
+        </div>
+        ${r.remarks ? `<div style="margin-top:10px;padding:8px 12px;background:var(--panel);border:1px solid var(--border);border-radius:6px;font-size:11px;font-family:var(--mono);color:var(--text2)">${r.remarks}</div>` : ''}
+      `).join('<hr style="border:none;border-top:1px solid var(--border);margin:12px 0">');
     }
 
     // ── REPAIR PANEL ──────────────────────────────────────────────────
@@ -892,7 +989,8 @@
       document.getElementById('vr-panel-subtitle').textContent = `Request #${requestId} — ${deviceName}`;
       document.getElementById('vr-status').value = 'REPAIR_DONE';
       document.getElementById('vr-resolution').value = '';
-      onOutcomeChange(); // set correct hint
+      document.getElementById('vr-repair-cost').value = '';
+      onOutcomeChange();
       const panel = document.getElementById('vendor-repair-panel');
       panel.style.display = 'block';
       panel.scrollIntoView({behavior:'smooth', block:'start'});
@@ -900,6 +998,7 @@
 
     function closeRepairPanel(){
       document.getElementById('vendor-repair-panel').style.display = 'none';
+      document.getElementById('vr-repair-cost').value = '';
     }
 
     function onOutcomeChange(){
@@ -915,81 +1014,26 @@
     }
 
     async function submitRepairUpdate(){
-      const requestId = document.getElementById('vr-request-id').value;
-      const status    = document.getElementById('vr-status').value;
+      const requestId  = document.getElementById('vr-request-id').value;
+      const status     = document.getElementById('vr-status').value;
       const resolution = document.getElementById('vr-resolution').value.trim();
+      const repairCost = parseFloat(document.getElementById('vr-repair-cost').value) || null;
 
       if(!resolution){
         showAlert('Please enter resolution notes','error'); return;
       }
 
-      // RepairDTO: { requestId, resolution, status }
-      const body = {
-        requestId: parseInt(requestId),
-        resolution,
-        status   // "REPAIR_DONE" → ASSIGNED  |  anything else → CONDEMNED
-      };
+      const body = { requestId: parseInt(requestId), resolution, status, repairCost };
 
       try{
         await apiFetch('/service-requests/vendor', {method:'PUT', body:JSON.stringify(body)});
-        const label = status === 'REPAIR_DONE' ? 'Repair marked done — device returned to employee' : 'Device condemned';
+        const label = status === 'REPAIR_DONE'
+          ? 'Repair marked done — device returned to employee'
+          : 'Device condemned';
         showAlert(label, 'success');
         closeRepairPanel();
-        // Refresh everything that could have changed
-        await Promise.all([loadServiceRequests(), loadMyDevices(), loadRepairLogs()]);
+        await Promise.all([loadServiceRequests(), loadMyDevices()]);
         loadDashboard();
-      }catch(e){ showAlert('Failed: '+e.message,'error'); }
-    }
-
-    // ── REPAIR LOGS ───────────────────────────────────────────────────
-    async function loadRepairLogs(){
-      try{
-        const data = await apiFetch('/tech-vendor/repair-logs');
-        repairsCache = data || [];
-        renderRepairLogs(repairsCache);
-      }catch(e){ renderRepairLogs([]); }
-    }
-
-    function renderRepairLogs(list){
-      document.getElementById('repair-list').innerHTML = list.length
-        ? list.map(r=>`<tr>
-            <td style="font-family:var(--mono);font-size:11px;color:var(--text3)">#${r.id}</td>
-            <td class="main-cell">${r.deviceName||'Device #'+r.deviceId}</td>
-            <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.issueReported||'—'}</td>
-            <td>${r.technicianName||'—'}</td>
-            <td style="font-size:11px;font-family:var(--mono)">${r.sentDate||'—'}</td>
-            <td style="font-size:11px;font-family:var(--mono)">${r.expectedReturnDate||'—'}</td>
-            <td style="font-family:var(--mono)">${r.repairCost ? '₹'+r.repairCost : '—'}</td>
-            <td>${chip(r.repairStatus)}</td>
-            <td><button class="btn btn-ghost btn-xs" onclick="openRepairUpdate(${r.id})">Update</button></td>
-          </tr>`).join('')
-        : `<tr><td colspan="9"><div class="empty"><div class="empty-icon">⚙</div>No repair logs</div></td></tr>`;
-    }
-
-    function openRepairUpdate(id){
-      document.getElementById('repair-id').value = id;
-      const form = document.getElementById('repair-update-form');
-      form.style.display = 'block';
-      form.scrollIntoView({behavior:'smooth'});
-    }
-
-    async function updateRepair(){
-      const id = document.getElementById('repair-id').value;
-      const body = {
-        repairStatus: document.getElementById('repair-status-input').value,
-        technicianName: document.getElementById('repair-tech').value.trim(),
-        repairCost: parseFloat(document.getElementById('repair-cost').value)||null,
-        invoiceNumber: document.getElementById('repair-invoice').value.trim(),
-        actualReturnDate: document.getElementById('repair-return-date').value||null,
-        fixedSuccessfully: document.getElementById('repair-fixed').value==='true',
-        repairNotes: document.getElementById('repair-notes').value.trim(),
-        postRepairAction: document.getElementById('repair-action').value
-      };
-      try{
-        await apiFetch(`/tech-vendor/repair-logs/${id}`, {method:'PUT', body:JSON.stringify(body)});
-        showAlert('Repair log updated!','success');
-        document.getElementById('repair-update-form').style.display='none';
-        loadRepairLogs(); loadMyDevices(); loadDashboard();
       }catch(e){ showAlert('Failed: '+e.message,'error'); }
     }
 
@@ -1024,46 +1068,141 @@
     }
 
     // ── DEVICE DETAIL MODAL ───────────────────────────────────────────
+    // Calls GET /vendor/{deviceId}/repair-logs to fetch repair history
     async function viewDevice(id){
       const d = devicesCache.find(x=>x.id===id);
-  if(!d) return;
-  document.getElementById('modal-device-name').textContent = d.deviceName;
+      if(!d) return;
 
-  const today = new Date();
-  const warrantyExpiry = d.warrantyExpiryDate ? new Date(d.warrantyExpiryDate) : null;
-  const warrantyDisplay = warrantyExpiry
-    ? (warrantyExpiry > today
-        ? `<span style="color:var(--green);font-family:var(--mono)">✓ Valid until ${d.warrantyExpiryDate}</span>`
-        : `<span style="color:var(--red);font-family:var(--mono)">✗ Expired ${d.warrantyExpiryDate}</span>`)
-    : '<span style="color:var(--text3);font-family:var(--mono)">—</span>';
+      currentModalDeviceId = id;
+      document.getElementById('modal-device-name').textContent = d.deviceName;
+      document.getElementById('modal-device-id').textContent = `#${d.id} · ${d.brand||''}`;
 
-  document.getElementById('modal-detail-grid').innerHTML = `
-    <div class="detail-item"><div class="detail-label">Brand</div><div class="detail-value">${d.brand||'—'}</div></div>
-    <div class="detail-item"><div class="detail-label">Type</div><div class="detail-value">${chip(d.deviceType)}</div></div>
-    <div class="detail-item"><div class="detail-label">Status</div><div class="detail-value">${chip(d.deviceStatus)}</div></div>
-    <div class="detail-item"><div class="detail-label">Warranty</div><div class="detail-value">${warrantyDisplay}</div></div>
-    <div class="detail-item"><div class="detail-label">Rent/Month</div><div class="detail-value">${d.rentPerMonth ? '<span style="color:var(--cyan);font-family:var(--mono)">₹'+d.rentPerMonth+'</span>' : '<span style="color:var(--text3)">—</span>'}</div></div>
-    <div class="detail-item"><div class="detail-label">Assigned To</div><div class="detail-value">${d.assignedEmployeeName||'<span style="color:var(--text3)">Unassigned</span>'}</div></div>
-    <div class="detail-item"><div class="detail-label">Added On</div><div class="detail-value">${d.createdAt ? d.createdAt.split('T')[0] : '—'}</div></div>
-  `;
+      const today = new Date();
+      const warrantyExpiry = d.warrantyExpiryDate ? new Date(d.warrantyExpiryDate) : null;
+      const warrantyDisplay = warrantyExpiry
+        ? (warrantyExpiry > today
+            ? `<span style="color:var(--green);font-family:var(--mono)">✓ Valid until ${d.warrantyExpiryDate}</span>`
+            : `<span style="color:var(--red);font-family:var(--mono)">✗ Expired ${d.warrantyExpiryDate}</span>`)
+        : '<span style="color:var(--text3);font-family:var(--mono)">—</span>';
 
-      const repairs = repairsCache.filter(r=>r.deviceId===id);
-      document.getElementById('modal-repair-history').innerHTML = repairs.length
-        ? `<div class="timeline">${repairs.map(r=>`
-            <div class="tl-item">
-              <div class="tl-dot ${r.repairStatus==='FIXED'?'green':r.repairStatus==='IRREPARABLE'?'red':r.repairStatus==='IN_PROGRESS'?'amber':'cyan'}">⚙</div>
-              <div class="tl-content">
-                <div class="tl-title">${r.issueReported||'Repair'}</div>
-                <div class="tl-meta">${chip(r.repairStatus)} · ${r.sentDate||'—'} → ${r.actualReturnDate||'pending'} · ${r.repairCost ? '₹'+r.repairCost : 'cost pending'}</div>
-              </div>
-            </div>`).join('')}</div>`
-        : `<div class="empty" style="padding:16px">No repair history</div>`;
+      document.getElementById('modal-detail-grid').innerHTML = `
+        <div class="detail-item"><div class="detail-label">Brand</div><div class="detail-value">${d.brand||'—'}</div></div>
+        <div class="detail-item"><div class="detail-label">Type</div><div class="detail-value">${chip(d.deviceType)}</div></div>
+        <div class="detail-item"><div class="detail-label">Status</div><div class="detail-value">${chip(d.deviceStatus)}</div></div>
+        <div class="detail-item"><div class="detail-label">Warranty</div><div class="detail-value">${warrantyDisplay}</div></div>
+        <div class="detail-item"><div class="detail-label">Rent/Month</div><div class="detail-value">${d.rentPerMonth ? '<span style="color:var(--cyan);font-family:var(--mono)">₹'+d.rentPerMonth+'</span>' : '<span style="color:var(--text3)">—</span>'}</div></div>
+        <div class="detail-item"><div class="detail-label">Assigned To</div><div class="detail-value">${d.assignedEmployeeName||'<span style="color:var(--text3)">Unassigned</span>'}</div></div>
+        <div class="detail-item"><div class="detail-label">Added On</div><div class="detail-value">${d.createdAt ? d.createdAt.split('T')[0] : '—'}</div></div>
+      `;
 
+      // Show loading state immediately, then fetch
+      document.getElementById('modal-repair-history').innerHTML = `
+        <div class="empty" style="padding:20px">
+          <div class="empty-icon" style="font-size:20px;animation:spin 1s linear infinite">⚙</div>
+          Loading repair history…
+        </div>`;
       document.getElementById('device-modal').classList.add('open');
+
+      await loadModalRepairLogs(id);
+    }
+
+    // Fetches and renders repair logs for the currently open modal device
+    async function loadModalRepairLogs(deviceId){
+      const container = document.getElementById('modal-repair-history');
+      try{
+        const logs = await apiFetch(`/devices/vendor/${deviceId}/repair-logs`);
+        renderModalRepairLogs(logs);
+      }catch(e){
+        container.innerHTML = `
+          <div style="padding:12px 0;font-size:11px;font-family:var(--mono);color:var(--red)">
+            Failed to load repair logs: ${e.message}
+          </div>`;
+      }
+    }
+
+    // Re-fetches logs for currently open modal (used by refresh button)
+    async function refreshModalRepairLogs(){
+      if(!currentModalDeviceId) return;
+      const btn = document.getElementById('modal-refresh-logs-btn');
+      btn.textContent = '↻ Loading…';
+      btn.disabled = true;
+      await loadModalRepairLogs(currentModalDeviceId);
+      btn.textContent = '↺ Refresh';
+      btn.disabled = false;
+    }
+
+    // Renders RepairLogResponseDTO list into the modal repair history section
+    function renderModalRepairLogs(logs){
+      const container = document.getElementById('modal-repair-history');
+      if(!logs || !logs.length){
+        container.innerHTML = `<div class="empty" style="padding:16px"><div class="empty-icon">⚙</div>No repair history for this device</div>`;
+        return;
+      }
+
+      container.innerHTML = logs.map(r => {
+        // Determine dot color from repairStatus or serviceRequestStatus
+        const statusVal = (r.repairStatus || r.serviceRequestStatus || '').toUpperCase();
+        const dotColor = statusVal.includes('DONE') || statusVal.includes('FIXED') ? 'green'
+          : statusVal.includes('IRREPARABLE') || statusVal.includes('NOT_FIXABLE') ? 'red'
+          : statusVal.includes('IN_PROGRESS') || statusVal.includes('SENT') ? 'amber'
+          : 'cyan';
+
+        return `
+        <div class="repair-log-card">
+          <div class="repair-log-header">
+            <div style="display:flex;align-items:center;gap:10px">
+              <div class="tl-dot ${dotColor}" style="width:24px;height:24px;font-size:10px">⚙</div>
+              <div>
+                <div style="font-size:12px;font-weight:600;color:var(--text)">
+                  ${r.issueType ? r.issueType.replace(/_/g,' ') : 'Repair Log'}
+                  ${r.damagedComponent ? `<span style="color:var(--text3);font-weight:400"> · ${r.damagedComponent}</span>` : ''}
+                </div>
+                ${r.serviceRequestId
+                    ? `<div class="repair-log-id">SR #${r.serviceRequestId} · ${r.serviceRequestStatus ? chip(r.serviceRequestStatus) : ''}</div>`
+                    : ''}
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px">
+              ${r.repairStatus ? chip(r.repairStatus) : ''}
+              <span style="font-size:10px;font-family:var(--mono);color:var(--text3)">#${r.id}</span>
+            </div>
+          </div>
+
+          <div class="repair-log-grid">
+            <div>
+              <div class="detail-label">Repaired By</div>
+              <div style="font-family:var(--mono);font-size:12px;color:var(--text);margin-top:3px">${r.repairedBy || '—'}</div>
+            </div>
+            <div>
+              <div class="detail-label">Repair Date</div>
+              <div style="font-family:var(--mono);font-size:12px;color:var(--text);margin-top:3px">${r.repairDate || '—'}</div>
+            </div>
+            <div>
+              <div class="detail-label">Repair Cost</div>
+              <div style="font-family:var(--mono);font-size:12px;color:var(--cyan);margin-top:3px">${r.repairCost ? '₹' + r.repairCost : '—'}</div>
+            </div>
+            <div>
+              <div class="detail-label">Action Taken</div>
+              <div style="font-family:var(--mono);font-size:12px;color:var(--text);margin-top:3px">${r.repairAction || '—'}</div>
+            </div>
+            <div>
+              <div class="detail-label">Replaced Component</div>
+              <div style="font-family:var(--mono);font-size:12px;color:var(--text);margin-top:3px">${r.replacedComponent || '—'}</div>
+            </div>
+            <div>
+              <div class="detail-label">Device</div>
+              <div style="font-family:var(--mono);font-size:12px;color:var(--text);margin-top:3px">${r.deviceName || '—'}</div>
+            </div>
+          </div>
+
+          ${r.remarks ? `<div class="repair-log-remarks">📝 ${r.remarks}</div>` : ''}
+        </div>`;
+      }).join('');
     }
 
     function closeModal(){
       document.getElementById('device-modal').classList.remove('open');
+      currentModalDeviceId = null;
     }
 
     // ── HELPERS ───────────────────────────────────────────────────────
@@ -1086,83 +1225,80 @@
       localStorage.removeItem('auth_type');
       fetch(`${API}/session/logout`,{method:'POST'}).finally(()=>window.location.href='/vendor-login.html');
     }
+
     // ── TWO-FACTOR AUTH ───────────────────────────────────────────────
-    async function loadTotpStatus() {
-        const chip = document.getElementById('totp-status-chip');
-        chip.textContent = 'checking...';
-        chip.className = 'chip';
-        document.getElementById('qr-area').style.display = 'none';
-        document.getElementById('totp-verify-input').value = '';
-        document.getElementById('totp-verify-error').style.display = 'none';
-        try {
-            const data = await apiFetch('/totp/status');
-            if (data.totpEnabled) {
-                chip.textContent = 'enabled';
-                chip.className = 'chip repair_done';
-                document.getElementById('totp-setup-section').style.display = 'none';
-                document.getElementById('totp-disable-section').style.display = 'block';
-            } else {
-                chip.textContent = 'disabled';
-                chip.className = 'chip rejected';
-                document.getElementById('totp-setup-section').style.display = 'block';
-                document.getElementById('totp-disable-section').style.display = 'none';
-            }
-        } catch(e) {
-            chip.textContent = 'error';
-            chip.className = 'chip open';
+    async function loadTotpStatus(){
+      const chipEl = document.getElementById('totp-status-chip');
+      chipEl.textContent = 'checking...';
+      chipEl.className = 'chip';
+      document.getElementById('qr-area').style.display = 'none';
+      document.getElementById('totp-verify-input').value = '';
+      document.getElementById('totp-verify-error').style.display = 'none';
+      try{
+        const data = await apiFetch('/totp/status');
+        if(data.totpEnabled){
+          chipEl.textContent = 'enabled';
+          chipEl.className = 'chip repair_done';
+          document.getElementById('totp-setup-section').style.display = 'none';
+          document.getElementById('totp-disable-section').style.display = 'block';
+        } else {
+          chipEl.textContent = 'disabled';
+          chipEl.className = 'chip rejected';
+          document.getElementById('totp-setup-section').style.display = 'block';
+          document.getElementById('totp-disable-section').style.display = 'none';
         }
+      }catch(e){
+        chipEl.textContent = 'error';
+        chipEl.className = 'chip open';
+      }
     }
 
-    async function generateTotpQr() {
-        const btn = document.getElementById('generate-qr-btn');
-        btn.textContent = 'Generating...';
-        btn.disabled = true;
-        try {
-            const data = await apiFetch('/totp/setup', { method: 'POST' });
-            document.getElementById('totp-secret-display').textContent = data.secret || '';
-            const qrUri = encodeURIComponent(data.qrCodeUri || '');
-            document.getElementById('qr-img').src =
-                `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${qrUri}`;
-            document.getElementById('qr-area').style.display = 'block';
-        } catch(e) {
-            showAlert('Failed to generate QR: ' + e.message, 'error');
-        } finally {
-            btn.textContent = 'Regenerate QR Code';
-            btn.disabled = false;
-        }
+    async function generateTotpQr(){
+      const btn = document.getElementById('generate-qr-btn');
+      btn.textContent = 'Generating...';
+      btn.disabled = true;
+      try{
+        const data = await apiFetch('/totp/setup', { method: 'POST' });
+        document.getElementById('totp-secret-display').textContent = data.secret || '';
+        const qrUri = encodeURIComponent(data.qrCodeUri || '');
+        document.getElementById('qr-img').src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${qrUri}`;
+        document.getElementById('qr-area').style.display = 'block';
+      }catch(e){
+        showAlert('Failed to generate QR: ' + e.message, 'error');
+      }finally{
+        btn.textContent = 'Regenerate QR Code';
+        btn.disabled = false;
+      }
     }
 
-    async function verifyAndActivateTotp() {
-        const code = document.getElementById('totp-verify-input').value.trim();
-        const errEl = document.getElementById('totp-verify-error');
-        errEl.style.display = 'none';
-        if (code.length !== 6) {
-            errEl.textContent = 'Please enter a 6-digit code.';
-            errEl.style.display = 'block';
-            return;
-        }
-        try {
-            await apiFetch('/totp/verify-setup', {
-                method: 'POST',
-                body: JSON.stringify({ code })
-            });
-            showAlert('2FA activated — required on next login', 'success');
-            loadTotpStatus();
-        } catch(e) {
-            errEl.textContent = 'Invalid code. Try again.';
-            errEl.style.display = 'block';
-        }
+    async function verifyAndActivateTotp(){
+      const code = document.getElementById('totp-verify-input').value.trim();
+      const errEl = document.getElementById('totp-verify-error');
+      errEl.style.display = 'none';
+      if(code.length !== 6){
+        errEl.textContent = 'Please enter a 6-digit code.';
+        errEl.style.display = 'block';
+        return;
+      }
+      try{
+        await apiFetch('/totp/verify-setup', { method: 'POST', body: JSON.stringify({ code }) });
+        showAlert('2FA activated — required on next login', 'success');
+        loadTotpStatus();
+      }catch(e){
+        errEl.textContent = 'Invalid code. Try again.';
+        errEl.style.display = 'block';
+      }
     }
 
-    async function disableTotp() {
-        if (!confirm('Disable two-factor authentication?')) return;
-        try {
-            await apiFetch('/totp/disable', { method: 'DELETE' });
-            showAlert('2FA has been disabled', 'success');
-            loadTotpStatus();
-        } catch(e) {
-            showAlert('Failed: ' + e.message, 'error');
-        }
+    async function disableTotp(){
+      if(!confirm('Disable two-factor authentication?')) return;
+      try{
+        await apiFetch('/totp/disable', { method: 'DELETE' });
+        showAlert('2FA has been disabled', 'success');
+        loadTotpStatus();
+      }catch(e){
+        showAlert('Failed: ' + e.message, 'error');
+      }
     }
 </script>
 </body>

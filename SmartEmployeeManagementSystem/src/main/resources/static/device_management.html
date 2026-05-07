@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EMS - Device Management</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg: #0d0f14; --bg2: #131720; --bg3: #1a2030;
+            --panel: #1e2436; --panel2: #252c40;
+            --border: rgba(255,255,255,0.07); --border2: rgba(255,255,255,0.12);
+            --text: #e0e0e0; --text2: #8b92a8; --text3: #5557fa;
+            --accent: #4f8cff; --accent-dim: rgba(79,140,255,0.12);
+            --green: #36d399; --green-dim: rgba(54,211,153,0.12);
+            --amber: #f9c74f; --amber-dim: rgba(249,199,79,0.12);
+            --red: #f87171; --red-dim: rgba(248,113,113,0.12);
+            --violet: #a78bfa; --violet-dim: rgba(167,139,250,0.12);
+            --font: 'DM Sans', sans-serif; --mono: 'DM Mono', monospace;
+        }
+        body { font-family: var(--font); background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; overflow: hidden; }
+        .app { display: flex; height: 100vh; }
+        .sidebar { width: 260px; background: var(--bg2); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow-y: auto; }
+        .logo { padding: 20px; border-bottom: 1px solid var(--border); }
+        .logo h2 { font-size: 20px; color: var(--text); }
+        .logo span { color: var(--accent); }
+        .logo p { font-size: 11px; color: var(--text3); margin-top: 4px; }
+        .nav-item { padding: 12px 20px; margin: 4px 12px; border-radius: 8px; cursor: pointer; transition: all 0.2s; color: var(--text2); display: flex; align-items: center; gap: 10px; }
+        .nav-item:hover, .nav-item.active { background: var(--accent-dim); color: var(--accent); }
+        .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .topbar { background: var(--bg2); padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
+        .page-title { font-size: 20px; font-weight: 600; }
+        .user-info { display: flex; align-items: center; gap: 16px; }
+        .logout-btn { padding: 8px 16px; background: var(--red-dim); border: 1px solid rgba(248,113,113,0.3); border-radius: 6px; color: var(--red); cursor: pointer; }
+        .content { flex: 1; overflow-y: auto; padding: 24px; }
+        .view { display: none; }
+        .view.active { display: block; }
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+        .stat-card { background: var(--panel); padding: 20px; border-radius: 12px; border: 1px solid var(--border); }
+        .stat-label { font-size: 11px; color: var(--text3); text-transform: uppercase; margin-bottom: 8px; }
+        .stat-value { font-size: 28px; font-weight: 600; }
+        .form-card { background: var(--panel); border-radius: 12px; border: 1px solid var(--border); padding: 24px; max-width: 600px; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group.full { grid-column: 1 / -1; }
+        label { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; }
+        input, select, textarea { padding: 10px 12px; background: var(--bg3); border: 1px solid var(--border2); border-radius: 8px; color: var(--text); font-family: var(--font); font-size: 13px; }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
+        .table-wrap { background: var(--panel); border-radius: 12px; border: 1px solid var(--border); overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 12px 16px; background: var(--bg3); color: var(--text3); font-size: 11px; font-weight: 600; text-transform: uppercase; }
+        td { padding: 12px 16px; border-top: 1px solid var(--border); }
+        .chip { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; display: inline-block; }
+        .chip.active, .chip.approved, .chip.delivered, .chip.repair_done { background: var(--green-dim); color: var(--green); }
+        .chip.pending, .chip.scheduled, .chip.sent_for_repair { background: var(--amber-dim); color: var(--amber); }
+        .chip.open { background: var(--accent-dim); color: var(--accent); }
+        .chip.inactive, .chip.rejected, .chip.cancelled, .chip.expired { background: var(--red-dim); color: var(--red); }
+        .chip.under_repair { background: var(--amber-dim); color: var(--amber); }
+        .chip.assigned { background: var(--green-dim); color: var(--green); }
+        .chip.condemned { background: var(--red-dim); color: var(--red); }
+        .btn { padding: 8px 16px; border-radius: 6px; border: none; font-family: var(--font); font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+        .btn-primary { background: var(--accent); color: white; }
+        .btn-primary:hover { background: #6ba0ff; }
+        .btn-secondary { background: var(--bg3); color: var(--text2); border: 1px solid var(--border2); }
+        .btn-danger { background: var(--red-dim); color: var(--red); border: 1px solid rgba(248,113,113,0.3); }
+        .btn-sm { padding: 4px 10px; font-size: 11px; margin: 2px; }
+        .section-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .section-title { font-size: 16px; font-weight: 600; }
+        .empty-state { text-align: center; padding: 40px; color: var(--text3); }
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center; }
+        .modal-overlay.open { display: flex; }
+        .modal { background: var(--panel); border-radius: 12px; padding: 24px; width: 450px; max-width: 90%; }
+        .modal-title { font-size: 18px; font-weight: 600; margin-bottom: 16px; }
+        .modal-actions { display: flex; gap: 12px; margin-top: 20px; justify-content: flex-end; }
+        .alert { position: fixed; top: 20px; right: 20px; padding: 12px 20px; border-radius: 8px; z-index: 1100; animation: slideIn 0.3s ease; }
+        .alert-success { background: var(--green-dim); color: var(--green); border: 1px solid var(--green); }
+        .alert-error { background: var(--red-dim); color: var(--red); border: 1px solid var(--red); }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .action-row { display: flex; gap: 6px; flex-wrap: wrap; }
+        .back-btn { padding: 8px 16px; background: var(--bg3); border: 1px solid var(--border2); border-radius: 6px; color: var(--text2); cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; }
+        .back-btn:hover { background: var(--panel2); color: var(--text); }
+    </style>
+</head>
+<body>
+<div class="app">
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="logo">
+            <h2>E<span>M</span>S</h2>
+            <p>Device Management</p>
+        </div>
+        <div style="flex: 1;">
+            <div class="nav-item" onclick="window.location.href='/dashboard.html'">&#9632; ← Back to Dashboard</div>
+            <div class="nav-item active" onclick="showView('overview', event)">&#9632; Overview</div>
+            <div class="nav-item" onclick="showView('my-devices', event)">&#9632; My Devices</div>
+            <div class="nav-item" onclick="showView('service-requests', event)">&#9632; My Service Requests</div>
+            <div class="nav-item" onclick="showView('admin-service-requests', event)">&#9632; All Service Requests</div>
+            <div class="nav-item" onclick="showView('add-device', event)">&#9632; Add New Device</div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="topbar">
+            <div class="page-title" id="pageTitle">Device Overview</div>
+            <div class="user-info">
+                <span id="username-display"></span>
+                <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
+        </div>
+        <div class="content" id="content">
+
+            <!-- OVERVIEW VIEW -->
+            <div id="overview-view" class="view active">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Total Devices</div>
+                        <div class="stat-value" id="total-devices">--</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Assigned</div>
+                        <div class="stat-value" id="assigned-devices">--</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Under Repair</div>
+                        <div class="stat-value" id="repair-devices">--</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Open Requests</div>
+                        <div class="stat-value" id="open-requests">--</div>
+                    </div>
+                </div>
+
+                <div class="section-head">
+                    <div class="section-title">Recent Service Requests</div>
+                    <button class="btn btn-secondary btn-sm" onclick="loadOverview()">Refresh</button>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Employee</th>
+                            <th>Device</th>
+                            <th>Type</th>
+                            <th>Status</th>
+                            <th>Raised At</th>
+                        </tr>
+                        </thead>
+                        <tbody id="recent-requests"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ALL DEVICES VIEW -->
+            <div id="all-devices-view" class="view">
+                <div class="section-head">
+                    <div class="section-title">All Devices</div>
+                    <button class="btn btn-primary btn-sm" onclick="loadAllDevices()">Refresh</button>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Device Name</th>
+                            <th>Brand</th>
+                            <th>Type</th>
+                            <th>Status</th>
+                            <th>Warranty</th>
+                            <th>Assigned To</th>
+                            <th>Actions</th>
+                        </tr>
+                        </thead>
+                        <tbody id="all-devices-list"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- MY DEVICES VIEW -->
+            <div id="my-devices-view" class="view">
+                <div class="section-head">
+                    <div class="section-title">My Assigned Devices</div>
+                    <button class="btn btn-primary btn-sm" onclick="loadMyAssignedDevices()">Refresh</button>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Device Name</th>
+                            <th>Brand</th>
+                            <th>Type</th>
+                            <th>Warranty</th>
+                            <th>Assigned On</th>
+                            <th>Status</th>
+                        </tr>
+                        </thead>
+                        <tbody id="my-devices-list"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- MY SERVICE REQUESTS VIEW -->
+            <div id="service-requests-view" class="view">
+                <div class="section-head">
+                    <div class="section-title">My Service Requests</div>
+                    <button class="btn btn-primary btn-sm" onclick="loadServiceRequests()">Refresh</button>
+                </div>
+                <div class="table-wrap" style="margin-bottom:24px">
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Device</th>
+                            <th>Type</th>
+                            <th>Description</th>
+                            <th>Urgent</th>
+                            <th>Status</th>
+                            <th>Raised At</th>
+                        </tr>
+                        </thead>
+                        <tbody id="service-requests-list"></tbody>
+                    </table>
+                </div>
+
+                <div class="section-title" style="margin-bottom:16px">Raise a New Request</div>
+                <div class="form-card">
+                    <div class="form-grid">
+                        <div class="form-group full">
+                            <label>Device</label>
+                            <select id="sr-device-select">
+                                <option value="">-- Select your device --</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Request Type</label>
+                            <select id="sr-type">
+                                <option value="REPAIR">Repair</option>
+                                <option value="REPLACEMENT">Replacement</option>
+                                <option value="UPGRADE">Upgrade</option>
+                                <option value="MAINTENANCE">Maintenance</option>
+                                <option value="RETURN">Return</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="display:flex;align-items:center;gap:10px;padding-top:20px">
+                            <input type="checkbox" id="sr-urgent" style="width:16px;height:16px;padding:0">
+                            <label style="text-transform:none;font-size:13px;font-weight:400;color:var(--text);cursor:pointer" for="sr-urgent">Mark as Urgent</label>
+                        </div>
+                        <div class="form-group full">
+                            <label>Issue Description</label>
+                            <textarea id="sr-description" rows="3" placeholder="Describe the issue in detail..."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-actions" style="margin-top:20px">
+                        <button class="btn btn-primary" onclick="submitServiceRequest()">Submit Request</button>
+                        <button class="btn btn-secondary" onclick="clearServiceRequestForm()">Clear</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ADMIN SERVICE REQUESTS VIEW -->
+            <div id="admin-service-requests-view" class="view">
+                <div class="section-head">
+                    <div class="section-title">All Open Service Requests</div>
+                    <button class="btn btn-primary btn-sm" onclick="loadAdminServiceRequests()">Refresh</button>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Employee</th>
+                            <th>Device</th>
+                            <th>Type</th>
+                            <th>Description</th>
+                            <th>Urgent</th>
+                            <th>Status</th>
+                            <th>Raised At</th>
+                            <th>Actions</th>
+                        </tr>
+                        </thead>
+                        <tbody id="admin-service-requests-list"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ADD DEVICE VIEW -->
+            <div id="add-device-view" class="view">
+                <div class="section-title" style="margin-bottom: 20px;">Add New Device</div>
+                <div class="form-card">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Device Name</label>
+                            <input type="text" id="device-name" placeholder="e.g., MacBook Pro 16">
+                        </div>
+                        <div class="form-group">
+                            <label>Brand</label>
+                            <input type="text" id="device-brand" placeholder="e.g., Apple">
+                        </div>
+                        <div class="form-group">
+                            <label>Device Type</label>
+                            <select id="device-type">
+                                <option value="LAPTOP">Laptop</option>
+                                <option value="DESKTOP">Desktop</option>
+                                <option value="MOBILE">Mobile</option>
+                                <option value="TABLET">Tablet</option>
+                                <option value="MONITOR">Monitor</option>
+                                <option value="KEYBOARD">Keyboard</option>
+                                <option value="MOUSE">Mouse</option>
+                                <option value="HEADSET">Headset</option>
+                                <option value="OTHER">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Warranty Expiry Date</label>
+                            <input type="date" id="device-warranty">
+                        </div>
+                        <div class="form-group full">
+                            <label>Vendor</label>
+                            <select id="device-vendor">
+                                <option value="">-- Select Vendor --</option>
+                            </select>
+                        </div>
+                        <div class="form-group full">
+                            <label>Description (Optional)</label>
+                            <textarea id="device-description" rows="3" placeholder="Additional device details..."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-actions" style="margin-top: 20px;">
+                        <button class="btn btn-primary" onclick="addDevice()">Add Device</button>
+                        <button class="btn btn-secondary" onclick="clearDeviceForm()">Clear</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- ASSIGN DEVICE MODAL -->
+<div id="assign-modal" class="modal-overlay">
+    <div class="modal">
+        <div class="modal-title">Assign Device to Employee</div>
+        <input type="hidden" id="assign-device-id">
+        <div class="form-group" style="margin-bottom:12px">
+            <label>Device</label>
+            <input type="text" id="assign-device-name" readonly style="color:var(--text2)">
+        </div>
+        <div class="form-group" style="margin-bottom:12px">
+            <label>Employee</label>
+            <select id="assign-employee-select">
+                <option value="">-- Select Employee --</option>
+            </select>
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-primary" onclick="confirmAssign()">Assign</button>
+            <button class="btn btn-secondary" onclick="closeAssignModal()">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- ADMIN SERVICE REQUEST ACTION MODAL -->
+<div id="admin-sr-modal" class="modal-overlay">
+    <div class="modal">
+        <div class="modal-title">Update Service Request <span id="admin-sr-modal-id" style="color:var(--accent)"></span></div>
+        <input type="hidden" id="admin-sr-id">
+
+        <div class="form-group" style="margin-bottom:14px">
+            <label>Device</label>
+            <input type="text" id="admin-sr-device-display" readonly style="color:var(--text2)">
+        </div>
+        <div class="form-group" style="margin-bottom:14px">
+            <label>Employee</label>
+            <input type="text" id="admin-sr-employee-display" readonly style="color:var(--text2)">
+        </div>
+        <div class="form-group" style="margin-bottom:14px">
+            <label>Update Status</label>
+            <select id="admin-sr-status">
+                <option value="SENT_FOR_REPAIR">Sent for Repair — device will be marked Under Repair</option>
+                <option value="REPAIR_DONE">Repair Done</option>
+                <option value="REJECTED">Rejected</option>
+            </select>
+        </div>
+        <div class="form-group" style="margin-bottom:4px">
+            <label>Admin Remarks</label>
+            <textarea id="admin-sr-remarks" rows="3" placeholder="Add remarks or instructions for the vendor..."></textarea>
+        </div>
+        <div id="admin-sr-repair-hint" style="font-size:11px;color:var(--amber);margin-top:6px;display:none;">
+            ⚠ Selecting "Sent for Repair" will automatically mark the device as <strong>Under Repair</strong>.
+        </div>
+
+        <div class="modal-actions">
+            <button class="btn btn-primary" onclick="submitAdminSRUpdate()">Update Request</button>
+            <button class="btn btn-secondary" onclick="closeAdminSRModal()">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const API = 'http://localhost:8080';
+    let currentUser = null;
+
+    (async function initAuth() {
+        const token = localStorage.getItem('jwt_token');
+        const authType = localStorage.getItem('auth_type');
+        if (!token && authType !== 'session') {
+            window.location.href = '/google.html';
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API}/employee/me`, {
+                headers: getAuthHeader(),
+                credentials: 'include'
+            });
+
+            if (response.status === 401) { window.location.href = '/google.html'; return; }
+            if (!response.ok) { window.location.href = '/google.html'; return; }
+
+            const employee = await response.json();
+            currentUser = employee;
+            document.getElementById('username-display').textContent = employee.email || employee.name || 'User';
+            loadOverview();
+        } catch (e) {
+            window.location.href = '/google.html';
+        }
+    })();
+
+    function getAuthHeader() {
+        const token = localStorage.getItem('jwt_token');
+        return token ? { 'Authorization': `Bearer ${token}` } : {};
+    }
+
+    async function apiFetch(path, opts = {}) {
+        try {
+            const response = await fetch(`${API}${path}`, {
+                ...opts,
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...getAuthHeader(),
+                    ...opts.headers
+                },
+                credentials: 'include'
+            });
+
+            if (response.status === 401) {
+                localStorage.removeItem('jwt_token');
+                localStorage.removeItem('auth_type');
+                showAlert('Session expired. Please login again.', 'error');
+                setTimeout(() => window.location.href = '/google.html', 1500);
+                throw new Error('Unauthorized');
+            }
+
+            if (!response.ok) {
+                const error = await response.text();
+                throw new Error(error || 'Request failed');
+            }
+
+            const text = await response.text();
+            if (!text) return null;
+            try { return JSON.parse(text); } catch { return text; }
+        } catch (e) {
+            if (!e.message.includes('Unauthorized')) showAlert(e.message, 'error');
+            throw e;
+        }
+    }
+
+    function showAlert(message, type) {
+        const alert = document.createElement('div');
+        alert.className = `alert alert-${type}`;
+        alert.textContent = message;
+        document.body.appendChild(alert);
+        setTimeout(() => alert.remove(), 3000);
+    }
+
+    function showView(viewName, event) {
+        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+        document.getElementById(`${viewName}-view`).classList.add('active');
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        if (event && event.target) event.target.classList.add('active');
+        document.getElementById('pageTitle').textContent = viewName.split('-').map(w =>
+            w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+
+        const loaders = {
+            'overview': loadOverview,
+            'all-devices': loadAllDevices,
+            'my-devices': loadMyAssignedDevices,
+            'service-requests': loadServiceRequests,
+            'admin-service-requests': loadAdminServiceRequests,
+            'add-device': loadVendorsForDevice
+        };
+        if (loaders[viewName]) loaders[viewName]();
+    }
+
+    // ============ OVERVIEW ============
+    async function loadOverview() {
+        try {
+            const [allDevices, requests] = await Promise.all([
+                apiFetch('/devices/vendor/me'),
+                apiFetch('/service-requests/open')
+            ]);
+
+            document.getElementById('total-devices').textContent = allDevices?.length || 0;
+            document.getElementById('assigned-devices').textContent =
+                allDevices?.filter(d => d.deviceStatus === 'ASSIGNED').length || 0;
+            document.getElementById('repair-devices').textContent =
+                allDevices?.filter(d => d.deviceStatus === 'UNDER_REPAIR').length || 0;
+            document.getElementById('open-requests').textContent = requests?.length || 0;
+
+            const recent = (requests || []).slice(0, 5);
+            const tbody = document.getElementById('recent-requests');
+            if (!recent.length) {
+                tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No recent requests</td></tr>';
+            } else {
+                tbody.innerHTML = recent.map(r => `<tr>
+                    <td>#${r.id}</td>
+                    <td>${r.raisedByName || '—'}</td>
+                    <td>${r.deviceName || '—'}</td>
+                    <td><span class="chip">${r.requestType}</span></td>
+                    <td><span class="chip ${r.status?.toLowerCase()}">${r.status}</span></td>
+                    <td style="font-size:12px">${r.raisedAt ? new Date(r.raisedAt).toLocaleDateString() : '—'}</td>
+                </tr>`).join('');
+            }
+        } catch (e) { console.error(e); }
+    }
+
+    // ============ ALL DEVICES ============
+    async function loadAllDevices() {
+        try {
+            const devices = await apiFetch('/devices/all');
+            const tbody = document.getElementById('all-devices-list');
+            if (!devices || !devices.length) {
+                tbody.innerHTML = '<tr><td colspan="8" class="empty-state">No devices found</td></tr>';
+                return;
+            }
+
+            const today = new Date();
+            tbody.innerHTML = devices.map(d => {
+                const warrantyExpiry = d.warrantyExpiryDate ? new Date(d.warrantyExpiryDate) : null;
+                const warrantyDisplay = warrantyExpiry
+                    ? (warrantyExpiry > today
+                        ? `<span style="color:var(--green);font-size:11px">✓ ${d.warrantyExpiryDate}</span>`
+                        : `<span style="color:var(--red);font-size:11px">✗ ${d.warrantyExpiryDate}</span>`)
+                    : '<span style="color:var(--text3);font-size:11px">—</span>';
+
+                const actions = d.deviceStatus === 'AVAILABLE'
+                    ? `<button class="btn btn-primary btn-sm" onclick="openAssignModal(${d.id}, '${d.deviceName}')">Assign</button>`
+                    : '—';
+
+                return `<tr>
+                    <td>#${d.id}</td>
+                    <td><strong>${d.deviceName || '—'}</strong></td>
+                    <td>${d.brand || '—'}</td>
+                    <td><span class="chip">${(d.deviceType || '').toLowerCase()}</span></td>
+                    <td><span class="chip ${(d.deviceStatus || '').toLowerCase()}">${d.deviceStatus || '—'}</span></td>
+                    <td>${warrantyDisplay}</td>
+                    <td>${d.assignedToName || '—'}</td>
+                    <td>${actions}</td>
+                </tr>`;
+            }).join('');
+        } catch (e) { console.error(e); }
+    }
+
+    // ============ MY DEVICES ============
+    async function loadMyAssignedDevices() {
+        try {
+            const devices = await apiFetch('/devices/my');
+            const tbody = document.getElementById('my-devices-list');
+            if (!devices || !devices.length) {
+                tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No devices assigned to you</td></tr>';
+                return;
+            }
+
+            const today = new Date();
+            tbody.innerHTML = devices.map(d => {
+                const warrantyExpiry = d.warrantyExpiryDate ? new Date(d.warrantyExpiryDate) : null;
+                const warrantyDisplay = warrantyExpiry
+                    ? (warrantyExpiry > today
+                        ? `<span style="color:var(--green);font-size:11px">✓ ${d.warrantyExpiryDate}</span>`
+                        : `<span style="color:var(--red);font-size:11px">✗ Expired ${d.warrantyExpiryDate}</span>`)
+                    : '<span style="color:var(--text3);font-size:11px">—</span>';
+
+                return `<tr>
+                    <td>#${d.id}</td>
+                    <td><strong>${d.deviceName || '—'}</strong></td>
+                    <td>${d.brand || '—'}</td>
+                    <td><span class="chip">${(d.deviceType || '').toLowerCase()}</span></td>
+                    <td>${warrantyDisplay}</td>
+                    <td style="font-size:12px;color:var(--text2)">${d.assignedDate || '—'}</td>
+                    <td><span class="chip ${(d.deviceStatus || '').toLowerCase()}">${d.deviceStatus || '—'}</span></td>
+                </tr>`;
+            }).join('');
+        } catch (e) { console.error(e); }
+    }
+
+    // ============ SERVICE REQUESTS ============
+    async function loadServiceRequests() {
+        await Promise.all([loadServiceRequestsList(), loadMyDevicesForSR()]);
+    }
+
+    async function loadServiceRequestsList() {
+        try {
+            const requests = await apiFetch('/service-requests/my');
+            const tbody = document.getElementById('service-requests-list');
+            if (!requests || !requests.length) {
+                tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No service requests yet</td></tr>';
+                return;
+            }
+            tbody.innerHTML = requests.map(r => `<tr>
+                <td>#${r.id}</td>
+                <td>${r.deviceName || '—'}</td>
+                <td><span class="chip">${r.requestType}</span></td>
+                <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.issueDescription || '-'}</td>
+                <td>${r.urgent ? '<span class="chip pending">YES</span>' : '<span style="color:var(--text2)">No</span>'}</td>
+                <td><span class="chip ${r.status?.toLowerCase()}">${r.status}</span></td>
+                <td style="font-size:12px;color:var(--text2)">${r.raisedAt ? new Date(r.raisedAt).toLocaleDateString() : '—'}</td>
+            </tr>`).join('');
+        } catch (e) { console.error(e); }
+    }
+
+    async function loadMyDevicesForSR() {
+        try {
+            const devices = await apiFetch('/devices/my');
+            const select = document.getElementById('sr-device-select');
+            select.innerHTML = '<option value="">-- Select your device --</option>';
+            (devices || []).forEach(d => {
+                const opt = document.createElement('option');
+                opt.value = d.id;
+                opt.textContent = `${d.deviceName} (${d.brand || d.deviceType || 'Device'})`;
+                select.appendChild(opt);
+            });
+        } catch (e) { console.error('Failed to load devices for SR', e); }
+    }
+
+    async function submitServiceRequest() {
+        const deviceId = parseInt(document.getElementById('sr-device-select').value);
+        const requestType = document.getElementById('sr-type').value;
+        const issueDescription = document.getElementById('sr-description').value.trim();
+        const urgent = document.getElementById('sr-urgent').checked;
+
+        if (!deviceId) { showAlert('Please select a device', 'error'); return; }
+        if (!issueDescription) { showAlert('Please describe the issue', 'error'); return; }
+
+        try {
+            await apiFetch('/service-requests', {
+                method: 'POST',
+                body: JSON.stringify({ deviceId, requestType, issueDescription, urgent })
+            });
+            showAlert('Service request submitted!', 'success');
+            clearServiceRequestForm();
+            loadServiceRequestsList();
+            loadOverview();
+        } catch (e) { showAlert('Failed: ' + e.message, 'error'); }
+    }
+
+    function clearServiceRequestForm() {
+        document.getElementById('sr-device-select').value = '';
+        document.getElementById('sr-type').value = 'REPAIR';
+        document.getElementById('sr-description').value = '';
+        document.getElementById('sr-urgent').checked = false;
+    }
+
+    // ============ ADMIN SERVICE REQUESTS ============
+    async function loadAdminServiceRequests() {
+        try {
+            const requests = await apiFetch('/service-requests/open');
+            const tbody = document.getElementById('admin-service-requests-list');
+            if (!requests || !requests.length) {
+                tbody.innerHTML = '<tr><td colspan="9" class="empty-state">No open service requests</td></tr>';
+                return;
+            }
+            tbody.innerHTML = requests.map(r => `<tr>
+                <td>#${r.id}</td>
+                <td style="font-size:12px;color:var(--text2)">${r.raisedByName || r.employeeId || '—'}</td>
+                <td><strong>${r.deviceName || '—'}</strong></td>
+                <td><span class="chip">${r.requestType}</span></td>
+                <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:var(--text2)" title="${r.issueDescription || ''}">${r.issueDescription || '-'}</td>
+                <td>${r.urgent ? '<span class="chip pending">YES</span>' : '<span style="color:var(--text2);font-size:12px">No</span>'}</td>
+                <td><span class="chip ${r.status?.toLowerCase()}">${r.status}</span></td>
+                <td style="font-size:12px;color:var(--text2)">${r.raisedAt ? new Date(r.raisedAt).toLocaleDateString() : '—'}</td>
+                <td>
+                    <button class="btn btn-primary btn-sm" onclick="openAdminSRModal(${r.id}, '${(r.deviceName || '').replace(/'/g, "\\'")}', '${(r.raisedByName || r.employeeId || '').replace(/'/g, "\\'")}')">
+                        Update
+                    </button>
+                </td>
+            </tr>`).join('');
+        } catch (e) { console.error(e); }
+    }
+
+    function openAdminSRModal(requestId, deviceName, employeeName) {
+        document.getElementById('admin-sr-id').value = requestId;
+        document.getElementById('admin-sr-modal-id').textContent = `#${requestId}`;
+        document.getElementById('admin-sr-device-display').value = deviceName;
+        document.getElementById('admin-sr-employee-display').value = employeeName;
+        document.getElementById('admin-sr-status').value = 'SENT_FOR_REPAIR';
+        document.getElementById('admin-sr-remarks').value = '';
+        document.getElementById('admin-sr-repair-hint').style.display = 'block';
+        document.getElementById('admin-sr-modal').classList.add('open');
+    }
+
+    document.getElementById('admin-sr-status')?.addEventListener('change', function () {
+        document.getElementById('admin-sr-repair-hint').style.display =
+            this.value === 'SENT_FOR_REPAIR' ? 'block' : 'none';
+    });
+
+    async function submitAdminSRUpdate() {
+        const serviceRequestId = parseInt(document.getElementById('admin-sr-id').value);
+        const status = document.getElementById('admin-sr-status').value;
+        const adminRemarks = document.getElementById('admin-sr-remarks').value.trim();
+
+        if (!adminRemarks) {
+            showAlert('Please add remarks before updating', 'error');
+            return;
+        }
+
+        try {
+            await apiFetch('/service-requests/admin', {
+                method: 'PUT',
+                body: JSON.stringify({ serviceRequestId, status, adminRemarks })
+            });
+            const statusLabel = status.replace(/_/g, ' ').toLowerCase();
+            showAlert(`Service request marked as "${statusLabel}" successfully!`, 'success');
+            closeAdminSRModal();
+            loadAdminServiceRequests();
+            loadOverview();
+        } catch (e) { showAlert('Failed: ' + e.message, 'error'); }
+    }
+
+    function closeAdminSRModal() {
+        document.getElementById('admin-sr-modal').classList.remove('open');
+        document.getElementById('admin-sr-id').value = '';
+        document.getElementById('admin-sr-remarks').value = '';
+        document.getElementById('admin-sr-repair-hint').style.display = 'none';
+    }
+
+    // ============ ASSIGN DEVICE ============
+    async function openAssignModal(deviceId, deviceName) {
+        document.getElementById('assign-device-id').value = deviceId;
+        document.getElementById('assign-device-name').value = deviceName;
+        try {
+            const employees = await apiFetch('/employee');
+            const select = document.getElementById('assign-employee-select');
+            select.innerHTML = '<option value="">-- Select Employee --</option>';
+            employees.filter(e => e.status === 'ACTIVE').forEach(e => {
+                const opt = document.createElement('option');
+                opt.value = e.employeeId;
+                opt.textContent = `${e.name} (${e.email}) — ${e.dept || 'N/A'}`;
+                select.appendChild(opt);
+            });
+        } catch (e) { showAlert('Failed to load employees', 'error'); return; }
+        document.getElementById('assign-modal').classList.add('open');
+    }
+
+    async function confirmAssign() {
+        const deviceId = document.getElementById('assign-device-id').value;
+        const employeeId = document.getElementById('assign-employee-select').value;
+        if (!employeeId) { showAlert('Please select an employee', 'error'); return; }
+        try {
+            const message = await apiFetch(`/devices/${deviceId}/assign`, {
+                method: 'POST',
+                body: JSON.stringify({ employeeId: parseInt(employeeId) })
+            });
+            showAlert(message || 'Device assigned successfully!', 'success');
+            closeAssignModal();
+            loadAllDevices();
+            loadOverview();
+        } catch (e) { showAlert('Failed: ' + e.message, 'error'); }
+    }
+
+    function closeAssignModal() {
+        document.getElementById('assign-modal').classList.remove('open');
+        document.getElementById('assign-employee-select').value = '';
+        document.getElementById('assign-device-id').value = '';
+        document.getElementById('assign-device-name').value = '';
+    }
+
+    // ============ ADD DEVICE ============
+    async function loadVendorsForDevice() {
+        try {
+            const vendors = await apiFetch('/vendors');
+            const select = document.getElementById('device-vendor');
+            select.innerHTML = '<option value="">-- Select Vendor --</option>';
+            (vendors || []).forEach(v => {
+                const opt = document.createElement('option');
+                opt.value = v.id;
+                opt.textContent = `${v.name} (${v.email})`;
+                select.appendChild(opt);
+            });
+        } catch (e) { console.error('Failed to load vendors', e); }
+    }
+
+    async function addDevice() {
+        const body = {
+            deviceName: document.getElementById('device-name').value.trim(),
+            brand: document.getElementById('device-brand').value.trim(),
+            deviceType: document.getElementById('device-type').value,
+            warrantyExpiryDate: document.getElementById('device-warranty').value,
+            vendorId: parseInt(document.getElementById('device-vendor').value),
+            description: document.getElementById('device-description').value.trim()
+        };
+
+        if (!body.deviceName || !body.brand || !body.vendorId) {
+            showAlert('Please fill all required fields', 'error');
+            return;
+        }
+
+        try {
+            await apiFetch('/devices/add', {
+                method: 'POST',
+                body: JSON.stringify(body)
+            });
+            showAlert('Device added successfully!', 'success');
+            clearDeviceForm();
+            loadAllDevices();
+            loadOverview();
+        } catch (e) { showAlert('Failed: ' + e.message, 'error'); }
+    }
+
+    function clearDeviceForm() {
+        document.getElementById('device-name').value = '';
+        document.getElementById('device-brand').value = '';
+        document.getElementById('device-type').value = 'LAPTOP';
+        document.getElementById('device-warranty').value = '';
+        document.getElementById('device-vendor').value = '';
+        document.getElementById('device-description').value = '';
+    }
+
+    // ============ LOGOUT ============
+    function logout() {
+        localStorage.removeItem('jwt_token');
+        localStorage.removeItem('refresh_token');
+        localStorage.removeItem('auth_type');
+        localStorage.removeItem('last_role');
+        fetch(`${API}/session/logout`, { method: 'POST', credentials: 'include' })
+            .finally(() => {
+                document.cookie = 'JSESSIONID=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+                window.location.href = '/google.html';
+            });
+    }
+</script>
+</body>
+</html>
