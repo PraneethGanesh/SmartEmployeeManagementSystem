@@ -66,3 +66,6 @@ api:
   key:
     enabled: true
     header-name: X-API-Key
+app:
+  cors:
+    allowed-origins: http://192.168.1.3:8080,http://localhost:8080,http://smartems.local:8080

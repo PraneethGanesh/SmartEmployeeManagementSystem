@@ -10,5 +10,6 @@ import java.util.Optional;
 public interface RepairLogRepository extends JpaRepository<RepairLog, Long> {
     Optional<RepairLog> findByServiceRequest(ServiceRequest serviceRequest);
     List<RepairLog> findByDeviceIdIn(List<Long> deviceIds);
+    List<RepairLog> findByDeviceIdOrderByRepairDateDescIdDesc(Long deviceId);
     List<RepairLog> findByDeviceIdAndDeviceTechVendorIdOrderByRepairDateDescIdDesc(Long deviceId, Long vendorId);
 }

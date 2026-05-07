@@ -80,6 +80,39 @@
         .action-row { display: flex; gap: 6px; flex-wrap: wrap; }
         .back-btn { padding: 8px 16px; background: var(--bg3); border: 1px solid var(--border2); border-radius: 6px; color: var(--text2); cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; }
         .back-btn:hover { background: var(--panel2); color: var(--text); }
+        .device-card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+        .device-card { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 14px; min-height: 210px; }
+        .device-card-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+        .device-icon { width: 42px; height: 42px; border-radius: 8px; display: grid; place-items: center; background: var(--accent-dim); color: var(--accent); font-size: 22px; flex: 0 0 auto; }
+        .device-name { font-size: 16px; font-weight: 700; line-height: 1.25; }
+        .device-subtitle { color: var(--text2); font-size: 12px; margin-top: 4px; }
+        .device-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: auto; }
+        .meta-box { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 10px; min-width: 0; }
+        .meta-label { color: var(--text3); text-transform: uppercase; font-size: 10px; font-weight: 700; margin-bottom: 4px; }
+        .meta-value { color: var(--text); font-size: 12px; overflow-wrap: anywhere; }
+        .detail-layout { display: grid; grid-template-columns: minmax(260px, 360px) 1fr; gap: 18px; align-items: start; }
+        .detail-panel { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 18px; }
+        .detail-title-row { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; margin-bottom: 18px; }
+        .timeline { position: relative; display: flex; flex-direction: column; gap: 12px; }
+        .timeline-item { position: relative; display: grid; grid-template-columns: 34px 1fr; gap: 12px; }
+        .timeline-dot { width: 14px; height: 14px; border-radius: 50%; background: var(--accent); margin: 5px auto 0; box-shadow: 0 0 0 5px var(--accent-dim); }
+        .timeline-body { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 12px; }
+        .timeline-title { font-weight: 700; margin-bottom: 4px; }
+        .timeline-description { color: var(--text2); font-size: 13px; }
+        .timeline-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; color: var(--text3); font-size: 11px; }
+        @media (max-width: 900px) {
+            body { overflow: auto; }
+            .app { min-height: 100vh; height: auto; }
+            .sidebar { width: 220px; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .detail-layout { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 700px) {
+            .app { display: block; }
+            .sidebar { width: 100%; height: auto; }
+            .topbar { align-items: flex-start; gap: 12px; flex-direction: column; }
+            .form-grid, .stats-grid { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
@@ -93,6 +126,7 @@
         <div style="flex: 1;">
             <div class="nav-item" onclick="window.location.href='/dashboard.html'">&#9632; ← Back to Dashboard</div>
             <div class="nav-item active" onclick="showView('overview', event)">&#9632; Overview</div>
+            <div class="nav-item" onclick="showView('all-devices', event)">&#9632; All Devices</div>
             <div class="nav-item" onclick="showView('my-devices', event)">&#9632; My Devices</div>
             <div class="nav-item" onclick="showView('service-requests', event)">&#9632; My Service Requests</div>
             <div class="nav-item" onclick="showView('admin-service-requests', event)">&#9632; All Service Requests</div>
@@ -156,25 +190,42 @@
             <!-- ALL DEVICES VIEW -->
             <div id="all-devices-view" class="view">
                 <div class="section-head">
-                    <div class="section-title">All Devices</div>
+                    <div>
+                        <div class="section-title">Device Cards</div>
+                        <div style="color:var(--text2);font-size:12px">Scan inventory status, assignment, warranty, and open a full device record.</div>
+                    </div>
                     <button class="btn btn-primary btn-sm" onclick="loadAllDevices()">Refresh</button>
                 </div>
-                <div class="table-wrap">
-                    <table>
-                        <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Device Name</th>
-                            <th>Brand</th>
-                            <th>Type</th>
-                            <th>Status</th>
-                            <th>Warranty</th>
-                            <th>Assigned To</th>
-                            <th>Actions</th>
-                        </tr>
-                        </thead>
-                        <tbody id="all-devices-list"></tbody>
-                    </table>
+                <div id="all-devices-list" class="device-card-grid"></div>
+            </div>
+
+            <!-- DEVICE DETAILS VIEW -->
+            <div id="device-detail-view" class="view">
+                <div class="section-head">
+                    <button class="back-btn" onclick="showView('all-devices')">← Back to Devices</button>
+                    <button class="btn btn-secondary btn-sm" onclick="reloadCurrentDeviceDetail()">Refresh</button>
+                </div>
+                <div class="detail-layout">
+                    <div class="detail-panel">
+                        <div class="detail-title-row">
+                            <div>
+                                <div class="device-name" id="detail-device-name">Device</div>
+                                <div class="device-subtitle" id="detail-device-subtitle">Loading details...</div>
+                            </div>
+                            <span class="chip" id="detail-device-status">--</span>
+                        </div>
+                        <div class="device-meta" style="grid-template-columns:1fr">
+                            <div class="meta-box"><div class="meta-label">Assigned To</div><div class="meta-value" id="detail-assigned-to">--</div></div>
+                            <div class="meta-box"><div class="meta-label">Assigned On</div><div class="meta-value" id="detail-assigned-date">--</div></div>
+                            <div class="meta-box"><div class="meta-label">Vendor</div><div class="meta-value" id="detail-vendor">--</div></div>
+                            <div class="meta-box"><div class="meta-label">Warranty</div><div class="meta-value" id="detail-warranty">--</div></div>
+                            <div class="meta-box"><div class="meta-label">Created At</div><div class="meta-value" id="detail-created-at">--</div></div>
+                        </div>
+                    </div>
+                    <div class="detail-panel">
+                        <div class="section-title" style="margin-bottom:16px">Timeline / Activity Logs</div>
+                        <div id="device-activity-list" class="timeline"></div>
+                    </div>
                 </div>
             </div>
 
@@ -401,6 +452,33 @@
 <script>
     const API = 'http://localhost:8080';
     let currentUser = null;
+    let currentDeviceId = null;
+
+    function escapeHtml(value) {
+        return String(value ?? '').replace(/[&<>"']/g, ch => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        }[ch]));
+    }
+
+    function escapeJs(value) {
+        return String(value ?? '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+    }
+
+    function formatDate(value, includeTime = false) {
+        if (!value) return '--';
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return value;
+        return includeTime ? date.toLocaleString() : date.toLocaleDateString();
+    }
+
+    function titleCase(value) {
+        return String(value || '--').replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+    }
+
+    function deviceIcon(type) {
+        const icons = { LAPTOP: '⌘', DESKTOP: '▣', MOBILE: '▯', TABLET: '▭', MONITOR: '◫', KEYBOARD: '⌨', MOUSE: '◉', HEADSET: '◌' };
+        return icons[type] || '◆';
+    }
 
     (async function initAuth() {
         const token = localStorage.getItem('jwt_token');
@@ -434,13 +512,14 @@
     }
 
     async function apiFetch(path, opts = {}) {
+        const { silent = false, ...fetchOptions } = opts;
         try {
             const response = await fetch(`${API}${path}`, {
-                ...opts,
+                ...fetchOptions,
                 headers: {
                     'Content-Type': 'application/json',
                     ...getAuthHeader(),
-                    ...opts.headers
+                    ...fetchOptions.headers
                 },
                 credentials: 'include'
             });
@@ -462,7 +541,7 @@
             if (!text) return null;
             try { return JSON.parse(text); } catch { return text; }
         } catch (e) {
-            if (!e.message.includes('Unauthorized')) showAlert(e.message, 'error');
+            if (!silent && !e.message.includes('Unauthorized')) showAlert(e.message, 'error');
             throw e;
         }
     }
@@ -480,6 +559,11 @@
         document.getElementById(`${viewName}-view`).classList.add('active');
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
         if (event && event.target) event.target.classList.add('active');
+        if (!event) {
+            const nav = Array.from(document.querySelectorAll('.nav-item'))
+                .find(n => n.getAttribute('onclick')?.includes(`'${viewName}'`));
+            if (nav) nav.classList.add('active');
+        }
         document.getElementById('pageTitle').textContent = viewName.split('-').map(w =>
             w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 
@@ -529,37 +613,111 @@
     // ============ ALL DEVICES ============
     async function loadAllDevices() {
         try {
-            const devices = await apiFetch('/devices/all');
-            const tbody = document.getElementById('all-devices-list');
+            const devices = await loadAccessibleDevices();
+            const list = document.getElementById('all-devices-list');
             if (!devices || !devices.length) {
-                tbody.innerHTML = '<tr><td colspan="8" class="empty-state">No devices found</td></tr>';
+                list.innerHTML = '<div class="empty-state">No devices found</div>';
                 return;
             }
 
             const today = new Date();
-            tbody.innerHTML = devices.map(d => {
+            list.innerHTML = devices.map(d => {
                 const warrantyExpiry = d.warrantyExpiryDate ? new Date(d.warrantyExpiryDate) : null;
                 const warrantyDisplay = warrantyExpiry
                     ? (warrantyExpiry > today
-                        ? `<span style="color:var(--green);font-size:11px">✓ ${d.warrantyExpiryDate}</span>`
-                        : `<span style="color:var(--red);font-size:11px">✗ ${d.warrantyExpiryDate}</span>`)
-                    : '<span style="color:var(--text3);font-size:11px">—</span>';
+                        ? `<span style="color:var(--green)">Active until ${escapeHtml(d.warrantyExpiryDate)}</span>`
+                        : `<span style="color:var(--red)">Expired ${escapeHtml(d.warrantyExpiryDate)}</span>`)
+                    : '<span style="color:var(--text3)">--</span>';
 
                 const actions = d.deviceStatus === 'AVAILABLE'
-                    ? `<button class="btn btn-primary btn-sm" onclick="openAssignModal(${d.id}, '${d.deviceName}')">Assign</button>`
-                    : '—';
+                    ? `<button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); openAssignModal(${d.id}, '${escapeJs(d.deviceName)}')">Assign</button>`
+                    : '';
 
-                return `<tr>
-                    <td>#${d.id}</td>
-                    <td><strong>${d.deviceName || '—'}</strong></td>
-                    <td>${d.brand || '—'}</td>
-                    <td><span class="chip">${(d.deviceType || '').toLowerCase()}</span></td>
-                    <td><span class="chip ${(d.deviceStatus || '').toLowerCase()}">${d.deviceStatus || '—'}</span></td>
-                    <td>${warrantyDisplay}</td>
-                    <td>${d.assignedToName || '—'}</td>
-                    <td>${actions}</td>
-                </tr>`;
+                return `<div class="device-card" onclick="openDeviceDetail(${d.id})">
+                    <div class="device-card-head">
+                        <div style="display:flex;gap:12px;min-width:0">
+                            <div class="device-icon">${deviceIcon(d.deviceType)}</div>
+                            <div style="min-width:0">
+                                <div class="device-name">${escapeHtml(d.deviceName || '--')}</div>
+                                <div class="device-subtitle">#${d.id} · ${escapeHtml(d.brand || '--')} · ${titleCase(d.deviceType)}</div>
+                            </div>
+                        </div>
+                        <span class="chip ${(d.deviceStatus || '').toLowerCase()}">${titleCase(d.deviceStatus)}</span>
+                    </div>
+                    <div class="device-meta">
+                        <div class="meta-box"><div class="meta-label">Assigned To</div><div class="meta-value">${escapeHtml(d.assignedEmployeeName || '--')}</div></div>
+                        <div class="meta-box"><div class="meta-label">Assigned On</div><div class="meta-value">${escapeHtml(d.assignedDate || '--')}</div></div>
+                        <div class="meta-box"><div class="meta-label">Vendor</div><div class="meta-value">${escapeHtml(d.vendorName || '--')}</div></div>
+                        <div class="meta-box"><div class="meta-label">Warranty</div><div class="meta-value">${warrantyDisplay}</div></div>
+                    </div>
+                    <div class="action-row">
+                        <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation(); openDeviceDetail(${d.id})">Details</button>
+                        ${actions}
+                    </div>
+                </div>`;
             }).join('');
+        } catch (e) { console.error(e); }
+    }
+
+    async function loadAccessibleDevices() {
+        const endpoints = ['/devices/all', '/devices/vendor/me', '/devices/my'];
+        for (const endpoint of endpoints) {
+            try {
+                return await apiFetch(endpoint, { silent: endpoint !== endpoints[endpoints.length - 1] });
+            } catch (e) {
+                if (endpoint === endpoints[endpoints.length - 1]) throw e;
+            }
+        }
+        return [];
+    }
+
+    async function openDeviceDetail(deviceId) {
+        currentDeviceId = deviceId;
+        showView('device-detail');
+        await reloadCurrentDeviceDetail();
+    }
+
+    async function reloadCurrentDeviceDetail() {
+        if (!currentDeviceId) return;
+        try {
+            const [device, activity] = await Promise.all([
+                apiFetch(`/devices/${currentDeviceId}`),
+                apiFetch(`/devices/${currentDeviceId}/activity`)
+            ]);
+
+            document.getElementById('pageTitle').textContent = `Device #${device.id}`;
+            document.getElementById('detail-device-name').textContent = device.deviceName || '--';
+            document.getElementById('detail-device-subtitle').textContent = `${device.brand || '--'} · ${titleCase(device.deviceType)}`;
+            const status = document.getElementById('detail-device-status');
+            status.className = `chip ${(device.deviceStatus || '').toLowerCase()}`;
+            status.textContent = titleCase(device.deviceStatus);
+            document.getElementById('detail-assigned-to').textContent = device.assignedEmployeeName || '--';
+            document.getElementById('detail-assigned-date').textContent = device.assignedDate || '--';
+            document.getElementById('detail-vendor').textContent = device.vendorName || '--';
+            document.getElementById('detail-warranty').textContent = device.warrantyExpiryDate || '--';
+            document.getElementById('detail-created-at').textContent = formatDate(device.createdAt, true);
+
+            const timeline = document.getElementById('device-activity-list');
+            if (!activity || !activity.length) {
+                timeline.innerHTML = '<div class="empty-state">No activity logs found for this device</div>';
+                return;
+            }
+
+            timeline.innerHTML = activity.map(item => `<div class="timeline-item">
+                <div class="timeline-dot"></div>
+                <div class="timeline-body">
+                    <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start">
+                        <div class="timeline-title">${escapeHtml(item.title || titleCase(item.type))}</div>
+                        ${item.status ? `<span class="chip ${(item.status || '').toLowerCase()}">${titleCase(item.status)}</span>` : ''}
+                    </div>
+                    <div class="timeline-description">${escapeHtml(item.description || '--')}</div>
+                    <div class="timeline-meta">
+                        <span>${formatDate(item.occurredAt, true)}</span>
+                        ${item.actorName ? `<span>By ${escapeHtml(item.actorName)}</span>` : ''}
+                        ${item.type ? `<span>${titleCase(item.type)}</span>` : ''}
+                    </div>
+                </div>
+            </div>`).join('');
         } catch (e) { console.error(e); }
     }
 
@@ -797,17 +955,17 @@
             brand: document.getElementById('device-brand').value.trim(),
             deviceType: document.getElementById('device-type').value,
             warrantyExpiryDate: document.getElementById('device-warranty').value,
-            vendorId: parseInt(document.getElementById('device-vendor').value),
+            vendorId: parseInt(document.getElementById('device-vendor').value) || null,
             description: document.getElementById('device-description').value.trim()
         };
 
-        if (!body.deviceName || !body.brand || !body.vendorId) {
-            showAlert('Please fill all required fields', 'error');
+        if (!body.deviceName || !body.brand) {
+            showAlert('Please enter device name and brand', 'error');
             return;
         }
 
         try {
-            await apiFetch('/devices/add', {
+            await apiFetch('/devices', {
                 method: 'POST',
                 body: JSON.stringify(body)
             });
