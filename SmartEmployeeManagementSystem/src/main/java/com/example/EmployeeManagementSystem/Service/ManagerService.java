@@ -199,6 +199,7 @@ public class ManagerService {
         dto.setDeviceType(device.getDeviceType());
         dto.setDeviceStatus(device.getDeviceStatus());
         dto.setWarrantyExpiryDate(device.getWarrantyExpiryDate());
+        dto.setRentPerMonth(device.getRentPerMonth());
 
         if (device.getTechVendor() != null) {
             dto.setVendorName(device.getTechVendor().getName());
