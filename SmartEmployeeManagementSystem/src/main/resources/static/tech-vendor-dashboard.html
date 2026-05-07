@@ -382,7 +382,16 @@
                     </div>
                     <div class="tablewrap">
                         <table>
-                            <thead><tr><th>ID</th><th>Device Name</th><th>Brand</th><th>Type</th><th>Warranty</th><th>Status</th><th>Actions</th></tr></thead>
+                            <thead><tr>
+                                <th>ID</th>
+                                <th>Device Name</th>
+                                <th>Brand</th>
+                                <th>Type</th>
+                                <th>Warranty</th>
+                                <th>Rent/Month</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr></thead>
                             <tbody id="devices-list"></tbody>
                         </table>
                     </div>
@@ -399,6 +408,7 @@
                         </div>
                     </div>
                     <div class="card-body">
+                        <!-- Find this section in the ADD DEVICE view -->
                         <div class="form-grid">
                             <div class="form-group">
                                 <label class="form-label">Device Name</label>
@@ -425,6 +435,11 @@
                             <div class="form-group">
                                 <label class="form-label">Warranty Expiry</label>
                                 <input class="form-input" type="date" id="d-warranty">
+                            </div>
+                            <!-- ADD THIS NEW FIELD -->
+                            <div class="form-group">
+                                <label class="form-label">Rent Per Month (₹)</label>
+                                <input class="form-input" type="number" id="d-rent" placeholder="5000" step="0.01" min="0">
                             </div>
                         </div>
                         <div class="form-actions">
@@ -775,26 +790,29 @@
     }
 
     function renderDevices(list){
-      document.getElementById('devices-list').innerHTML = list.length
-        ? list.map(d=>`<tr>
-            <td style="font-family:var(--mono);font-size:11px;color:var(--text3)">#${d.id}</td>
-            <td class="main-cell">${d.deviceName||'—'}</td>
-            <td>${d.brand||'—'}</td>
-            <td>${chip(d.deviceType)}</td>
-            <td style="font-size:11px;font-family:var(--mono)">
-              ${d.warrantyExpiryDate
-                ? (new Date(d.warrantyExpiryDate) > new Date()
-                    ? `<span style="color:var(--green)">✓ ${d.warrantyExpiryDate}</span>`
-                    : `<span style="color:var(--red)">✗ ${d.warrantyExpiryDate}</span>`)
-                : '<span style="color:var(--text3)">—</span>'}
-            </td>
-            <td>${chip(d.deviceStatus)}</td>
-            <td><div class="action-row">
-              <button class="btn btn-ghost btn-xs" onclick="viewDevice(${d.id})">Details</button>
-            </div></td>
-          </tr>`).join('')
-        : `<tr><td colspan="7"><div class="empty"><div class="empty-icon">⬡</div>No devices registered yet</div></td></tr>`;
-    }
+  document.getElementById('devices-list').innerHTML = list.length
+    ? list.map(d=>`<tr>
+        <td style="font-family:var(--mono);font-size:11px;color:var(--text3)">#${d.id}</td>
+        <td class="main-cell">${d.deviceName||'—'}</td>
+        <td>${d.brand||'—'}</td>
+        <td>${chip(d.deviceType)}</td>
+        <td style="font-size:11px;font-family:var(--mono)">
+          ${d.warrantyExpiryDate
+            ? (new Date(d.warrantyExpiryDate) > new Date()
+                ? `<span style="color:var(--green)">✓ ${d.warrantyExpiryDate}</span>`
+                : `<span style="color:var(--red)">✗ ${d.warrantyExpiryDate}</span>`)
+            : '<span style="color:var(--text3)">—</span>'}
+        </td>
+        <td style="font-family:var(--mono);color:var(--cyan)">
+          ${d.rentPerMonth ? '₹'+d.rentPerMonth : '<span style="color:var(--text3)">—</span>'}
+        </td>
+        <td>${chip(d.deviceStatus)}</td>
+        <td><div class="action-row">
+          <button class="btn btn-ghost btn-xs" onclick="viewDevice(${d.id})">Details</button>
+        </div></td>
+      </tr>`).join('')
+    : `<tr><td colspan="8"><div class="empty"><div class="empty-icon">⬡</div>No devices registered yet</div></td></tr>`;
+}
 
     function filterDevices(){
       const q = document.getElementById('device-search').value.toLowerCase();
@@ -807,27 +825,28 @@
     }
 
     async function addDevice(){
-      const body = {
-        deviceName: document.getElementById('d-name').value.trim(),
-        brand: document.getElementById('d-brand').value.trim(),
-        deviceType: document.getElementById('d-type').value,
-        warrantyExpiryDate: document.getElementById('d-warranty').value || null,
-      };
-      if(!body.deviceName || !body.brand || !body.deviceType){
-        showAlert('Device name, brand and type are required','error'); return;
-      }
-      try{
-        await apiFetch('/devices', {method:'POST', body:JSON.stringify(body)});
-        showAlert('Device registered successfully!','success');
-        clearDeviceForm();
-        loadMyDevices();
-      }catch(e){ showAlert('Failed: '+e.message,'error'); }
-    }
+  const body = {
+    deviceName: document.getElementById('d-name').value.trim(),
+    brand: document.getElementById('d-brand').value.trim(),
+    deviceType: document.getElementById('d-type').value,
+    warrantyExpiryDate: document.getElementById('d-warranty').value || null,
+    rentPerMonth: parseFloat(document.getElementById('d-rent').value) || null  // ADD THIS
+  };
+  if(!body.deviceName || !body.brand || !body.deviceType){
+    showAlert('Device name, brand and type are required','error'); return;
+  }
+  try{
+    await apiFetch('/devices', {method:'POST', body:JSON.stringify(body)});
+    showAlert('Device registered successfully!','success');
+    clearDeviceForm();
+    loadMyDevices();
+  }catch(e){ showAlert('Failed: '+e.message,'error'); }
+}
 
     function clearDeviceForm(){
-      ['d-name','d-brand','d-warranty'].forEach(id=>document.getElementById(id).value='');
-      document.getElementById('d-type').value='LAPTOP';
-    }
+  ['d-name','d-brand','d-warranty','d-rent'].forEach(id=>document.getElementById(id).value='');  // ADD 'd-rent'
+  document.getElementById('d-type').value='LAPTOP';
+}
 
     // ── SERVICE REQUESTS (vendor repair queue) ────────────────────────
     // GET  /service-requests/vendor/me  → list of SENT_FOR_REPAIR requests
@@ -1007,25 +1026,26 @@
     // ── DEVICE DETAIL MODAL ───────────────────────────────────────────
     async function viewDevice(id){
       const d = devicesCache.find(x=>x.id===id);
-      if(!d) return;
-      document.getElementById('modal-device-name').textContent = d.deviceName;
+  if(!d) return;
+  document.getElementById('modal-device-name').textContent = d.deviceName;
 
-      const today = new Date();
-      const warrantyExpiry = d.warrantyExpiryDate ? new Date(d.warrantyExpiryDate) : null;
-      const warrantyDisplay = warrantyExpiry
-        ? (warrantyExpiry > today
-            ? `<span style="color:var(--green);font-family:var(--mono)">✓ Valid until ${d.warrantyExpiryDate}</span>`
-            : `<span style="color:var(--red);font-family:var(--mono)">✗ Expired ${d.warrantyExpiryDate}</span>`)
-        : '<span style="color:var(--text3);font-family:var(--mono)">—</span>';
+  const today = new Date();
+  const warrantyExpiry = d.warrantyExpiryDate ? new Date(d.warrantyExpiryDate) : null;
+  const warrantyDisplay = warrantyExpiry
+    ? (warrantyExpiry > today
+        ? `<span style="color:var(--green);font-family:var(--mono)">✓ Valid until ${d.warrantyExpiryDate}</span>`
+        : `<span style="color:var(--red);font-family:var(--mono)">✗ Expired ${d.warrantyExpiryDate}</span>`)
+    : '<span style="color:var(--text3);font-family:var(--mono)">—</span>';
 
-      document.getElementById('modal-detail-grid').innerHTML = `
-        <div class="detail-item"><div class="detail-label">Brand</div><div class="detail-value">${d.brand||'—'}</div></div>
-        <div class="detail-item"><div class="detail-label">Type</div><div class="detail-value">${chip(d.deviceType)}</div></div>
-        <div class="detail-item"><div class="detail-label">Status</div><div class="detail-value">${chip(d.deviceStatus)}</div></div>
-        <div class="detail-item"><div class="detail-label">Warranty</div><div class="detail-value">${warrantyDisplay}</div></div>
-        <div class="detail-item"><div class="detail-label">Assigned To</div><div class="detail-value">${d.assignedEmployeeName||'<span style="color:var(--text3)">Unassigned</span>'}</div></div>
-        <div class="detail-item"><div class="detail-label">Added On</div><div class="detail-value">${d.createdAt ? d.createdAt.split('T')[0] : '—'}</div></div>
-      `;
+  document.getElementById('modal-detail-grid').innerHTML = `
+    <div class="detail-item"><div class="detail-label">Brand</div><div class="detail-value">${d.brand||'—'}</div></div>
+    <div class="detail-item"><div class="detail-label">Type</div><div class="detail-value">${chip(d.deviceType)}</div></div>
+    <div class="detail-item"><div class="detail-label">Status</div><div class="detail-value">${chip(d.deviceStatus)}</div></div>
+    <div class="detail-item"><div class="detail-label">Warranty</div><div class="detail-value">${warrantyDisplay}</div></div>
+    <div class="detail-item"><div class="detail-label">Rent/Month</div><div class="detail-value">${d.rentPerMonth ? '<span style="color:var(--cyan);font-family:var(--mono)">₹'+d.rentPerMonth+'</span>' : '<span style="color:var(--text3)">—</span>'}</div></div>
+    <div class="detail-item"><div class="detail-label">Assigned To</div><div class="detail-value">${d.assignedEmployeeName||'<span style="color:var(--text3)">Unassigned</span>'}</div></div>
+    <div class="detail-item"><div class="detail-label">Added On</div><div class="detail-value">${d.createdAt ? d.createdAt.split('T')[0] : '—'}</div></div>
+  `;
 
       const repairs = repairsCache.filter(r=>r.deviceId===id);
       document.getElementById('modal-repair-history').innerHTML = repairs.length
