@@ -25,6 +25,7 @@ public class Device {
     @OneToOne(mappedBy = "device")
     private DeviceAssignment currentAssignment;
 
+    @Enumerated(EnumType.STRING)
     private DeviceStatus deviceStatus;
 
     private DeviceType deviceType;
