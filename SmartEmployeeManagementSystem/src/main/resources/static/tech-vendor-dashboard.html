@@ -359,7 +359,7 @@
                     </div>
                     <div class="tablewrap">
                         <table>
-                            <thead><tr><th>Device</th><th>Type</th><th>Status</th><th>Assigned To</th></tr></thead>
+                            <thead><tr><th>Device</th><th>Type</th><th>Status</th><th>Warranty</th><th>Rent/Month</th></tr></thead>
                             <tbody id="dash-devices"></tbody>
                         </table>
                     </div>
@@ -769,7 +769,8 @@
           <td class="main-cell">${d.deviceName||'—'}</td>
           <td>${chip(d.deviceType)}</td>
           <td>${chip(d.deviceStatus)}</td>
-          <td>${d.assignedEmployeeName||'—'}</td>
+          <td>${d.warrantyExpiryDate||'—'}</td>
+          <td>${d.rentPerMonth||'—'}</td>
         </tr>`).join('') ||
         `<tr><td colspan="4" class="empty">No devices</td></tr>`;
     }
