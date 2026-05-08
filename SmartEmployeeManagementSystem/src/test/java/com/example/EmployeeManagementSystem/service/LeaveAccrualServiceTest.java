@@ -51,28 +51,16 @@ class LeaveAccrualServiceTest {
     }
 
     @Test
-    void femaleEmployee_accruesMaternity() {
+    void femaleEmployee_doesNotAccrueMaternity() {
         Employee emp = employee(Gender.F);
         LeaveType maternity = leaveType("MATERNITY", true, Gender.F);
 
         when(employeeRepo.findByStatus(Status.ACTIVE)).thenReturn(List.of(emp));
         when(leaveTypeRepo.findAll()).thenReturn(List.of(maternity));
-        when(entitlementRepo.findByEmployeeEmployeeIdAndLeaveTypeIdAndYear(any(), any(), any()))
-                .thenReturn(Optional.empty());
-
-        // Simulate new entitlement creation
-        when(entitlementRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         service.runMonthlyAccrual(LocalDate.of(2025, 6, 1));
 
-        ArgumentCaptor<LeaveEntitlement> captor = ArgumentCaptor.forClass(LeaveEntitlement.class);
-        verify(entitlementRepo, atLeastOnce()).save(captor.capture());
-
-        LeaveEntitlement saved = captor.getAllValues().stream()
-                .filter(e -> e.getAccruedThisYear().compareTo(BigDecimal.ONE) == 0)
-                .findFirst().orElseThrow();
-
-        assertThat(saved.getAccruedThisYear()).isEqualByComparingTo("1");
+        verify(entitlementRepo, never()).save(any());
     }
 
     @Test
@@ -87,6 +75,63 @@ class LeaveAccrualServiceTest {
         service.runMonthlyAccrual(LocalDate.of(2025, 6, 1));
 
         verify(entitlementRepo, never()).save(any());
+    }
+
+    @Test
+    void newEmployeeJoiningBeforeMonthEnd_getsInitialSickAndCasualLeave() {
+        Employee emp = employee(Gender.M);
+        emp.setJoined_at(LocalDate.of(2025, 5, 8));
+        LeaveType sick = leaveType("SICK", false, null);
+        sick.setId(1);
+        LeaveType casual = leaveType("CASUAL", false, null);
+        casual.setId(2);
+
+        when(leaveTypeRepo.findAll()).thenReturn(List.of(sick, casual));
+        when(entitlementRepo.findByEmployeeEmployeeIdAndLeaveTypeIdAndYear(any(), any(), any()))
+                .thenReturn(Optional.empty());
+        when(entitlementRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        service.grantInitialMonthlyAccrual(emp, LocalDate.of(2025, 5, 8));
+
+        ArgumentCaptor<LeaveEntitlement> captor = ArgumentCaptor.forClass(LeaveEntitlement.class);
+        verify(entitlementRepo, atLeast(2)).save(captor.capture());
+
+        List<LeaveEntitlement> saved = captor.getAllValues();
+        assertThat(saved).anySatisfy(e -> {
+            assertThat(e.getLeaveType().getName()).isEqualTo("SICK");
+            assertThat(e.getAccruedThisYear()).isEqualByComparingTo(BigDecimal.ONE);
+        });
+        assertThat(saved).anySatisfy(e -> {
+            assertThat(e.getLeaveType().getName()).isEqualTo("CASUAL");
+            assertThat(e.getAccruedThisYear()).isEqualByComparingTo(BigDecimal.ONE);
+        });
+    }
+
+    @Test
+    void newEmployeeJoiningInLastWeek_waitsForNextMonthAccrual() {
+        Employee emp = employee(Gender.M);
+        emp.setJoined_at(LocalDate.of(2025, 5, 25));
+
+        service.grantInitialMonthlyAccrual(emp, LocalDate.of(2025, 5, 25));
+
+        verifyNoInteractions(leaveTypeRepo);
+        verify(entitlementRepo, never()).save(any());
+    }
+
+    @Test
+    void newEmployeeJoiningBeforeLastWeek_getsInitialLeave() {
+        Employee emp = employee(Gender.M);
+        emp.setJoined_at(LocalDate.of(2025, 5, 24));
+        LeaveType sick = leaveType("SICK", false, null);
+
+        when(leaveTypeRepo.findAll()).thenReturn(List.of(sick));
+        when(entitlementRepo.findByEmployeeEmployeeIdAndLeaveTypeIdAndYear(any(), any(), any()))
+                .thenReturn(Optional.empty());
+        when(entitlementRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        service.grantInitialMonthlyAccrual(emp, LocalDate.of(2025, 5, 24));
+
+        verify(entitlementRepo, atLeastOnce()).save(any());
     }
 
     // --- helpers ---
