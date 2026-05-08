@@ -6,6 +6,7 @@ import com.example.EmployeeManagementSystem.DTO.ServiceRequestDTO;
 import com.example.EmployeeManagementSystem.DTO.ServiceRequestResponseDTO;
 import com.example.EmployeeManagementSystem.Entity.*;
 import com.example.EmployeeManagementSystem.Enum.DeviceStatus;
+import com.example.EmployeeManagementSystem.Enum.PaymentStatus;
 import com.example.EmployeeManagementSystem.Enum.ServiceRequestStatus;
 import com.example.EmployeeManagementSystem.Exception.EmployeeNotFound;
 import com.example.EmployeeManagementSystem.Exception.VendorNotFoundException;
@@ -192,6 +193,7 @@ public class ServiceRequestService {
        RepairBill repairBill=new RepairBill();
         repairBill.setDevice(device);
         repairBill.setGeneratedDate(LocalDate.now());
+        repairBill.setPaymentStatus(PaymentStatus.PENDING);
 
         // 5. Update based on repair result
         if (repairDTO.getStatus()==ServiceRequestStatus.REPAIR_DONE) {

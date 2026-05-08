@@ -118,7 +118,7 @@ public class DeviceService {
     }
 
     public List<DeviceResponseDTO> getAllDevices() {
-        return deviceRepository.findByStatus(DeviceStatus.CONDEMNED.name()).stream()
+        return deviceRepository.findByStatus(DeviceStatus.RETURNED_TO_VENDOR.name()).stream()
                 .map(this::toDeviceResponse)
                 .toList();
     }
@@ -415,8 +415,12 @@ public class DeviceService {
         }
 
         DeviceAssignment currentAssignment = device.getCurrentAssignment();
+        device.setCurrentAssignment(null);
         deviceAssignmentRepo.delete(currentAssignment);
         device.setDeviceStatus(DeviceStatus.RETURNED_TO_VENDOR);
+        if (currentAssignment != null) {
+            deviceAssignmentRepo.delete(currentAssignment);
+        }
         deviceRepository.save(device);
 
 
