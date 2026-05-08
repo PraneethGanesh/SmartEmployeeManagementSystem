@@ -529,6 +529,14 @@
                                 <label class="form-label">Resolution Notes</label>
                                 <input class="form-input" id="vr-resolution" placeholder="What was repaired, parts replaced, or why it couldn't be fixed…">
                             </div>
+                            <div class="form-group">
+                                <label class="form-label">Damaged Component <span style="color:var(--text3);font-weight:400">optional</span></label>
+                                <input class="form-input" id="vr-damaged-component" placeholder="e.g. Motherboard, Screen…">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Replaced Component <span style="color:var(--text3);font-weight:400">optional</span></label>
+                                <input class="form-input" id="vr-replaced-component" placeholder="e.g. RAM, Battery…">
+                            </div>
                         </div>
                         <div id="vr-outcome-hint" class="outcome-hint success">
                             ✓ Device status → <strong>ASSIGNED</strong> — returned to the employee
@@ -991,6 +999,8 @@
       document.getElementById('vr-status').value = 'REPAIR_DONE';
       document.getElementById('vr-resolution').value = '';
       document.getElementById('vr-repair-cost').value = '';
+      document.getElementById('vr-damaged-component').value = '';
+      document.getElementById('vr-replaced-component').value = '';
       onOutcomeChange();
       const panel = document.getElementById('vendor-repair-panel');
       panel.style.display = 'block';
@@ -998,9 +1008,11 @@
     }
 
     function closeRepairPanel(){
-      document.getElementById('vendor-repair-panel').style.display = 'none';
-      document.getElementById('vr-repair-cost').value = '';
-    }
+    document.getElementById('vendor-repair-panel').style.display = 'none';
+    document.getElementById('vr-repair-cost').value = '';
+    document.getElementById('vr-damaged-component').value = '';
+    document.getElementById('vr-replaced-component').value = '';
+}
 
     function onOutcomeChange(){
       const status = document.getElementById('vr-status').value;
@@ -1015,28 +1027,37 @@
     }
 
     async function submitRepairUpdate(){
-      const requestId  = document.getElementById('vr-request-id').value;
-      const status     = document.getElementById('vr-status').value;
-      const resolution = document.getElementById('vr-resolution').value.trim();
-      const repairCost = parseFloat(document.getElementById('vr-repair-cost').value) || null;
+    const requestId         = document.getElementById('vr-request-id').value;
+    const status            = document.getElementById('vr-status').value;
+    const resolution        = document.getElementById('vr-resolution').value.trim();
+    const repairCost        = parseFloat(document.getElementById('vr-repair-cost').value) || null;
+    const damagedComponent  = document.getElementById('vr-damaged-component').value.trim() || null;
+    const replacedComponent = document.getElementById('vr-replaced-component').value.trim() || null;
 
-      if(!resolution){
+    if(!resolution){
         showAlert('Please enter resolution notes','error'); return;
-      }
+    }
 
-      const body = { requestId: parseInt(requestId), resolution, status, repairCost };
+    const body = {
+        requestId: parseInt(requestId),
+        resolution,
+        status,
+        repairCost,
+        damagedComponent,
+        replacedComponent
+    };
 
-      try{
+    try{
         await apiFetch('/service-requests/vendor', {method:'PUT', body:JSON.stringify(body)});
         const label = status === 'REPAIR_DONE'
-          ? 'Repair marked done — device returned to employee'
-          : 'Device condemned';
+            ? 'Repair marked done — device returned to employee'
+            : 'Device condemned — marked irreparable';
         showAlert(label, 'success');
         closeRepairPanel();
         await Promise.all([loadServiceRequests(), loadMyDevices()]);
         loadDashboard();
-      }catch(e){ showAlert('Failed: '+e.message,'error'); }
-    }
+    }catch(e){ showAlert('Failed: '+e.message,'error'); }
+}
 
     // ── ASSIGNMENTS ───────────────────────────────────────────────────
     async function loadAssignments(){

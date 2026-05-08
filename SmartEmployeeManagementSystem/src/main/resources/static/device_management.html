@@ -133,6 +133,7 @@
             <div class="nav-item active" onclick="showView('overview', event)">&#9632; Overview</div>
             <div class="nav-item" onclick="showView('all-devices', event)">&#9632; All Devices</div>
             <div class="nav-item" onclick="showView('admin-service-requests', event)">&#9632; All Service Requests</div>
+            <div class="nav-item" onclick="showView('bills', event)">&#9632; Repair Bills</div>
 
             <!-- MY WORKSPACE -->
             <div style="height: 1px; background: var(--border); margin: 6px 12px;"></div>
@@ -346,6 +347,30 @@
                 </div>
             </div>
 
+            <!-- REPAIR BILLS VIEW -->
+            <div id="bills-view" class="view">
+                <div class="section-head">
+                    <div class="section-title">Unpaid Repair Bills</div>
+                    <button class="btn btn-primary btn-sm" onclick="loadRepairBills()">Refresh</button>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>Bill ID</th>
+                            <th>Device</th>
+                            <th>Repaired By</th>
+                            <th>Repair Date</th>
+                            <th>Repair Cost</th>
+                            <th>Generated On</th>
+                            <th>Payment Status</th>
+                        </tr>
+                        </thead>
+                        <tbody id="bills-list"></tbody>
+                    </table>
+                </div>
+            </div>
+
         </div>
     </div>
 </div>
@@ -533,7 +558,8 @@
             'my-devices': loadMyAssignedDevices,
             'service-requests': loadServiceRequests,
             'admin-service-requests': loadAdminServiceRequests,
-            'add-device': loadVendorsForDevice
+            'add-device': loadVendorsForDevice,
+            'bills': loadRepairBills
         };
         if (loaders[viewName]) loaders[viewName]();
     }
@@ -972,6 +998,29 @@ if (d.deviceStatus === 'AVAILABLE') {
         document.getElementById('device-vendor').value = '';
         document.getElementById('device-description').value = '';
     }
+
+    // ============ REPAIR BILLS ============
+async function loadRepairBills() {
+    try {
+        const bills = await apiFetch('/bills/repairBill');
+        const tbody = document.getElementById('bills-list');
+        if (!bills || !bills.length) {
+            tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No unpaid bills found</td></tr>';
+            return;
+        }
+        tbody.innerHTML = bills.map(b => `<tr>
+            <td>#${b.billId}</td>
+            <td><strong>${b.deviceName || '—'}</strong></td>
+            <td style="font-size:12px;color:var(--text2)">${b.repairedBy || '—'}</td>
+            <td style="font-size:12px;color:var(--text2)">${b.repairedDate || '—'}</td>
+            <td style="color:var(--amber);font-weight:600">
+                ${b.repairCost ? '₹' + b.repairCost : '—'}
+            </td>
+            <td style="font-size:12px;color:var(--text2)">${b.generatedOn || '—'}</td>
+            <td><span class="chip ${(b.status || '').toLowerCase()}">${b.status || '—'}</span></td>
+        </tr>`).join('');
+    } catch (e) { console.error(e); }
+}
 
     // ============ LOGOUT ============
     function logout() {
