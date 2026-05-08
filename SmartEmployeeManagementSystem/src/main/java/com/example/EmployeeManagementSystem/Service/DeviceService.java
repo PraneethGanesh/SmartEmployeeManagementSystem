@@ -371,7 +371,7 @@ public class DeviceService {
                 .orElseThrow(() -> new RuntimeException("Device not found"));
 
         if (device.getTechVendor() == null || !device.getTechVendor().getId().equals(vendor.getId())) {
-            throw new RuntimeException("Unauthorized access to device repair logs");
+            throw new RuntimeException("Unauthorized access     to device repair logs");
         }
 
         return repairLogRepository.findByDeviceIdAndDeviceTechVendorIdOrderByRepairDateDescIdDesc(deviceId, vendor.getId()).stream()
