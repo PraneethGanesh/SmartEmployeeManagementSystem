@@ -23,6 +23,7 @@ import com.example.EmployeeManagementSystem.Repository.RepairLogRepository;
 import com.example.EmployeeManagementSystem.Repository.ServiceRequestRepository;
 import com.example.EmployeeManagementSystem.Repository.VendorRepo;
 import com.example.EmployeeManagementSystem.Util.AuthUtil;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -117,7 +118,7 @@ public class DeviceService {
     }
 
     public List<DeviceResponseDTO> getAllDevices() {
-        return deviceRepository.findAll().stream()
+        return deviceRepository.findByStatus(DeviceStatus.CONDEMNED.name()).stream()
                 .map(this::toDeviceResponse)
                 .toList();
     }
@@ -386,7 +387,6 @@ public class DeviceService {
         dto.setDamagedComponent(repairLog.getDamagedComponent());
         dto.setRepairAction(repairLog.getRepairAction());
         dto.setReplacedComponent(repairLog.getReplacedComponent());
-        dto.setRepairCost(repairLog.getRepairCost());
         dto.setRepairedBy(repairLog.getRepairedBy());
         dto.setRepairDate(repairLog.getRepairDate());
         dto.setRemarks(repairLog.getRemarks());
@@ -404,5 +404,40 @@ public class DeviceService {
         }
 
         return dto;
+    }
+
+    @Transactional
+    public ResponseEntity<String> returnCondemned(Long deviceId, Authentication authentication) {
+        Device device = getAuthorizedDevice(deviceId, authentication);
+
+        if (device.getDeviceStatus() != DeviceStatus.CONDEMNED) {
+            throw new IllegalArgumentException("Only condemned devices can be returned");
+        }
+
+        DeviceAssignment currentAssignment = device.getCurrentAssignment();
+        deviceAssignmentRepo.delete(currentAssignment);
+        device.setDeviceStatus(DeviceStatus.RETURNED_TO_VENDOR);
+        deviceRepository.save(device);
+
+
+        return ResponseEntity.ok("Condemned device returned and assignment removed");
+    }
+
+    public ResponseEntity<String> removeDevice(Long deviceId, Authentication authentication) {
+
+        Device device=deviceRepository.findById(deviceId).orElseThrow(
+                ()-> new RuntimeException("Device Not found")
+        );
+        String email=AuthUtil.extractEmail(authentication);
+        Vendor vendor=vendorRepo.findByEmail(email).orElseThrow(
+           ()->new VendorNotFoundException("vendor  not found")
+        );
+
+        if(device.getTechVendor().getName()!=vendor.getName()){
+            throw new AccessDeniedException("Access Denied");
+        }
+        deviceRepository.delete(device);
+        return ResponseEntity.ok("Device removed from stock");
+
     }
 }
