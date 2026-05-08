@@ -27,8 +27,6 @@ public class RepairLog {
 
     private String replacedComponent;
 
-    private BigDecimal repairCost;
-
     private String repairedBy;
 
     private LocalDate repairDate;
@@ -89,14 +87,6 @@ public class RepairLog {
 
     public void setReplacedComponent(String replacedComponent) {
         this.replacedComponent = replacedComponent;
-    }
-
-    public BigDecimal getRepairCost() {
-        return repairCost;
-    }
-
-    public void setRepairCost(BigDecimal repairCost) {
-        this.repairCost = repairCost;
     }
 
     public String getRepairedBy() {

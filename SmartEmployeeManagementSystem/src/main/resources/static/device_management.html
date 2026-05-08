@@ -594,6 +594,8 @@ if (d.deviceStatus === 'AVAILABLE') {
     actions = `<button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); openAssignModal(${d.id}, '${escapeJs(d.deviceName)}')">Assign</button>`;
 } else if (d.deviceStatus === 'REPAIR_DONE') {
     actions = `<button class="btn btn-sm" style="background:var(--violet-dim);color:var(--violet);border:1px solid rgba(167,139,250,0.3)" onclick="event.stopPropagation(); reassignRepairedDevice(${d.id}, '${escapeJs(d.deviceName)}')">Reassign</button>`;
+}else if (d.deviceStatus === 'CONDEMNED') {
+    actions = `<button class="btn btn-danger btn-sm" onclick="event.stopPropagation(); returnCondemnedDevice(${d.id}, '${escapeJs(d.deviceName)}')">Return to Vendor</button>`;
 }
 
                 return `<div class="device-card" onclick="openDeviceDetail(${d.id})">
@@ -902,6 +904,17 @@ if (d.deviceStatus === 'AVAILABLE') {
     try {
         const device = await apiFetch(`/devices/${deviceId}/mark-assigned`, { method: 'PUT' });
         showAlert(`Device reassigned to ${device.assignedEmployeeName} successfully!`, 'success');
+        loadAllDevices();
+        loadOverview();
+    } catch (e) {
+        showAlert('Failed: ' + e.message, 'error');
+    }
+}
+    async function returnCondemnedDevice(deviceId, deviceName) {
+    if (!confirm(`Return condemned device "${deviceName}" to vendor? This will remove the assignment.`)) return;
+    try {
+        const message = await apiFetch(`/devices/condemned/remove/${deviceId}`, { method: 'PUT' });
+        showAlert(message || 'Device returned to vendor successfully!', 'success');
         loadAllDevices();
         loadOverview();
     } catch (e) {

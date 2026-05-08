@@ -113,4 +113,17 @@ public class DeviceController {
         return deviceService.getRepairLogsForLoggedInVendorDevice(deviceId, authentication);
     }
 
+    @PutMapping("/condemned/remove/{deviceId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<String> returnCondemned(@PathVariable Long deviceId, Authentication authentication) {
+        return deviceService.returnCondemned(deviceId, authentication);
+    }
+
+    @DeleteMapping("/remove/{deviceId}")
+    @PreAuthorize("hasRole('TECH_VENDOR')")
+    public ResponseEntity<String> removeReturned(@PathVariable Long deviceId, Authentication authentication) {
+        return deviceService.removeDevice(deviceId, authentication);
+    }
+
+
 }
