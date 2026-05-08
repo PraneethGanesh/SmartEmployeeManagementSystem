@@ -31,21 +31,25 @@ public class EmployeeService {
     private final LeaveRequestRepo leaveRequestRepo;
     private final PasswordEncoder passwordEncoder;
     private final RefreshTokenRepository refreshTokenRepository; // FIX: added
+    private final LeaveAccrualService leaveAccrualService;
 
     public EmployeeService(EmployeeRepo employeeRepo,
                            LeaveRequestRepo leaveRequestRepo,
                            PasswordEncoder passwordEncoder,
-                           RefreshTokenRepository refreshTokenRepository) {
+                           RefreshTokenRepository refreshTokenRepository,
+                           LeaveAccrualService leaveAccrualService) {
         this.employeeRepo = employeeRepo;
         this.leaveRequestRepo = leaveRequestRepo;
         this.passwordEncoder = passwordEncoder;
         this.refreshTokenRepository = refreshTokenRepository; // FIX: injected
+        this.leaveAccrualService = leaveAccrualService;
     }
 
     public List<Employee> getAllEmployees() {
         return employeeRepo.findAll();
     }
 
+    @Transactional
     public Employee createEmployee(AdminEmployeeDTO employeeDTO) {
         log.info("Creating new employee with email: {}", employeeDTO.getEmail());
         var employee = new Employee();
@@ -67,9 +71,12 @@ public class EmployeeService {
         );
         employee.setDept(manager.getDept());
         employee.setManager(manager);
-        return employeeRepo.save(employee);
+        Employee savedEmployee = employeeRepo.save(employee);
+        leaveAccrualService.grantInitialMonthlyAccrual(savedEmployee, savedEmployee.getJoined_at());
+        return savedEmployee;
     }
 
+    @Transactional
     public Employee createManager(EmployeeDTO employeeDTO) {
         log.info("Creating new manager with email: {}", employeeDTO.getEmail());
         var employee = new Employee();
@@ -87,7 +94,9 @@ public class EmployeeService {
         }
         employee.setPassword(passwordEncoder.encode(employeeDTO.getPassword()));
         employee.setGender(employeeDTO.getGender());
-        return employeeRepo.save(employee);
+        Employee savedEmployee = employeeRepo.save(employee);
+        leaveAccrualService.grantInitialMonthlyAccrual(savedEmployee, savedEmployee.getJoined_at());
+        return savedEmployee;
     }
 
     public Employee updateEmployee(long id, EmployeeDTO employee) {
