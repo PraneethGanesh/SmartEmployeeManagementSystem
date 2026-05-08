@@ -113,6 +113,19 @@
             .topbar { align-items: flex-start; gap: 12px; flex-direction: column; }
             .form-grid, .stats-grid { grid-template-columns: 1fr; }
         }
+
+        .bill-card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+.bill-card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 18px; display: flex; flex-direction: column; gap: 12px; }
+.bill-card-head { display: flex; justify-content: space-between; align-items: flex-start; }
+.bill-card-id { font-size: 11px; color: var(--text3); font-family: var(--mono); }
+.bill-card-device { font-size: 15px; font-weight: 700; }
+.bill-card-brand { font-size: 11px; color: var(--text2); margin-top: 2px; }
+.bill-card-cost { font-size: 26px; font-weight: 700; color: var(--amber); font-family: var(--mono); }
+.bill-card-divider { height: 1px; background: var(--border); }
+.bill-card-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.bill-meta-item { display: flex; flex-direction: column; gap: 3px; }
+.bill-meta-label { font-size: 10px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: .5px; }
+.bill-meta-value { font-size: 12px; color: var(--text2); font-family: var(--mono); }
     </style>
 </head>
 <body>
@@ -133,6 +146,7 @@
             <div class="nav-item active" onclick="showView('overview', event)">&#9632; Overview</div>
             <div class="nav-item" onclick="showView('all-devices', event)">&#9632; All Devices</div>
             <div class="nav-item" onclick="showView('admin-service-requests', event)">&#9632; All Service Requests</div>
+            <div class="nav-item" onclick="showView('bills', event)">&#9632; Repair Bills</div>
 
             <!-- MY WORKSPACE -->
             <div style="height: 1px; background: var(--border); margin: 6px 12px;"></div>
@@ -346,6 +360,18 @@
                 </div>
             </div>
 
+            <!-- REPAIR BILLS VIEW -->
+            <div id="bills-view" class="view">
+                <div class="section-head">
+                    <div>
+                        <div class="section-title">Unpaid Repair Bills</div>
+                        <div style="color:var(--text2);font-size:12px">All outstanding bills pending payment</div>
+                    </div>
+                    <button class="btn btn-primary btn-sm" onclick="loadRepairBills()">Refresh</button>
+                </div>
+                <div id="bills-card-grid" class="bill-card-grid"></div>
+            </div>
+
         </div>
     </div>
 </div>
@@ -533,7 +559,8 @@
             'my-devices': loadMyAssignedDevices,
             'service-requests': loadServiceRequests,
             'admin-service-requests': loadAdminServiceRequests,
-            'add-device': loadVendorsForDevice
+            'add-device': loadVendorsForDevice,
+            'bills': loadRepairBills
         };
         if (loaders[viewName]) loaders[viewName]();
     }
@@ -972,6 +999,50 @@ if (d.deviceStatus === 'AVAILABLE') {
         document.getElementById('device-vendor').value = '';
         document.getElementById('device-description').value = '';
     }
+
+    // ============ REPAIR BILLS ============
+async function loadRepairBills() {
+    try {
+        const bills = await apiFetch('/bills/repairBill');
+        const grid = document.getElementById('bills-card-grid');
+        if (!bills || !bills.length) {
+            grid.innerHTML = '<div class="empty-state">No unpaid bills found</div>';
+            return;
+        }
+        grid.innerHTML = bills.map(b => `
+            <div class="bill-card">
+                <div class="bill-card-head">
+                    <div>
+                        <div class="bill-card-id">Bill #${b.billId}</div>
+                        <div class="bill-card-device">${escapeHtml(b.deviceName || '—')}</div>
+                        <div class="bill-card-brand">${escapeHtml(b.repairedBy || '—')}</div>
+                    </div>
+                    <span class="chip ${(b.status || '').toLowerCase()}">${b.status || '—'}</span>
+                </div>
+                <div class="bill-card-cost">${b.repairCost ? '₹' + b.repairCost : '—'}</div>
+                <div class="bill-card-divider"></div>
+                <div class="bill-card-meta">
+                    <div class="bill-meta-item">
+                        <div class="bill-meta-label">Repaired By</div>
+                        <div class="bill-meta-value">${escapeHtml(b.repairedBy || '—')}</div>
+                    </div>
+                    <div class="bill-meta-item">
+                        <div class="bill-meta-label">Repair Date</div>
+                        <div class="bill-meta-value">${b.repairLog?.repairedDate || '—'}</div>
+                    </div>
+                    <div class="bill-meta-item">
+                        <div class="bill-meta-label">Generated On</div>
+                        <div class="bill-meta-value">${b.geneartedOn || '—'}</div>
+                    </div>
+                    <div class="bill-meta-item">
+                        <div class="bill-meta-label">Vendor</div>
+                        <div class="bill-meta-value">${escapeHtml(b.repairedBy || '—')}</div>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    } catch (e) { console.error(e); }
+}
 
     // ============ LOGOUT ============
     function logout() {

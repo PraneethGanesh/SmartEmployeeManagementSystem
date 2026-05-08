@@ -10,6 +10,7 @@ public class RepairDTO {
     private ServiceRequestStatus status;
     private String damagedComponent;
     private String replacedComponent;
+    private BigDecimal repairCost;
 
     public Long getRequestId() {
         return requestId;
@@ -37,6 +38,22 @@ public class RepairDTO {
 
     public String getDamagedComponent() {
         return damagedComponent;
+    }
+
+    public void setDamagedComponent(String damagedComponent) {
+        this.damagedComponent = damagedComponent;
+    }
+
+    public String getReplacedComponent() {
+        return replacedComponent;
+    }
+
+    public void setReplacedComponent(String replacedComponent) {
+        this.replacedComponent = replacedComponent;
+    }
+
+    public BigDecimal getRepairCost() {
+        return repairCost;
     }
 
     public void setDamagedComponent(String damagedComponent) {
