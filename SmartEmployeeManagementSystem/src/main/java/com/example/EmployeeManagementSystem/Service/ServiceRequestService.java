@@ -212,9 +212,14 @@ public class ServiceRequestService {
 
         request.setResolvedAt(LocalDateTime.now());
         repairLog.setRepairAction(repairDTO.getResolution());
-        repairLog.setRepairCost(repairDTO.getRepairCost());
         repairLog.setRepairedBy(vendor.getName());
         repairLog.setRepairDate(LocalDate.now());
+        if(repairDTO.getDamagedComponent()!=null){
+            repairLog.setDamagedComponent(repairDTO.getDamagedComponent());
+        }
+        if(repairDTO.getReplacedComponent()!=null){
+            repairLog.setReplacedComponent(repairDTO.getReplacedComponent());
+        }
 
         repairLogRepository.save(repairLog);
         deviceRepository.save(device);
