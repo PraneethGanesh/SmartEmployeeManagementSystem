@@ -4,20 +4,13 @@ import com.example.EmployeeManagementSystem.DTO.AdminActionDTO;
 import com.example.EmployeeManagementSystem.DTO.RepairDTO;
 import com.example.EmployeeManagementSystem.DTO.ServiceRequestDTO;
 import com.example.EmployeeManagementSystem.DTO.ServiceRequestResponseDTO;
-import com.example.EmployeeManagementSystem.Entity.Device;
-import com.example.EmployeeManagementSystem.Entity.Employee;
-import com.example.EmployeeManagementSystem.Entity.RepairLog;
-import com.example.EmployeeManagementSystem.Entity.ServiceRequest;
-import com.example.EmployeeManagementSystem.Entity.Vendor;
+import com.example.EmployeeManagementSystem.Entity.*;
 import com.example.EmployeeManagementSystem.Enum.DeviceStatus;
+import com.example.EmployeeManagementSystem.Enum.PaymentStatus;
 import com.example.EmployeeManagementSystem.Enum.ServiceRequestStatus;
 import com.example.EmployeeManagementSystem.Exception.EmployeeNotFound;
 import com.example.EmployeeManagementSystem.Exception.VendorNotFoundException;
-import com.example.EmployeeManagementSystem.Repository.DeviceRepository;
-import com.example.EmployeeManagementSystem.Repository.EmployeeRepo;
-import com.example.EmployeeManagementSystem.Repository.RepairLogRepository;
-import com.example.EmployeeManagementSystem.Repository.ServiceRequestRepository;
-import com.example.EmployeeManagementSystem.Repository.VendorRepo;
+import com.example.EmployeeManagementSystem.Repository.*;
 import com.example.EmployeeManagementSystem.Util.AuthUtil;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -34,13 +27,15 @@ public class ServiceRequestService {
     private final DeviceRepository deviceRepository;
     private final RepairLogRepository repairLogRepository;
     private final VendorRepo vendorRepo;
+    private final RepairBillRepository repairBillRepository;
 
-    public ServiceRequestService(ServiceRequestRepository serviceRequestRepository, EmployeeRepo employeeRepo, DeviceRepository deviceRepository, RepairLogRepository repairLogRepository, VendorRepo vendorRepo) {
+    public ServiceRequestService(ServiceRequestRepository serviceRequestRepository, EmployeeRepo employeeRepo, DeviceRepository deviceRepository, RepairLogRepository repairLogRepository, VendorRepo vendorRepo, RepairBillRepository repairBillRepository) {
         this.serviceRequestRepository = serviceRequestRepository;
         this.employeeRepo = employeeRepo;
         this.deviceRepository = deviceRepository;
         this.repairLogRepository = repairLogRepository;
         this.vendorRepo = vendorRepo;
+        this.repairBillRepository = repairBillRepository;
     }
 
     public ServiceRequest createServiceRequest(ServiceRequestDTO dto, Authentication authentication) {
@@ -195,6 +190,11 @@ public class ServiceRequestService {
             throw new RuntimeException("Repair status is required");
         }
 
+       RepairBill repairBill=new RepairBill();
+        repairBill.setDevice(device);
+        repairBill.setGeneratedDate(LocalDate.now());
+        repairBill.setPaymentStatus(PaymentStatus.PENDING);
+
         // 5. Update based on repair result
         if (repairDTO.getStatus()==ServiceRequestStatus.REPAIR_DONE) {
             request.setResolution(repairDTO.getResolution());
@@ -221,7 +221,10 @@ public class ServiceRequestService {
             repairLog.setReplacedComponent(repairDTO.getReplacedComponent());
         }
 
-        repairLogRepository.save(repairLog);
+        RepairLog savedLog=repairLogRepository.save(repairLog);
+        repairBill.setRepairLog(savedLog);
+        repairBill.setRepairCost(repairDTO.getRepairCost());
+        repairBillRepository.save(repairBill);
         deviceRepository.save(device);
         ServiceRequest serviceRequest=serviceRequestRepository.save(request);
         return toServiceRequestResponseDTO(serviceRequest);
