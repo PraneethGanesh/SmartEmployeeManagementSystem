@@ -56,15 +56,4 @@ public class RepairDTO {
         return repairCost;
     }
 
-    public void setDamagedComponent(String damagedComponent) {
-        this.damagedComponent = damagedComponent;
-    }
-
-    public String getReplacedComponent() {
-        return replacedComponent;
-    }
-
-    public void setReplacedComponent(String replacedComponent) {
-        this.replacedComponent = replacedComponent;
-    }
 }
