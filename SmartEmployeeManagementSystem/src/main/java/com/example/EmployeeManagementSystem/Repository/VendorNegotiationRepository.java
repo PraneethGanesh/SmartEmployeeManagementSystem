@@ -8,4 +8,5 @@ import java.util.List;
 public interface VendorNegotiationRepository extends JpaRepository<VendorNegotiation, Long> {
     List<VendorNegotiation> findByVendorIdOrderByUpdatedAtDesc(Long vendorId);
     List<VendorNegotiation> findAllByOrderByUpdatedAtDesc();
+    List<VendorNegotiation> findByDeviceId(Long deviceId);
 }
