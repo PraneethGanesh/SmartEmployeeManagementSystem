@@ -17,10 +17,11 @@ import com.example.EmployeeManagementSystem.Util.AuthUtil;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
+import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.List;
-
+@Service
 public class InvoiceService {
     private final VendorRepo vendorRepo;
     private final InvoiceRepository invoiceRepository;
