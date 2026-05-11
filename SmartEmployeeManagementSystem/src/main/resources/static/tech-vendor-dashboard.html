@@ -1357,8 +1357,7 @@
               <div class="tl-dot ${dotColor}" style="width:24px;height:24px;font-size:10px">⚙</div>
               <div>
                 <div style="font-size:12px;font-weight:600;color:var(--text)">
-                  ${r.issueType ? r.issueType.replace(/_/g,' ') : 'Repair Log'}
-                  ${r.damagedComponent ? `<span style="color:var(--text3);font-weight:400"> · ${r.damagedComponent}</span>` : ''}
+                  ${'Repair Log'}
                 </div>
                 ${r.serviceRequestId
                     ? `<div class="repair-log-id">SR #${r.serviceRequestId} · ${r.serviceRequestStatus ? chip(r.serviceRequestStatus) : ''}</div>`
