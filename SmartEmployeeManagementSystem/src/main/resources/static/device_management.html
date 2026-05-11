@@ -126,6 +126,9 @@
 .bill-meta-item { display: flex; flex-direction: column; gap: 3px; }
 .bill-meta-label { font-size: 10px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: .5px; }
 .bill-meta-value { font-size: 12px; color: var(--text2); font-family: var(--mono); }
+
+        .chip.overdue { background: var(--red-dim); color: var(--red); }
+.chip.unpaid  { background: var(--amber-dim); color: var(--amber); }
     </style>
 </head>
 <body>
@@ -147,6 +150,7 @@
             <div class="nav-item" onclick="showView('all-devices', event)">&#9632; All Devices</div>
             <div class="nav-item" onclick="showView('admin-service-requests', event)">&#9632; All Service Requests</div>
             <div class="nav-item" onclick="showView('bills', event)">&#9632; Repair Bills</div>
+            <div class="nav-item" onclick="showView('bills-rental', event)">&#9632; Rental Bills</div>
 
             <!-- MY WORKSPACE -->
             <div style="height: 1px; background: var(--border); margin: 6px 12px;"></div>
@@ -372,6 +376,18 @@
                 <div id="bills-card-grid" class="bill-card-grid"></div>
             </div>
 
+            <!-- RENTAL BILLS VIEW -->
+            <div id="bills-rental-view" class="view">
+                <div class="section-head">
+                    <div>
+                        <div class="section-title">Unpaid Rental Bills</div>
+                        <div style="color:var(--text2);font-size:12px">Outstanding vendor rental dues pending payment</div>
+                    </div>
+                    <button class="btn btn-primary btn-sm" onclick="loadRentalBills()">Refresh</button>
+                </div>
+                <div id="rental-bills-card-grid" class="bill-card-grid"></div>
+            </div>
+
         </div>
     </div>
 </div>
@@ -560,7 +576,8 @@
             'service-requests': loadServiceRequests,
             'admin-service-requests': loadAdminServiceRequests,
             'add-device': loadVendorsForDevice,
-            'bills': loadRepairBills
+            'bills': loadRepairBills,
+            'bills-rental': loadRentalBills
         };
         if (loaders[viewName]) loaders[viewName]();
     }
@@ -1028,7 +1045,7 @@ async function loadRepairBills() {
                     </div>
                     <div class="bill-meta-item">
                         <div class="bill-meta-label">Repair Date</div>
-                        <div class="bill-meta-value">${b.repairLog?.repairedDate || '—'}</div>
+                        <div class="bill-meta-value">${b.repairedDate || '—'}</div>
                     </div>
                     <div class="bill-meta-item">
                         <div class="bill-meta-label">Generated On</div>
@@ -1037,6 +1054,50 @@ async function loadRepairBills() {
                     <div class="bill-meta-item">
                         <div class="bill-meta-label">Vendor</div>
                         <div class="bill-meta-value">${escapeHtml(b.repairedBy || '—')}</div>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    } catch (e) { console.error(e); }
+}
+
+// ============ RENTAL BILLS ============
+async function loadRentalBills() {
+    try {
+        const bills = await apiFetch('/bills/rentalBill');
+        const grid = document.getElementById('rental-bills-card-grid');
+        if (!bills || !bills.length) {
+            grid.innerHTML = '<div class="empty-state">No unpaid rental bills found</div>';
+            return;
+        }
+        grid.innerHTML = bills.map(b => `
+            <div class="bill-card">
+                <div class="bill-card-head">
+                    <div>
+                        <div class="bill-card-id">Rental Bill #${b.id}</div>
+                        <div class="bill-card-device">${escapeHtml(b.vendorName || '—')}</div>
+                        <div class="bill-card-brand">Rental charge</div>
+                    </div>
+                    <span class="chip ${(b.paymentStatus || '').toLowerCase()}">${b.paymentStatus || '—'}</span>
+                </div>
+                <div class="bill-card-cost">${b.amount != null ? '₹' + b.amount : '—'}</div>
+                <div class="bill-card-divider"></div>
+                <div class="bill-card-meta">
+                    <div class="bill-meta-item">
+                        <div class="bill-meta-label">Vendor</div>
+                        <div class="bill-meta-value">${escapeHtml(b.vendorName || '—')}</div>
+                    </div>
+                    <div class="bill-meta-item">
+                        <div class="bill-meta-label">Bill Date</div>
+                        <div class="bill-meta-value">${b.billDate || '—'}</div>
+                    </div>
+                    <div class="bill-meta-item">
+                        <div class="bill-meta-label">Due Date</div>
+                        <div class="bill-meta-value" style="color:${b.paymentStatus === 'OVERDUE' ? 'var(--red)' : 'inherit'}">${b.dueDate || '—'}</div>
+                    </div>
+                    <div class="bill-meta-item">
+                        <div class="bill-meta-label">Status</div>
+                        <div class="bill-meta-value">${b.paymentStatus || '—'}</div>
                     </div>
                 </div>
             </div>

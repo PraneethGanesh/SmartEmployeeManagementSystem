@@ -259,12 +259,6 @@
                 Negotiations
             </div>
 
-            <div class="nav-section">Assignments</div>
-            <div class="nav-item" onclick="showView('assignments',this)">
-                <svg class="nav-icon" fill="none" viewBox="0 0 16 16"><circle cx="6" cy="5" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M1 14c0-3 2-5 5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M11 9v6M8 12h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-                Assignments
-            </div>
-
             <div class="nav-section">Account</div>
             <div class="nav-item" onclick="showView('two-factor',this)">
                 <svg class="nav-icon" fill="none" viewBox="0 0 16 16"><rect x="1" y="7" width="14" height="8" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M4 7V5a4 4 0 0 1 8 0v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
@@ -631,33 +625,6 @@
                 </div>
             </div>
 
-            <!-- ASSIGNMENTS -->
-            <div id="assignments-view" class="view">
-                <div class="card">
-                    <div class="card-head">
-                        <div>
-                            <div class="card-title">Device Assignments</div>
-                            <div class="card-sub">who has your devices</div>
-                        </div>
-                        <button class="btn btn-ghost btn-sm" onclick="loadAssignments()">↺ Refresh</button>
-                    </div>
-                    <div class="tablewrap">
-                        <table>
-                            <thead>
-                            <tr>
-                                <th>Device</th>
-                                <th>Type</th>
-                                <th>Employee</th>
-                                <th>Assigned Date</th>
-                                <th>Status</th>
-                            </tr>
-                            </thead>
-                            <tbody id="assignments-list"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
             <!-- TWO-FACTOR AUTH -->
             <div id="two-factor-view" class="view">
                 <div class="card" style="max-width:560px">
@@ -787,20 +754,21 @@
     }
 
     async function apiFetch(path, opts={}){
-      const res = await fetch(`${API}${path}`,{
-        ...opts,
-        headers:{'Content-Type':'application/json',...getAuthHeader(),...(opts.headers||{})},
-        credentials:'include'
-      });
-      if(res.status===401){
-        localStorage.removeItem('jwt_token');
-        window.location.href='/login.html';
-        throw new Error('Unauthorized');
-      }
-      const text = await res.text();
-      if(!res.ok) throw new Error(text || 'Request failed');
-      return text ? JSON.parse(text) : null;
-    }
+  const res = await fetch(`${API}${path}`,{
+    ...opts,
+    headers:{'Content-Type':'application/json',...getAuthHeader(),...(opts.headers||{})},
+    credentials:'include'
+  });
+  if(res.status===401){
+    localStorage.removeItem('jwt_token');
+    window.location.href='/login.html';
+    throw new Error('Unauthorized');
+  }
+  const text = await res.text();
+  if(!res.ok) throw new Error(text || 'Request failed');
+  if(!text) return null;
+  try { return JSON.parse(text); } catch { return text; }  // ✅ falls back to raw string
+}
 
     // ── NAV ───────────────────────────────────────────────────────────
     function showView(name, el){
@@ -895,8 +863,11 @@
             </td>
             <td>${chip(d.deviceStatus)}</td>
             <td><div class="action-row">
-              <button class="btn btn-ghost btn-xs" onclick="viewDevice(${d.id})">Details</button>
-            </div></td>
+  <button class="btn btn-ghost btn-xs" onclick="viewDevice(${d.id})">Details</button>
+  ${d.deviceStatus === 'RETURNED_TO_VENDOR'
+    ? `<button class="btn btn-danger btn-xs" onclick="removeDevice(${d.id}, '${(d.deviceName||'Device').replace(/'/g,"\\'")}')">✕ Remove</button>`
+    : ''}
+</div></td>
           </tr>`).join('')
         : `<tr><td colspan="8"><div class="empty"><div class="empty-icon">⬡</div>No devices registered yet</div></td></tr>`;
     }
@@ -1324,7 +1295,6 @@
         <div class="detail-item"><div class="detail-label">Status</div><div class="detail-value">${chip(d.deviceStatus)}</div></div>
         <div class="detail-item"><div class="detail-label">Warranty</div><div class="detail-value">${warrantyDisplay}</div></div>
         <div class="detail-item"><div class="detail-label">Rent/Month</div><div class="detail-value">${d.rentPerMonth ? '<span style="color:var(--cyan);font-family:var(--mono)">₹'+d.rentPerMonth+'</span>' : '<span style="color:var(--text3)">—</span>'}</div></div>
-        <div class="detail-item"><div class="detail-label">Assigned To</div><div class="detail-value">${d.assignedEmployeeName||'<span style="color:var(--text3)">Unassigned</span>'}</div></div>
         <div class="detail-item"><div class="detail-label">Added On</div><div class="detail-value">${d.createdAt ? d.createdAt.split('T')[0] : '—'}</div></div>
       `;
 
@@ -1387,8 +1357,7 @@
               <div class="tl-dot ${dotColor}" style="width:24px;height:24px;font-size:10px">⚙</div>
               <div>
                 <div style="font-size:12px;font-weight:600;color:var(--text)">
-                  ${r.issueType ? r.issueType.replace(/_/g,' ') : 'Repair Log'}
-                  ${r.damagedComponent ? `<span style="color:var(--text3);font-weight:400"> · ${r.damagedComponent}</span>` : ''}
+                  ${'Repair Log'}
                 </div>
                 ${r.serviceRequestId
                     ? `<div class="repair-log-id">SR #${r.serviceRequestId} · ${r.serviceRequestStatus ? chip(r.serviceRequestStatus) : ''}</div>`
@@ -1411,16 +1380,16 @@
               <div style="font-family:var(--mono);font-size:12px;color:var(--text);margin-top:3px">${r.repairDate || '—'}</div>
             </div>
             <div>
-              <div class="detail-label">Repair Cost</div>
-              <div style="font-family:var(--mono);font-size:12px;color:var(--cyan);margin-top:3px">${r.repairCost ? '₹' + r.repairCost : '—'}</div>
-            </div>
-            <div>
               <div class="detail-label">Action Taken</div>
               <div style="font-family:var(--mono);font-size:12px;color:var(--text);margin-top:3px">${r.repairAction || '—'}</div>
             </div>
             <div>
+              <div class="detail-label">Damaged Component</div>
+              <div style="font-family:var(--mono);font-size:12px;color:var(--text);margin-top:3px">${r.damagedComponent || 'NONE'}</div>
+            </div>
+            <div>
               <div class="detail-label">Replaced Component</div>
-              <div style="font-family:var(--mono);font-size:12px;color:var(--text);margin-top:3px">${r.replacedComponent || '—'}</div>
+              <div style="font-family:var(--mono);font-size:12px;color:var(--text);margin-top:3px">${r.replacedComponent || 'NONE'}</div>
             </div>
             <div>
               <div class="detail-label">Device</div>
@@ -1533,6 +1502,19 @@
         showAlert('Failed: ' + e.message, 'error');
       }
     }
+
+    async function removeDevice(deviceId, deviceName) {
+  if (!confirm(`Remove "${deviceName}" from your catalog? This cannot be undone.`)) return;
+  try {
+    await apiFetch(`/devices/remove/${deviceId}`, { method: 'DELETE' });
+    showAlert(`"${deviceName}" removed from catalog`, 'success');
+    devicesCache = devicesCache.filter(d => d.id !== deviceId);
+    filterDevices();      // re-render list without hitting the server again
+    loadDashboard();      // update stats
+  } catch(e) {
+    showAlert('Failed: ' + e.message, 'error');
+  }
+}
 </script>
 </body>
 </html>
