@@ -21,7 +21,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.List;
-@Service
+@Service    
 public class InvoiceService {
     private final VendorRepo vendorRepo;
     private final InvoiceRepository invoiceRepository;
