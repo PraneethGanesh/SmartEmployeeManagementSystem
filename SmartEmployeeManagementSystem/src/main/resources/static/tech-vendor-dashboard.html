@@ -123,6 +123,10 @@
         .chip.active_assign{background:var(--green-dim);color:var(--green);border:1px solid rgba(16,212,142,0.2)} .chip.active_assign::before{background:var(--green)}
         .chip.returned{background:var(--text3);color:var(--text2);border:1px solid var(--border)} .chip.returned::before{background:var(--text2)}
         .chip.not_fixable{background:var(--red-dim);color:var(--red);border:1px solid rgba(240,84,84,0.2)} .chip.not_fixable::before{background:var(--red)}
+        .chip.pending{background:var(--amber-dim);color:var(--amber);border:1px solid rgba(245,158,11,0.2)} .chip.pending::before{background:var(--amber)}
+        .chip.negotiating{background:var(--cyan-dim);color:var(--cyan);border:1px solid var(--border2)} .chip.negotiating::before{background:var(--cyan)}
+        .chip.agreed,.chip.paid{background:var(--green-dim);color:var(--green);border:1px solid rgba(16,212,142,0.2)} .chip.agreed::before,.chip.paid::before{background:var(--green)}
+        .chip.closed{background:var(--bg4);color:var(--text2);border:1px solid var(--border)} .chip.closed::before{background:var(--text2)}
 
         .btn{padding:8px 16px;border-radius:6px;border:none;font-family:var(--font);font-size:12px;font-weight:700;cursor:pointer;transition:all 0.2s;letter-spacing:0.3px}
         .btn-primary{background:var(--cyan);color:#080b10}
@@ -182,6 +186,10 @@
 
         /* Inline repair panel */
         .repair-inline{background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:18px 20px;margin:0 16px 16px;animation:viewIn 0.2s ease}
+        .negotiation-grid{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:18px;align-items:start}
+        .message-list{display:flex;flex-direction:column;gap:10px;max-height:360px;overflow-y:auto;margin:14px 0}
+        .message-item{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 12px}
+        .message-meta{font-size:10px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;margin-bottom:4px}
 
         .modal-overlay{display:none;position:fixed;inset:0;background:rgba(8,11,16,0.85);z-index:1500;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
         .modal-overlay.open{display:flex}
@@ -245,6 +253,10 @@
                 <svg class="nav-icon" fill="none" viewBox="0 0 16 16"><path d="M8 1l1.5 4.5H14l-3.5 2.5 1.5 4.5L8 10l-4 2.5 1.5-4.5L2 5.5h4.5L8 1z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
                 Service Requests
                 <span class="nav-badge amber" id="sr-badge" style="display:none">0</span>
+            </div>
+            <div class="nav-item" onclick="showView('negotiations',this)">
+                <svg class="nav-icon" fill="none" viewBox="0 0 16 16"><path d="M2 4.5h12M2 8h12M2 11.5h7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="12" cy="11.5" r="2" stroke="currentColor" stroke-width="1.5"/></svg>
+                Negotiations
             </div>
 
             <div class="nav-section">Assignments</div>
@@ -549,6 +561,76 @@
                 </div>
             </div>
 
+            <!-- NEGOTIATIONS -->
+            <div id="negotiations-view" class="view">
+                <div class="negotiation-grid">
+                    <div>
+                        <div class="card">
+                            <div class="card-head">
+                                <div>
+                                    <div class="card-title">Negotiations</div>
+                                    <div class="card-sub">messages and payment discussions with admin</div>
+                                </div>
+                                <button class="btn btn-ghost btn-sm" onclick="loadNegotiations()">↺ Refresh</button>
+                            </div>
+                            <div class="tablewrap">
+                                <table>
+                                    <thead><tr><th>ID</th><th>Device</th><th>Subject</th><th>Amount</th><th>Status</th><th>Updated</th><th>Actions</th></tr></thead>
+                                    <tbody id="negotiations-list"><tr><td colspan="7"><div class="empty">Loading negotiations...</div></td></tr></tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-head">
+                                <div>
+                                    <div class="card-title">Start Negotiation</div>
+                                    <div class="card-sub">raise a new repair, pricing, or billing discussion</div>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="form-grid">
+                                    <div class="form-group">
+                                        <label class="form-label">Device</label>
+                                        <select class="form-input" id="vendor-neg-device"><option value="">No device</option></select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Proposed Amount</label>
+                                        <input class="form-input" id="vendor-neg-amount" type="number" min="0" step="0.01" placeholder="e.g. 2500">
+                                    </div>
+                                    <div class="form-group full">
+                                        <label class="form-label">Subject</label>
+                                        <input class="form-input" id="vendor-neg-subject" placeholder="Repair estimate or billing discussion">
+                                    </div>
+                                    <div class="form-group full">
+                                        <label class="form-label">Description</label>
+                                        <textarea class="form-input" id="vendor-neg-description" rows="3" placeholder="Give the admin the context for this negotiation"></textarea>
+                                    </div>
+                                    <div class="form-group full">
+                                        <label class="form-label">Initial Message</label>
+                                        <textarea class="form-input" id="vendor-neg-message" rows="3" placeholder="Write your opening message"></textarea>
+                                    </div>
+                                </div>
+                                <div class="form-actions">
+                                    <button class="btn btn-primary" onclick="createNegotiation()">Create Negotiation</button>
+                                    <button class="btn btn-ghost" onclick="clearNegotiationForm()">Clear</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-head">
+                            <div>
+                                <div class="card-title" id="neg-detail-title">Negotiation Detail</div>
+                                <div class="card-sub">select a row to reply</div>
+                            </div>
+                        </div>
+                        <div class="card-body" id="neg-detail-body">
+                            <div class="empty">No negotiation selected</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- ASSIGNMENTS -->
             <div id="assignments-view" class="view">
                 <div class="card">
@@ -677,7 +759,8 @@
 
 <script>
     const API = 'http://localhost:8080';
-    let devicesCache = [], srCache = [], srAllCache = [], assignmentsCache = [];
+    let devicesCache = [], srCache = [], srAllCache = [], assignmentsCache = [], negotiationsCache = [];
+    let selectedNegotiationId = null;
     let currentModalDeviceId = null; // track which device is open in modal
 
     // ── AUTH ──────────────────────────────────────────────────────────
@@ -730,6 +813,7 @@
         'dashboard': loadDashboard,
         'my-devices': loadMyDevices,
         'service-requests': loadServiceRequests,
+        'negotiations': loadNegotiations,
         'assignments': loadAssignments,
         'profile': loadProfile,
         'two-factor': loadTotpStatus,
@@ -740,7 +824,7 @@
 
     // ── INIT ──────────────────────────────────────────────────────────
     async function initDashboard(){
-      await Promise.all([loadMyDevices(), loadServiceRequests(), loadAssignments()]);
+      await Promise.all([loadMyDevices(), loadServiceRequests(), loadAssignments(), loadNegotiations()]);
       loadDashboard();
     }
 
@@ -1058,6 +1142,133 @@
         loadDashboard();
     }catch(e){ showAlert('Failed: '+e.message,'error'); }
 }
+
+    // ── NEGOTIATIONS ─────────────────────────────────────────────────
+    function escHtml(value){
+      const div = document.createElement('div');
+      div.textContent = value == null ? '' : String(value);
+      return div.innerHTML;
+    }
+
+    function money(value){
+      return value == null || value === '' ? '—' : `₹${Number(value).toLocaleString('en-IN')}`;
+    }
+
+    function populateNegotiationDevices(){
+      const select = document.getElementById('vendor-neg-device');
+      if(!select) return;
+      select.innerHTML = '<option value="">No device</option>' + (devicesCache || []).map(d =>
+        `<option value="${d.id}">${escHtml(d.deviceName || `Device #${d.id}`)}${d.deviceStatus ? ` · ${escHtml(d.deviceStatus)}` : ''}</option>`
+      ).join('');
+    }
+
+    async function loadNegotiations(){
+      try{
+        if(!devicesCache.length){
+          const data = await apiFetch('/devices/vendor/me').catch(()=>[]);
+          devicesCache = data || [];
+        }
+        populateNegotiationDevices();
+        negotiationsCache = await apiFetch('/vendor-negotiations') || [];
+        const tbody = document.getElementById('negotiations-list');
+        if(!tbody) return;
+        tbody.innerHTML = negotiationsCache.length ? negotiationsCache.map(n => `
+          <tr>
+            <td>#${n.id}</td>
+            <td class="main-cell">${escHtml(n.deviceName || n.deviceId || '—')}</td>
+            <td>${escHtml(n.subject || '—')}</td>
+            <td>${money(n.proposedAmount)}</td>
+            <td>${chip(n.status || 'PENDING')}</td>
+            <td>${n.updatedAt ? new Date(n.updatedAt).toLocaleString() : '—'}</td>
+            <td><button class="btn btn-ghost btn-xs" onclick="openNegotiation(${n.id})">Open</button></td>
+          </tr>`).join('') : `<tr><td colspan="7"><div class="empty">No negotiations yet</div></td></tr>`;
+        if(selectedNegotiationId && negotiationsCache.some(n => n.id === selectedNegotiationId)){
+          await openNegotiation(selectedNegotiationId);
+        }
+      }catch(e){
+        const tbody = document.getElementById('negotiations-list');
+        if(tbody) tbody.innerHTML = `<tr><td colspan="7"><div class="empty">Could not load negotiations</div></td></tr>`;
+      }
+    }
+
+    async function openNegotiation(id){
+      selectedNegotiationId = id;
+      try{
+        const n = await apiFetch(`/vendor-negotiations/${id}`);
+        document.getElementById('neg-detail-title').textContent = `Negotiation #${n.id}`;
+        document.getElementById('neg-detail-body').innerHTML = `
+          <div class="detail-grid" style="grid-template-columns:1fr">
+            <div class="detail-item"><div class="detail-label">Subject</div><div class="detail-value">${escHtml(n.subject || '—')}</div></div>
+            <div class="detail-item"><div class="detail-label">Device</div><div class="detail-value">${escHtml(n.deviceName || n.deviceId || '—')}</div></div>
+            <div class="detail-item"><div class="detail-label">Amount</div><div class="detail-value">${money(n.proposedAmount)}</div></div>
+            <div class="detail-item"><div class="detail-label">Status</div><div class="detail-value">${chip(n.status || 'PENDING')}</div></div>
+            <div class="detail-item"><div class="detail-label">Description</div><div class="detail-value">${escHtml(n.description || '—')}</div></div>
+          </div>
+          <div class="message-list">
+            ${(n.messages || []).length ? n.messages.map(m => `
+              <div class="message-item">
+                <div class="message-meta">${escHtml(m.senderType || '—')} · ${escHtml(m.senderEmail || '')} · ${m.createdAt ? new Date(m.createdAt).toLocaleString() : ''}</div>
+                <div>${escHtml(m.message || '')}</div>
+              </div>`).join('') : '<div class="empty" style="padding:16px">No messages yet</div>'}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Reply</label>
+            <textarea class="form-input" id="vendor-neg-reply" rows="3" placeholder="Write a reply to admin"></textarea>
+          </div>
+          <div class="form-actions">
+            <button class="btn btn-primary" onclick="replyNegotiation(${n.id})">Send Reply</button>
+            <select class="form-input" id="vendor-neg-status" style="max-width:170px">
+              ${['PENDING','NEGOTIATING','AGREED','REJECTED','CLOSED'].map(s => `<option value="${s}" ${s === n.status ? 'selected' : ''}>${s}</option>`).join('')}
+            </select>
+            <button class="btn btn-ghost" onclick="updateNegotiationStatus(${n.id})">Update Status</button>
+          </div>`;
+      }catch(e){ showAlert('Failed: '+e.message,'error'); }
+    }
+
+    async function createNegotiation(){
+      const body = {
+        deviceId: Number(document.getElementById('vendor-neg-device').value) || null,
+        proposedAmount: document.getElementById('vendor-neg-amount').value || null,
+        subject: document.getElementById('vendor-neg-subject').value.trim(),
+        description: document.getElementById('vendor-neg-description').value.trim(),
+        initialMessage: document.getElementById('vendor-neg-message').value.trim()
+      };
+      if(!body.subject || !body.description){
+        showAlert('Subject and description are required','error');
+        return;
+      }
+      try{
+        const created = await apiFetch('/vendor-negotiations', {method:'POST', body:JSON.stringify(body)});
+        showAlert('Negotiation created','success');
+        clearNegotiationForm();
+        selectedNegotiationId = created.id;
+        await loadNegotiations();
+      }catch(e){ showAlert('Failed: '+e.message,'error'); }
+    }
+
+    async function replyNegotiation(id){
+      const message = document.getElementById('vendor-neg-reply').value.trim();
+      if(!message){ showAlert('Reply message is required','error'); return; }
+      try{
+        await apiFetch(`/vendor-negotiations/${id}/messages`, {method:'POST', body:JSON.stringify({message})});
+        showAlert('Reply sent','success');
+        await loadNegotiations();
+      }catch(e){ showAlert('Failed: '+e.message,'error'); }
+    }
+
+    async function updateNegotiationStatus(id){
+      const status = document.getElementById('vendor-neg-status').value;
+      try{
+        await apiFetch(`/vendor-negotiations/${id}/status`, {method:'PUT', body:JSON.stringify({status})});
+        showAlert('Status updated','success');
+        await loadNegotiations();
+      }catch(e){ showAlert('Failed: '+e.message,'error'); }
+    }
+
+    function clearNegotiationForm(){
+      ['vendor-neg-amount','vendor-neg-subject','vendor-neg-description','vendor-neg-message'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('vendor-neg-device').value = '';
+    }
 
     // ── ASSIGNMENTS ───────────────────────────────────────────────────
     async function loadAssignments(){
