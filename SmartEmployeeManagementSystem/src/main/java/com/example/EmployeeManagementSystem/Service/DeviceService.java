@@ -19,9 +19,11 @@ import com.example.EmployeeManagementSystem.Exception.VendorNotFoundException;
 import com.example.EmployeeManagementSystem.Repository.DeviceAssignmentRepo;
 import com.example.EmployeeManagementSystem.Repository.DeviceRepository;
 import com.example.EmployeeManagementSystem.Repository.EmployeeRepo;
+import com.example.EmployeeManagementSystem.Repository.RepairBillRepository;
 import com.example.EmployeeManagementSystem.Repository.RepairLogRepository;
 import com.example.EmployeeManagementSystem.Repository.ServiceRequestRepository;
 import com.example.EmployeeManagementSystem.Repository.VendorRepo;
+import com.example.EmployeeManagementSystem.Repository.VendorNegotiationRepository;
 import com.example.EmployeeManagementSystem.Util.AuthUtil;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -45,19 +47,25 @@ public class DeviceService {
     private final EmployeeRepo employeeRepo;
     private final RepairLogRepository repairLogRepository;
     private final ServiceRequestRepository serviceRequestRepository;
+    private final RepairBillRepository repairBillRepository;
+    private final VendorNegotiationRepository vendorNegotiationRepository;
 
     public DeviceService(DeviceRepository deviceRepository,
                          VendorRepo vendorRepo,
                          DeviceAssignmentRepo deviceAssignmentRepo,
                          EmployeeRepo employeeRepo,
                          RepairLogRepository repairLogRepository,
-                         ServiceRequestRepository serviceRequestRepository) {
+                         ServiceRequestRepository serviceRequestRepository,
+                         RepairBillRepository repairBillRepository,
+                         VendorNegotiationRepository vendorNegotiationRepository) {
         this.deviceRepository = deviceRepository;
         this.vendorRepo = vendorRepo;
         this.deviceAssignmentRepo = deviceAssignmentRepo;
         this.employeeRepo = employeeRepo;
         this.repairLogRepository = repairLogRepository;
         this.serviceRequestRepository = serviceRequestRepository;
+        this.repairBillRepository = repairBillRepository;
+        this.vendorNegotiationRepository = vendorNegotiationRepository;
     }
 
     public Device addDevice(DeviceDTO deviceDTO, Authentication authentication) {
@@ -427,6 +435,7 @@ public class DeviceService {
         return ResponseEntity.ok("Condemned device returned and assignment removed");
     }
 
+    @Transactional
     public ResponseEntity<String> removeDevice(Long deviceId, Authentication authentication) {
 
         Device device=deviceRepository.findById(deviceId).orElseThrow(
@@ -437,9 +446,22 @@ public class DeviceService {
            ()->new VendorNotFoundException("vendor  not found")
         );
 
-        if(device.getTechVendor().getName()!=vendor.getName()){
+        if (device.getTechVendor() == null || !vendor.getId().equals(device.getTechVendor().getId())) {
             throw new AccessDeniedException("Access Denied");
         }
+
+        vendorNegotiationRepository.findByDeviceId(deviceId).forEach(negotiation -> negotiation.setDevice(null));
+        repairBillRepository.deleteAll(repairBillRepository.findByDeviceId(deviceId));
+        repairLogRepository.deleteAll(repairLogRepository.findByDeviceIdIn(List.of(deviceId)));
+        serviceRequestRepository.deleteAll(serviceRequestRepository.findByDeviceId(deviceId));
+
+        List<DeviceAssignment> deviceAssignments = deviceAssignmentRepo.findByDeviceIdOrderByAssignedDateDescIdDesc(deviceId);
+        device.setCurrentAssignment(null);
+        if (!deviceAssignments.isEmpty()) {
+            deviceAssignmentRepo.deleteAll(deviceAssignments);
+        }
+
+        device.setTechVendor(null);
         deviceRepository.delete(device);
         return ResponseEntity.ok("Device removed from stock");
 

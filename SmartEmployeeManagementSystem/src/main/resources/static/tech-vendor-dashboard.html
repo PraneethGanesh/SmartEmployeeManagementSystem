@@ -754,20 +754,21 @@
     }
 
     async function apiFetch(path, opts={}){
-      const res = await fetch(`${API}${path}`,{
-        ...opts,
-        headers:{'Content-Type':'application/json',...getAuthHeader(),...(opts.headers||{})},
-        credentials:'include'
-      });
-      if(res.status===401){
-        localStorage.removeItem('jwt_token');
-        window.location.href='/login.html';
-        throw new Error('Unauthorized');
-      }
-      const text = await res.text();
-      if(!res.ok) throw new Error(text || 'Request failed');
-      return text ? JSON.parse(text) : null;
-    }
+  const res = await fetch(`${API}${path}`,{
+    ...opts,
+    headers:{'Content-Type':'application/json',...getAuthHeader(),...(opts.headers||{})},
+    credentials:'include'
+  });
+  if(res.status===401){
+    localStorage.removeItem('jwt_token');
+    window.location.href='/login.html';
+    throw new Error('Unauthorized');
+  }
+  const text = await res.text();
+  if(!res.ok) throw new Error(text || 'Request failed');
+  if(!text) return null;
+  try { return JSON.parse(text); } catch { return text; }  // ✅ falls back to raw string
+}
 
     // ── NAV ───────────────────────────────────────────────────────────
     function showView(name, el){
@@ -862,8 +863,11 @@
             </td>
             <td>${chip(d.deviceStatus)}</td>
             <td><div class="action-row">
-              <button class="btn btn-ghost btn-xs" onclick="viewDevice(${d.id})">Details</button>
-            </div></td>
+  <button class="btn btn-ghost btn-xs" onclick="viewDevice(${d.id})">Details</button>
+  ${d.deviceStatus === 'RETURNED_TO_VENDOR'
+    ? `<button class="btn btn-danger btn-xs" onclick="removeDevice(${d.id}, '${(d.deviceName||'Device').replace(/'/g,"\\'")}')">✕ Remove</button>`
+    : ''}
+</div></td>
           </tr>`).join('')
         : `<tr><td colspan="8"><div class="empty"><div class="empty-icon">⬡</div>No devices registered yet</div></td></tr>`;
     }
@@ -1499,6 +1503,19 @@
         showAlert('Failed: ' + e.message, 'error');
       }
     }
+
+    async function removeDevice(deviceId, deviceName) {
+  if (!confirm(`Remove "${deviceName}" from your catalog? This cannot be undone.`)) return;
+  try {
+    await apiFetch(`/devices/remove/${deviceId}`, { method: 'DELETE' });
+    showAlert(`"${deviceName}" removed from catalog`, 'success');
+    devicesCache = devicesCache.filter(d => d.id !== deviceId);
+    filterDevices();      // re-render list without hitting the server again
+    loadDashboard();      // update stats
+  } catch(e) {
+    showAlert('Failed: ' + e.message, 'error');
+  }
+}
 </script>
 </body>
 </html>

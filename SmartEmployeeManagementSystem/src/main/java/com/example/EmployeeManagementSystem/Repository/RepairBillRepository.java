@@ -12,4 +12,6 @@ public interface RepairBillRepository extends JpaRepository<RepairBill,Long> {
             PaymentStatus paymentStatus,
             BigDecimal repairCost
     );
+
+    List<RepairBill> findByDeviceId(Long deviceId);
 }
