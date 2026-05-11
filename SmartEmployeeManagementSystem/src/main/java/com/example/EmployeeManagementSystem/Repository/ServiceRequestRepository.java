@@ -21,4 +21,6 @@ public interface ServiceRequestRepository extends JpaRepository<ServiceRequest,L
             ServiceRequestStatus status
     );
 
+    List<ServiceRequest> findByDeviceId(Long deviceId);
+
 }

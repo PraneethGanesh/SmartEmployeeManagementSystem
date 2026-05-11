@@ -16,6 +16,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -199,13 +200,13 @@ public class ServiceRequestService {
         if (repairDTO.getStatus()==ServiceRequestStatus.REPAIR_DONE) {
             request.setResolution(repairDTO.getResolution());
             request.setStatus(repairDTO.getStatus());
-
+            repairBill.setRepairCost(repairDTO.getRepairCost());
             device.setDeviceStatus(DeviceStatus.REPAIR_DONE);
             repairLog.setRemarks("Repair completed successfully");
-        } else {
+        } else if(repairDTO.getStatus()==ServiceRequestStatus.IRREPARABLE){
             request.setResolution(repairDTO.getResolution());
             request.setStatus(repairDTO.getStatus());
-
+            repairBill.setRepairCost(BigDecimal.ZERO);
             device.setDeviceStatus(DeviceStatus.CONDEMNED);
             repairLog.setRemarks("Repair closed without successful fix");
         }
@@ -223,7 +224,6 @@ public class ServiceRequestService {
 
         RepairLog savedLog=repairLogRepository.save(repairLog);
         repairBill.setRepairLog(savedLog);
-        repairBill.setRepairCost(repairDTO.getRepairCost());
         repairBillRepository.save(repairBill);
         deviceRepository.save(device);
         ServiceRequest serviceRequest=serviceRequestRepository.save(request);

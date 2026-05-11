@@ -1,6 +1,7 @@
 package com.example.EmployeeManagementSystem.Controller;
 
 
+import com.example.EmployeeManagementSystem.DTO.RentalBillDTO;
 import com.example.EmployeeManagementSystem.DTO.RepairBillDTO;
 import com.example.EmployeeManagementSystem.Entity.RepairBill;
 import com.example.EmployeeManagementSystem.Service.BillService;
@@ -25,5 +26,11 @@ public class BillController {
     @PreAuthorize("hasRole('ADMIN')")
     public List<RepairBillDTO> getAllRepairBill(){
         return billService.getRepairBills();
+    }
+
+    @GetMapping("/rentalBill")
+    @PreAuthorize("hasRole('ADMIN')")
+    public List<RentalBillDTO> getAllRentalBill(){
+        return billService.getRentalBill();
     }
 }

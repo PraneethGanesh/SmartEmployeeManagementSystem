@@ -13,4 +13,7 @@ public interface DeviceRepository extends JpaRepository<Device,Long> {
     List<Device> findByDeviceStatus(DeviceStatus deviceStatus);
     @Query(value = "select * from device d where d.device_status != :deviceStatus",nativeQuery = true)
     List<Device> findByStatus(@Param("deviceStatus") String deviceStatus);
+
+    @Query(value = "select * from device d where d.vendor_id=:vendorId AND d.device_status IN (:status)",nativeQuery = true)
+    List<Device> findByStatus(@Param("vendorId") long vendorId,@Param("status") List<String> status);
 }
