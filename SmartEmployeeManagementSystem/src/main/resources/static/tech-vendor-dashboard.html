@@ -259,12 +259,6 @@
                 Negotiations
             </div>
 
-            <div class="nav-section">Assignments</div>
-            <div class="nav-item" onclick="showView('assignments',this)">
-                <svg class="nav-icon" fill="none" viewBox="0 0 16 16"><circle cx="6" cy="5" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M1 14c0-3 2-5 5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M11 9v6M8 12h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-                Assignments
-            </div>
-
             <div class="nav-section">Account</div>
             <div class="nav-item" onclick="showView('two-factor',this)">
                 <svg class="nav-icon" fill="none" viewBox="0 0 16 16"><rect x="1" y="7" width="14" height="8" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M4 7V5a4 4 0 0 1 8 0v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
@@ -627,33 +621,6 @@
                         <div class="card-body" id="neg-detail-body">
                             <div class="empty">No negotiation selected</div>
                         </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ASSIGNMENTS -->
-            <div id="assignments-view" class="view">
-                <div class="card">
-                    <div class="card-head">
-                        <div>
-                            <div class="card-title">Device Assignments</div>
-                            <div class="card-sub">who has your devices</div>
-                        </div>
-                        <button class="btn btn-ghost btn-sm" onclick="loadAssignments()">↺ Refresh</button>
-                    </div>
-                    <div class="tablewrap">
-                        <table>
-                            <thead>
-                            <tr>
-                                <th>Device</th>
-                                <th>Type</th>
-                                <th>Employee</th>
-                                <th>Assigned Date</th>
-                                <th>Status</th>
-                            </tr>
-                            </thead>
-                            <tbody id="assignments-list"></tbody>
-                        </table>
                     </div>
                 </div>
             </div>
@@ -1324,7 +1291,6 @@
         <div class="detail-item"><div class="detail-label">Status</div><div class="detail-value">${chip(d.deviceStatus)}</div></div>
         <div class="detail-item"><div class="detail-label">Warranty</div><div class="detail-value">${warrantyDisplay}</div></div>
         <div class="detail-item"><div class="detail-label">Rent/Month</div><div class="detail-value">${d.rentPerMonth ? '<span style="color:var(--cyan);font-family:var(--mono)">₹'+d.rentPerMonth+'</span>' : '<span style="color:var(--text3)">—</span>'}</div></div>
-        <div class="detail-item"><div class="detail-label">Assigned To</div><div class="detail-value">${d.assignedEmployeeName||'<span style="color:var(--text3)">Unassigned</span>'}</div></div>
         <div class="detail-item"><div class="detail-label">Added On</div><div class="detail-value">${d.createdAt ? d.createdAt.split('T')[0] : '—'}</div></div>
       `;
 
@@ -1411,16 +1377,16 @@
               <div style="font-family:var(--mono);font-size:12px;color:var(--text);margin-top:3px">${r.repairDate || '—'}</div>
             </div>
             <div>
-              <div class="detail-label">Repair Cost</div>
-              <div style="font-family:var(--mono);font-size:12px;color:var(--cyan);margin-top:3px">${r.repairCost ? '₹' + r.repairCost : '—'}</div>
-            </div>
-            <div>
               <div class="detail-label">Action Taken</div>
               <div style="font-family:var(--mono);font-size:12px;color:var(--text);margin-top:3px">${r.repairAction || '—'}</div>
             </div>
             <div>
+              <div class="detail-label">Damaged Component</div>
+              <div style="font-family:var(--mono);font-size:12px;color:var(--text);margin-top:3px">${r.damagedComponent || 'NONE'}</div>
+            </div>
+            <div>
               <div class="detail-label">Replaced Component</div>
-              <div style="font-family:var(--mono);font-size:12px;color:var(--text);margin-top:3px">${r.replacedComponent || '—'}</div>
+              <div style="font-family:var(--mono);font-size:12px;color:var(--text);margin-top:3px">${r.replacedComponent || 'NONE'}</div>
             </div>
             <div>
               <div class="detail-label">Device</div>
