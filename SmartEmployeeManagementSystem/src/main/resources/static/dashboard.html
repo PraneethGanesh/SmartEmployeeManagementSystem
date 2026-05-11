@@ -57,7 +57,9 @@
         .chip.active, .chip.approved, .chip.delivered, .chip.repair_done { background: var(--green-dim); color: var(--green); }
         .chip.pending, .chip.scheduled, .chip.sent_for_repair { background: var(--amber-dim); color: var(--amber); }
         .chip.open { background: var(--accent-dim); color: var(--accent); }
+        .chip.negotiating, .chip.agreed, .chip.paid { background: var(--green-dim); color: var(--green); }
         .chip.inactive, .chip.rejected, .chip.cancelled, .chip.expired { background: var(--red-dim); color: var(--red); }
+        .chip.closed { background: var(--bg3); color: var(--text2); }
         .chip.on_leave { background: var(--violet-dim); color: var(--violet); }
         .chip.employee { background: var(--accent-dim); color: var(--accent); }
         .chip.manager { background: var(--violet-dim); color: var(--violet); }
@@ -86,6 +88,12 @@
         .alert-error { background: var(--red-dim); color: var(--red); border: 1px solid var(--red); }
         @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         .action-row { display: flex; gap: 6px; flex-wrap: wrap; }
+        .negotiation-layout { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 18px; align-items: start; }
+        .negotiation-panel { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+        .negotiation-panel-body { padding: 18px; }
+        .message-list { display: flex; flex-direction: column; gap: 10px; max-height: 360px; overflow-y: auto; margin: 14px 0; }
+        .message-item { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; }
+        .message-meta { color: var(--text3); font-size: 10px; font-family: var(--mono); margin-bottom: 4px; text-transform: uppercase; }
         .notif-wrapper { position: relative; cursor: pointer; }
 
         .notif-badge {
@@ -218,6 +226,7 @@
             <div class="nav-item" onclick="showView('subscriptions', event)">&#9632; Subscriptions</div>
             <div class="nav-item" onclick="showView('add-subscription', event)">&#9632; Add Subscription</div>
             <div class="nav-item" onclick="showView('vendors', event)">&#9632; Vendors</div>
+            <div class="nav-item" onclick="showView('vendor-negotiations', event)">&#9632; Vendor Negotiations</div>
             <div class="nav-item" onclick="window.location.href='/device_management.html'">&#9632; Device Management</div>
             <div class="nav-item" onclick="showView('my-calendar', event)">&#9632; My Calendar</div>
             <div class="nav-item" onclick="showView('my-profile', event)">&#9632; My Profile</div>
@@ -573,6 +582,63 @@
             <div id="vendors-view" class="view">
                 <div class="section-head"><div class="section-title">Vendors</div><button class="btn btn-primary btn-sm" onclick="loadVendors()">Refresh</button></div>
                 <div class="table-wrap"><table><thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Phone</th><th>Registered</th><th>Actions</th></tr></thead><tbody id="vendors-list"></tbody></table></div>
+            </div>
+
+            <!-- VENDOR NEGOTIATIONS VIEW -->
+            <div id="vendor-negotiations-view" class="view">
+                <div class="section-head">
+                    <div class="section-title">Vendor Negotiations</div>
+                    <button class="btn btn-primary btn-sm" onclick="loadVendorNegotiations()">Refresh</button>
+                </div>
+                <div class="negotiation-layout">
+                    <div>
+                        <div class="table-wrap" style="margin-bottom:18px">
+                            <table>
+                                <thead><tr><th>ID</th><th>Vendor</th><th>Device</th><th>Subject</th><th>Amount</th><th>Status</th><th>Updated</th><th>Actions</th></tr></thead>
+                                <tbody id="vendor-negotiations-list"><tr><td colspan="8" class="empty-state">Loading...</td></tr></tbody>
+                            </table>
+                        </div>
+                        <div class="form-card" style="max-width:none">
+                            <div class="section-title" style="margin-bottom:14px">Start Negotiation</div>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label>Vendor</label>
+                                    <select id="neg-vendor-id"><option value="">-- Select Vendor --</option></select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Device</label>
+                                    <select id="neg-device-id"><option value="">No device</option></select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Proposed Amount</label>
+                                    <input id="neg-amount" type="number" min="0" step="0.01" placeholder="2500">
+                                </div>
+                                <div class="form-group">
+                                    <label>Subject</label>
+                                    <input id="neg-subject" placeholder="Repair cost discussion">
+                                </div>
+                                <div class="form-group full">
+                                    <label>Description</label>
+                                    <textarea id="neg-description" rows="3" placeholder="Scope, issue, or billing context"></textarea>
+                                </div>
+                                <div class="form-group full">
+                                    <label>Initial Message</label>
+                                    <textarea id="neg-initial-message" rows="3" placeholder="Message to the vendor"></textarea>
+                                </div>
+                            </div>
+                            <div style="margin-top:16px;display:flex;gap:10px">
+                                <button class="btn btn-primary" onclick="createVendorNegotiation()">Create Negotiation</button>
+                                <button class="btn btn-secondary" onclick="clearVendorNegotiationForm()">Clear</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="negotiation-panel">
+                        <div class="section-head"><div class="section-title" id="neg-detail-title">Negotiation Details</div></div>
+                        <div class="negotiation-panel-body" id="neg-detail-body">
+                            <div class="empty-state">Select a negotiation to view messages.</div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- DEVICES VIEW -->
@@ -1107,6 +1173,7 @@
     'add-subscription': loadRestaurantDropdown,
     'deliveries': loadDeliveries,
     'vendors': loadVendors,
+    'vendor-negotiations': loadVendorNegotiations,
     'devices': loadUnassignedDevices,
     'my-devices': loadMyAssignedDevices,
     'service-requests': loadServiceRequests,
@@ -1577,6 +1644,131 @@
             showAlert('Vendor deleted successfully!', 'success');
             loadVendors();
         } catch (e) { showAlert('Failed to delete vendor: ' + e.message, 'error'); }
+    }
+
+    // ============ VENDOR NEGOTIATIONS ============
+    let vendorNegotiationsCache = [];
+    let selectedNegotiationId = null;
+
+    function escHtml(value) {
+        const div = document.createElement('div');
+        div.textContent = value == null ? '' : String(value);
+        return div.innerHTML;
+    }
+
+    function formatMoney(value) {
+        return value == null || value === '' ? '—' : `₹${Number(value).toLocaleString('en-IN')}`;
+    }
+
+    async function loadVendorNegotiationOptions() {
+        const [vendors, devices] = await Promise.all([
+            apiFetch('/vendors').catch(() => []),
+            apiFetch('/devices/all').catch(() => apiFetch('/devices').catch(() => []))
+        ]);
+        const vendorSelect = document.getElementById('neg-vendor-id');
+        const deviceSelect = document.getElementById('neg-device-id');
+        vendorSelect.innerHTML = '<option value="">-- Select Vendor --</option>' + (vendors || []).map(v =>
+            `<option value="${v.id}">${escHtml(v.name || v.email || `Vendor #${v.id}`)}</option>`).join('');
+        deviceSelect.innerHTML = '<option value="">No device</option>' + (devices || []).map(d =>
+            `<option value="${d.id}">${escHtml(d.deviceName || `Device #${d.id}`)}${d.techVendorName ? ` · ${escHtml(d.techVendorName)}` : ''}</option>`).join('');
+    }
+
+    async function loadVendorNegotiations() {
+        await loadVendorNegotiationOptions();
+        try {
+            vendorNegotiationsCache = await apiFetch('/vendor-negotiations') || [];
+            const tbody = document.getElementById('vendor-negotiations-list');
+            tbody.innerHTML = vendorNegotiationsCache.length ? vendorNegotiationsCache.map(n => `
+                <tr>
+                    <td>#${n.id}</td>
+                    <td>${escHtml(n.vendorName || n.vendorId || '—')}</td>
+                    <td>${escHtml(n.deviceName || n.deviceId || '—')}</td>
+                    <td>${escHtml(n.subject || '—')}</td>
+                    <td>${formatMoney(n.proposedAmount)}</td>
+                    <td><span class="chip ${(n.status || 'pending').toLowerCase()}">${escHtml(n.status || 'PENDING')}</span></td>
+                    <td>${n.updatedAt ? new Date(n.updatedAt).toLocaleString() : '—'}</td>
+                    <td><button class="btn btn-secondary btn-sm" onclick="openVendorNegotiation(${n.id})">Open</button></td>
+                </tr>`).join('') : '<tr><td colspan="8" class="empty-state">No negotiations yet</td></tr>';
+            if (selectedNegotiationId) {
+                const exists = vendorNegotiationsCache.some(n => n.id === selectedNegotiationId);
+                if (exists) await openVendorNegotiation(selectedNegotiationId);
+            }
+        } catch (e) {
+            document.getElementById('vendor-negotiations-list').innerHTML = '<tr><td colspan="8" class="empty-state">Could not load negotiations</td></tr>';
+        }
+    }
+
+    async function openVendorNegotiation(id) {
+        selectedNegotiationId = id;
+        const n = await apiFetch(`/vendor-negotiations/${id}`);
+        document.getElementById('neg-detail-title').textContent = `Negotiation #${n.id}`;
+        document.getElementById('neg-detail-body').innerHTML = `
+            <div style="display:grid;gap:10px">
+                <div><label>Subject</label><div>${escHtml(n.subject || '—')}</div></div>
+                <div><label>Vendor</label><div>${escHtml(n.vendorName || n.vendorId || '—')}</div></div>
+                <div><label>Device</label><div>${escHtml(n.deviceName || n.deviceId || '—')}</div></div>
+                <div><label>Amount</label><div>${formatMoney(n.proposedAmount)}</div></div>
+                <div><label>Status</label><select id="neg-status-select">${['PENDING','NEGOTIATING','AGREED','REJECTED','PAID','CLOSED'].map(s => `<option value="${s}" ${s === n.status ? 'selected' : ''}>${s}</option>`).join('')}</select></div>
+                <button class="btn btn-secondary btn-sm" onclick="updateVendorNegotiationStatus(${n.id})">Update Status</button>
+                <div><label>Description</label><div style="color:var(--text2)">${escHtml(n.description || '—')}</div></div>
+            </div>
+            <div class="message-list">${(n.messages || []).length ? n.messages.map(m => `
+                <div class="message-item">
+                    <div class="message-meta">${escHtml(m.senderType || '—')} · ${escHtml(m.senderEmail || '')} · ${m.createdAt ? new Date(m.createdAt).toLocaleString() : ''}</div>
+                    <div>${escHtml(m.message || '')}</div>
+                </div>`).join('') : '<div class="empty-state">No messages yet</div>'}</div>
+            <div class="form-group">
+                <label>Reply</label>
+                <textarea id="neg-reply-message" rows="3" placeholder="Write a reply"></textarea>
+            </div>
+            <button class="btn btn-primary" style="margin-top:10px" onclick="replyVendorNegotiation(${n.id})">Send Reply</button>`;
+    }
+
+    async function createVendorNegotiation() {
+        const body = {
+            vendorId: Number(document.getElementById('neg-vendor-id').value) || null,
+            deviceId: Number(document.getElementById('neg-device-id').value) || null,
+            proposedAmount: document.getElementById('neg-amount').value || null,
+            subject: document.getElementById('neg-subject').value.trim(),
+            description: document.getElementById('neg-description').value.trim(),
+            initialMessage: document.getElementById('neg-initial-message').value.trim()
+        };
+        if (!body.vendorId || !body.subject || !body.description) {
+            showAlert('Vendor, subject, and description are required', 'error');
+            return;
+        }
+        try {
+            const created = await apiFetch('/vendor-negotiations', { method: 'POST', body: JSON.stringify(body) });
+            showAlert('Negotiation created', 'success');
+            clearVendorNegotiationForm();
+            selectedNegotiationId = created.id;
+            await loadVendorNegotiations();
+        } catch (e) { showAlert('Failed to create negotiation: ' + e.message, 'error'); }
+    }
+
+    async function replyVendorNegotiation(id) {
+        const message = document.getElementById('neg-reply-message').value.trim();
+        if (!message) { showAlert('Reply message is required', 'error'); return; }
+        try {
+            await apiFetch(`/vendor-negotiations/${id}/messages`, { method: 'POST', body: JSON.stringify({ message }) });
+            showAlert('Reply sent', 'success');
+            await loadVendorNegotiations();
+        } catch (e) { showAlert('Failed to send reply: ' + e.message, 'error'); }
+    }
+
+    async function updateVendorNegotiationStatus(id) {
+        const status = document.getElementById('neg-status-select').value;
+        try {
+            await apiFetch(`/vendor-negotiations/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) });
+            showAlert('Status updated', 'success');
+            await loadVendorNegotiations();
+        } catch (e) { showAlert('Failed to update status: ' + e.message, 'error'); }
+    }
+
+    function clearVendorNegotiationForm() {
+        ['neg-amount', 'neg-subject', 'neg-description', 'neg-initial-message'].forEach(id => document.getElementById(id).value = '');
+        document.getElementById('neg-vendor-id').value = '';
+        document.getElementById('neg-device-id').value = '';
     }
 
     // ============ MODAL HELPERS ============
