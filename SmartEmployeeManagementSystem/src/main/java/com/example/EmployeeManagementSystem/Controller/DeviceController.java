@@ -130,7 +130,4 @@ public class DeviceController {
     public List<DeviceResponseDTO> getDevicesUnderRepair(Authentication authentication) {
         return deviceService.getDevicesUnderRepair(authentication);
     }
-
-
-
 }
