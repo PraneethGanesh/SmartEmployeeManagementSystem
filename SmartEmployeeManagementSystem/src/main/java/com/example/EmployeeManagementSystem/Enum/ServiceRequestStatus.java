@@ -7,5 +7,6 @@ public enum ServiceRequestStatus {
     RECEIVED_BY_VENDOR ,
     REPAIR_DONE,
     REJECTED,
-    IRREPARABLE
+    IRREPARABLE,
+    CLOSED
 }
