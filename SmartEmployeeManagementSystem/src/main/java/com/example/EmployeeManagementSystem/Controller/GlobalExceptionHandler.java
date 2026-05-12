@@ -138,4 +138,22 @@ public class GlobalExceptionHandler {
         ));
     }
 
+    @ExceptionHandler(RepairBillNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleRepairBillNotFoundException(RepairBillNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                "error",     "Repair Bill Not Found",
+                "message",   ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()
+        ));
+    }
+
+    @ExceptionHandler(RentalBillNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleRentalBillNotFoundException(RentalBillNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                "error",     "Rental Bill Not Found",
+                "message",   ex.getMessage(),
+                "timestamp", LocalDateTime.now().toString()
+        ));
+    }
+
 }
