@@ -8,5 +8,5 @@ import java.math.BigDecimal;
 import java.util.List;
 
 public interface RentalBillRepository extends JpaRepository<RentalBill,Long> {
-    List<RentalBill> findByPaymentStatusNotAndAmountGreaterThan(PaymentStatus paymentStatus, BigDecimal zero);
+    List<RentalBill> findByPaymentStatusNotInAndAmountGreaterThan(List<PaymentStatus> paymentStatus, BigDecimal zero);
 }
