@@ -355,28 +355,68 @@
             <div class="nav-item active" onclick="showView('dashboard',this)">
                 <span>⊞</span> Dashboard
             </div>
+
             <div class="nav-section">Team</div>
-            <div class="nav-item" onclick="showView('employees',this)"><span>◈</span> All Employees</div>
-            <div class="nav-item" onclick="showView('add-employee',this)"><span>＋</span> Add Employee</div>
-            <div class="nav-item" onclick="showView('promote-users',this)"><span>▲</span> Promote Users <span class="nav-badge" id="users-badge">0</span></div>
+            <div class="nav-item" onclick="showView('employees',this)">
+                <span>◈</span> All Employees
+            </div>
+            <div class="nav-item" onclick="showView('add-employee',this)">
+                <span>＋</span> Add Employee
+            </div>
+            <div class="nav-item" onclick="showView('promote-users',this)">
+                <span>▲</span> Promote Users
+                <span class="nav-badge" id="users-badge">0</span>
+            </div>
+            <div class="nav-item" onclick="showView('search-employee',this)">
+                <span>⌕</span> Search Employee
+            </div>
+
             <div class="nav-section">Leave Management</div>
             <div class="nav-item" onclick="showView('pending-leaves',this)">
                 <span>⚑</span> Pending Approvals
                 <span class="nav-badge" id="pending-badge">0</span>
             </div>
-            <div class="nav-item" onclick="showView('all-leaves',this)"><span>◷</span> All Leave Requests</div>
+            <div class="nav-item" onclick="showView('all-leaves',this)">
+                <span>◷</span> All Leave Requests
+            </div>
+
             <div class="nav-section">Personal</div>
-            <div class="nav-item" onclick="showView('apply-leave',this)"><span>＋</span> Apply Leave</div>
-            <div class="nav-item" onclick="showView('my-leaves',this)"><span>◷</span> My Leaves</div>
-            <div class="nav-item" onclick="showView('my-calendar',this)"><span class="icon">📅</span> My Calendar</div>
-            <div class="nav-item" onclick="showView('profile',this)"><span>◉</span> My Profile</div>
-            <div class="nav-item" onclick="showView('my-subscriptions',this)"><span>🍱</span> My Subscriptions</div>
-            <div class="nav-item" onclick="showView('add-subscription',this)"><span>＋</span> Subscribe to Meal</div>
-            <div class="nav-item" onclick="showView('restaurants',this)"><span>🏪</span> Restaurants</div>
-            <div class="nav-item" onclick="showView('my-devices',this)"><span>⊞</span> My Devices</div>
-            <div class="nav-item" onclick="showView('service-requests', this)"><span class="icon">⚙</span> Service Requests</div>
-            <div class="nav-item" onclick="showView('two-factor',this)"><span class="icon">🔐</span> Two-Factor Auth</div>
-            <div class="nav-item" onclick="showView('search-employee',this)"><span>⌕</span> Search Employee</div>
+            <div class="nav-item" onclick="showView('profile',this)">
+                <span>◉</span> My Profile
+            </div>
+            <div class="nav-item" onclick="showView('apply-leave',this)">
+                <span>＋</span> Apply Leave
+            </div>
+            <div class="nav-item" onclick="showView('my-leaves',this)">
+                <span>◷</span> My Leaves
+            </div>
+            <div class="nav-item" onclick="showView('my-calendar',this)">
+                <span>📅</span> My Calendar
+            </div>
+
+            <div class="nav-section">Devices</div>
+            <div class="nav-item" onclick="showView('my-devices',this)">
+                <span>⊞</span> My Devices
+            </div>
+            <div class="nav-item" onclick="showView('service-requests', this)">
+                <span>⚙</span> Service Requests
+            </div>
+
+            <div class="nav-section">Meal Services</div>
+            <div class="nav-item" onclick="showView('my-subscriptions',this)">
+                <span>🍱</span> My Subscriptions
+            </div>
+            <div class="nav-item" onclick="showView('add-subscription',this)">
+                <span>＋</span> Subscribe to Meal
+            </div>
+            <div class="nav-item" onclick="showView('restaurants',this)">
+                <span>🏪</span> Restaurants
+            </div>
+
+            <div class="nav-section">Security</div>
+            <div class="nav-item" onclick="showView('two-factor',this)">
+                <span>🔐</span> Two-Factor Auth
+            </div>
         </nav>
         <div class="sidebar-footer">
             <div class="user-card">
