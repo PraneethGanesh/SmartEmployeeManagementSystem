@@ -83,7 +83,7 @@ public class ServiceRequestService {
         Employee employee = employeeRepo.findByEmail(email)
                 .orElseThrow(() -> new EmployeeNotFound("Employee not found: " + email));
 
-        List<ServiceRequest> serviceRequestList = serviceRequestRepository.findByRaisedByOrderByRaisedAtDesc(employee);
+        List<ServiceRequest> serviceRequestList = serviceRequestRepository.findByRaisedByAndStatusNotOrderByRaisedAtDesc(employee,ServiceRequestStatus.CLOSED);
         return serviceRequestList.stream()
                 .map(this::toServiceRequestResponseDTO)
                 .toList();
@@ -146,7 +146,7 @@ public class ServiceRequestService {
         }
         serviceRequest.setReviewedBy(admin);
         serviceRequest.setAdminRemarks(actionDTO.getAdminRemarks());
-        serviceRequest.setStatus(actionDTO.getStatus());
+        serviceRequest.setStatus(ServiceRequestStatus.CLOSED);
         ServiceRequest saved=serviceRequestRepository.save(serviceRequest);
         return toServiceRequestResponseDTO(saved);
     }
@@ -170,7 +170,7 @@ public class ServiceRequestService {
         }
         serviceRequest.setReviewedBy(admin);
         serviceRequest.setAdminRemarks(actionDTO.getAdminRemarks());
-        serviceRequest.setStatus(actionDTO.getStatus());
+        serviceRequest.setStatus(ServiceRequestStatus.CLOSED);
         ServiceRequest saved=serviceRequestRepository.save(serviceRequest);
         return toServiceRequestResponseDTO(saved);
     }
