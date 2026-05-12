@@ -1,17 +1,14 @@
 package com.example.EmployeeManagementSystem.Service;
 
-import com.example.EmployeeManagementSystem.DTO.AdminActionDTO;
-import com.example.EmployeeManagementSystem.DTO.RepairDTO;
-import com.example.EmployeeManagementSystem.DTO.ServiceRequestDTO;
-import com.example.EmployeeManagementSystem.DTO.ServiceRequestResponseDTO;
+import com.example.EmployeeManagementSystem.DTO.*;
 import com.example.EmployeeManagementSystem.Entity.*;
-import com.example.EmployeeManagementSystem.Enum.DeviceStatus;
-import com.example.EmployeeManagementSystem.Enum.PaymentStatus;
-import com.example.EmployeeManagementSystem.Enum.ServiceRequestStatus;
+import com.example.EmployeeManagementSystem.Enum.*;
 import com.example.EmployeeManagementSystem.Exception.EmployeeNotFound;
 import com.example.EmployeeManagementSystem.Exception.VendorNotFoundException;
 import com.example.EmployeeManagementSystem.Repository.*;
 import com.example.EmployeeManagementSystem.Util.AuthUtil;
+import org.jspecify.annotations.Nullable;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,14 +26,18 @@ public class ServiceRequestService {
     private final RepairLogRepository repairLogRepository;
     private final VendorRepo vendorRepo;
     private final RepairBillRepository repairBillRepository;
+    private final DeviceAssignmentRepo deviceAssignmentRepo;
+    private final NotificationService notificationService;
 
-    public ServiceRequestService(ServiceRequestRepository serviceRequestRepository, EmployeeRepo employeeRepo, DeviceRepository deviceRepository, RepairLogRepository repairLogRepository, VendorRepo vendorRepo, RepairBillRepository repairBillRepository) {
+    public ServiceRequestService(ServiceRequestRepository serviceRequestRepository, EmployeeRepo employeeRepo, DeviceRepository deviceRepository, RepairLogRepository repairLogRepository, VendorRepo vendorRepo, RepairBillRepository repairBillRepository, DeviceAssignmentRepo deviceAssignmentRepo, NotificationService notificationService) {
         this.serviceRequestRepository = serviceRequestRepository;
         this.employeeRepo = employeeRepo;
         this.deviceRepository = deviceRepository;
         this.repairLogRepository = repairLogRepository;
         this.vendorRepo = vendorRepo;
         this.repairBillRepository = repairBillRepository;
+        this.deviceAssignmentRepo = deviceAssignmentRepo;
+        this.notificationService = notificationService;
     }
 
     public ServiceRequest createServiceRequest(ServiceRequestDTO dto, Authentication authentication) {
@@ -124,7 +125,7 @@ public class ServiceRequestService {
 
 
     @Transactional
-    public ServiceRequestResponseDTO updateServiceRequestByAdmin(Authentication authentication, AdminActionDTO actionDTO){
+    public ServiceRequestResponseDTO updateServiceRequestForRepairByAdmin(Authentication authentication, AdminActionDTO actionDTO){
         ServiceRequest serviceRequest=serviceRequestRepository.findById(actionDTO.getServiceRequestId()).orElseThrow(
                 ()->new RuntimeException("Service Request Not Found")
         );
@@ -133,12 +134,15 @@ public class ServiceRequestService {
                 ()->new EmployeeNotFound("Admin not found:"+email)
         );
         Device device=serviceRequest.getDevice();
-        if (actionDTO.getStatus() == ServiceRequestStatus.SENT_FOR_REPAIR) {
-            device.setDeviceStatus(DeviceStatus.UNDER_REPAIR);
-            deviceRepository.save(device);
-            createRepairLogIfMissing(serviceRequest, actionDTO.getAdminRemarks());
-        } else if (actionDTO.getStatus() == ServiceRequestStatus.REJECTED) {
-            device.setDeviceStatus(DeviceStatus.ASSIGNED);
+        switch (actionDTO.getStatus()){
+            case SENT_FOR_REPAIR :
+                device.setDeviceStatus(DeviceStatus.SENT_TO_VENDOR);
+                deviceRepository.save(device);
+                createRepairLogIfMissing(serviceRequest, actionDTO.getAdminRemarks());
+                break;
+            case REJECTED :
+                device.setDeviceStatus(DeviceStatus.ASSIGNED);
+                break;
         }
         serviceRequest.setReviewedBy(admin);
         serviceRequest.setAdminRemarks(actionDTO.getAdminRemarks());
@@ -147,22 +151,99 @@ public class ServiceRequestService {
         return toServiceRequestResponseDTO(saved);
     }
 
+    public ServiceRequestResponseDTO updateServiceRequestForOtherServicesByAdmin(Authentication authentication, ApprovalActionDTO actionDTO) {
+        ServiceRequest serviceRequest=serviceRequestRepository.findById(actionDTO.getServiceRequestId()).orElseThrow(
+                ()->new RuntimeException("Service Request Not Found")
+        );
+        String email=AuthUtil.extractEmail(authentication);
+        Employee admin=employeeRepo.findByEmail(email).orElseThrow(
+                ()->new EmployeeNotFound("Admin not found:"+email)
+        );
+        Device device=serviceRequest.getDevice();
+        switch(actionDTO.getStatus()){
+            case APPROVED :
+                handelApproval(serviceRequest,device,actionDTO.getReplacementDeviceId());
+                break;
+            case REJECTED:
+                device.setDeviceStatus(DeviceStatus.ASSIGNED);
+                break;
+        }
+        serviceRequest.setReviewedBy(admin);
+        serviceRequest.setAdminRemarks(actionDTO.getAdminRemarks());
+        serviceRequest.setStatus(actionDTO.getStatus());
+        ServiceRequest saved=serviceRequestRepository.save(serviceRequest);
+        return toServiceRequestResponseDTO(saved);
+    }
+
+    public void handelApproval(ServiceRequest serviceRequest, Device device,long deviceId) {
+        ServiceRequestType type=serviceRequest.getRequestType();
+        DeviceAssignment current= device.getCurrentAssignment();
+        if(type==ServiceRequestType.RETURN){
+            deviceAssignmentRepo.delete(current);
+            System.out.println("deleted related assignment details for device:"+device.getDeviceName());
+            device.setDeviceStatus(DeviceStatus.AVAILABLE);
+            device.setCurrentAssignment(null);
+        }
+        if(type==ServiceRequestType.REPLACEMENT){
+            deviceAssignmentRepo.delete(current);
+            System.out.println("deleted related assignment details for device:"+device.getDeviceName());
+            device.setDeviceStatus(DeviceStatus.AVAILABLE);
+            device.setCurrentAssignment(null);
+            Device newDevice=deviceRepository.findById(deviceId).orElseThrow(
+                    ()->new RuntimeException("Device not found:"+deviceId)
+            );
+            if(device.getDeviceStatus()!=DeviceStatus.AVAILABLE){
+                throw new RuntimeException("Device not available");
+            }
+            if(newDevice.getCurrentAssignment()!=null){
+                throw new RuntimeException("Device already assigned");
+            }
+            Employee employee=employeeRepo.findByName(serviceRequest.getRaisedBy().getName()).orElseThrow(
+                    ()->new EmployeeNotFound("Employee Not found:"+serviceRequest.getRaisedBy().getName())
+            );
+            DeviceAssignment deviceAssignment=new DeviceAssignment();
+            deviceAssignment.setAssignedTo(employee);
+            deviceAssignment.setAssignedDate(LocalDate.now());
+            deviceAssignment.setDevice(device);
+            deviceAssignment.setStatus(AssignmentStatus.ACTIVE);
+            DeviceAssignment saved=deviceAssignmentRepo.save(deviceAssignment);
+            device.setCurrentAssignment(saved);
+            device.setDeviceStatus(DeviceStatus.ASSIGNED);
+            deviceRepository.save(device);
+        }
+
+    }
+
     public List<ServiceRequestResponseDTO> getAllServiceRequestByVendor(Authentication authentication){
         String email=AuthUtil.extractEmail(authentication);
         Vendor vendor=vendorRepo.findByEmail(email).orElseThrow(
                 ()->new VendorNotFoundException("Vendor not found: "+email)
         );
 
-        List<ServiceRequest> serviceRequestList=serviceRequestRepository.findByDeviceTechVendorAndStatus(vendor,ServiceRequestStatus.SENT_FOR_REPAIR);
+        List<ServiceRequest> serviceRequestList=serviceRequestRepository.findByDeviceTechVendorAndStatus(vendor,
+                ServiceRequestStatus.SENT_FOR_REPAIR);
         return serviceRequestList.stream()
                 .map(serviceRequest -> toServiceRequestResponseDTO(serviceRequest))
                 .toList();
     }
 
+    public ResponseEntity<String> updateServiceRequestToUnderRepair(Authentication authentication, long serviceRequestId) {
+        ServiceRequest serviceRequest=serviceRequestRepository.findById(serviceRequestId).orElseThrow(
+                ()->new RuntimeException("Service Request Not Found")
+        );
+        Device device=serviceRequest.getDevice();
+        serviceRequest.setStatus(ServiceRequestStatus.RECEIVED_BY_VENDOR);
+        device.setDeviceStatus(DeviceStatus.UNDER_REPAIR);
+        serviceRequestRepository.save(serviceRequest);
+        deviceRepository.save(device);
+        notificationService.notify(serviceRequest.getReviewedBy(),"Device:"+device+"is being repaired","DEVICE UNDER REPAIR");
+        return ResponseEntity.ok(
+                "Recieved the device and started the repair"
+        );
+    }
+
     @Transactional
-    public ServiceRequestResponseDTO updateServiceRequestByVendor(
-            Authentication authentication, RepairDTO repairDTO
-            ) {
+    public ServiceRequestResponseDTO updateServiceRequestByVendor(Authentication authentication, RepairDTO repairDTO) {
 
         // 1. Get vendor
         String email = AuthUtil.extractEmail(authentication);
@@ -179,7 +260,7 @@ public class ServiceRequestService {
         }
 
         // 4. Validate status
-        if (request.getStatus() != ServiceRequestStatus.SENT_FOR_REPAIR) {
+        if (request.getStatus() != ServiceRequestStatus.RECEIVED_BY_VENDOR) {
             throw new RuntimeException("Request is not in repair stage");
         }
 
@@ -241,9 +322,21 @@ public class ServiceRequestService {
         repairLog.setIssueType(serviceRequest.getRequestType() != null
                 ? serviceRequest.getRequestType().name()
                 : null);
-        repairLog.setDamagedComponent(serviceRequest.getIssueDescription());
         repairLog.setRemarks(adminRemarks);
         repairLogRepository.save(repairLog);
+    }
+
+
+    public List<ServiceRequestResponseDTO> getServiceRequestRecievedByVendor(Authentication authentication) {
+        String email=AuthUtil.extractEmail(authentication);
+        Vendor vendor=vendorRepo.findByEmail(email).orElseThrow(
+                ()->new VendorNotFoundException("Vendor Not found:"+email)
+        );
+        List<ServiceRequest> serviceRequestList=serviceRequestRepository.findByDeviceTechVendorAndStatus(vendor,ServiceRequestStatus.RECEIVED_BY_VENDOR);
+        return serviceRequestList
+                .stream()
+                .map(serviceRequest -> toServiceRequestResponseDTO(serviceRequest))
+                .toList();
     }
 }
 

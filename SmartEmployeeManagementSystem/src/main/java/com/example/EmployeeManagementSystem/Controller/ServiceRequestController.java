@@ -1,21 +1,13 @@
 package com.example.EmployeeManagementSystem.Controller;
 
-import com.example.EmployeeManagementSystem.DTO.AdminActionDTO;
-import com.example.EmployeeManagementSystem.DTO.RepairDTO;
-import com.example.EmployeeManagementSystem.DTO.ServiceRequestDTO;
-import com.example.EmployeeManagementSystem.DTO.ServiceRequestResponseDTO;
+import com.example.EmployeeManagementSystem.DTO.*;
 import com.example.EmployeeManagementSystem.Entity.ServiceRequest;
 import com.example.EmployeeManagementSystem.Service.ServiceRequestService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -49,13 +41,22 @@ public class ServiceRequestController {
         return ResponseEntity.ok(serviceRequestService.getAllOpenServiceRequests());
     }
 
-    @PutMapping("/admin")
+    @PutMapping("/admin/repair")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ServiceRequestResponseDTO> updateServiceRequestByAdmin(
+    public ResponseEntity<ServiceRequestResponseDTO> updateServiceRequestForRepair(
             Authentication authentication,
             @RequestBody AdminActionDTO actionDTO) {
-        return ResponseEntity.ok(serviceRequestService.updateServiceRequestByAdmin(authentication, actionDTO));
+        return ResponseEntity.ok(serviceRequestService.updateServiceRequestForRepairByAdmin(authentication, actionDTO));
     }
+
+    @PutMapping("/admin/other")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ServiceRequestResponseDTO> updateServiceRequestForOtherServices(
+            Authentication authentication,
+            @RequestBody ApprovalActionDTO actionDTO) {
+        return ResponseEntity.ok(serviceRequestService.updateServiceRequestForOtherServicesByAdmin(authentication, actionDTO));
+    }
+
 
     @GetMapping("/vendor/me")
     @PreAuthorize("hasRole('TECH_VENDOR')")
@@ -63,11 +64,25 @@ public class ServiceRequestController {
         return ResponseEntity.ok(serviceRequestService.getAllServiceRequestByVendor(authentication));
     }
 
-    @PutMapping("/vendor")
+    @PutMapping("/vendor/finalUpdate")
     @PreAuthorize("hasRole('TECH_VENDOR')")
     public ResponseEntity<ServiceRequestResponseDTO> updateServiceRequestByVendor(
             Authentication authentication,
             @RequestBody RepairDTO repairDTO) {
         return ResponseEntity.ok(serviceRequestService.updateServiceRequestByVendor(authentication, repairDTO));
+    }
+
+    @PutMapping("/vendor")
+    @PreAuthorize("hasRole('TECH_VENDOR')")
+    public ResponseEntity<String> updateServiceRequest(Authentication authentication,
+                                                       @PathVariable long serviceRequestId
+    ){
+        return serviceRequestService.updateServiceRequestToUnderRepair(authentication,serviceRequestId);
+    }
+
+    @GetMapping("/devices/repair")
+    @PreAuthorize("hasRole('TECH_VENDOR')")
+    public ResponseEntity<List<ServiceRequestResponseDTO>> getServiceRequestRecievedByVendor(Authentication authentication){
+        return ResponseEntity.ok(serviceRequestService.getServiceRequestRecievedByVendor(authentication));
     }
 }
