@@ -171,7 +171,7 @@ public class ServiceRequestService {
         deviceRepository.save(device);
         serviceRequest.setReviewedBy(admin);
         serviceRequest.setAdminRemarks(actionDTO.getAdminRemarks());
-        serviceRequest.setStatus(actionDTO.getStatus());
+        serviceRequest.setStatus(ServiceRequestStatus.CLOSED);
         ServiceRequest saved=serviceRequestRepository.save(serviceRequest);
         return toServiceRequestResponseDTO(saved);
     }

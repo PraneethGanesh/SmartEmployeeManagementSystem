@@ -103,7 +103,7 @@ public class DeviceService {
         return deviceAssignmentRepo.findByAssignedToEmployeeIdAndStatus(employee.getEmployeeId(), AssignmentStatus.ACTIVE)
                 .stream()
                 .map(DeviceAssignment::getDevice)
-                .filter(device -> device.getDeviceStatus() == DeviceStatus.ASSIGNED)
+                .filter(device -> device.getDeviceStatus() != DeviceStatus.CONDEMNED)
                 .map(this::toDeviceResponse)
                 .toList();
     }
