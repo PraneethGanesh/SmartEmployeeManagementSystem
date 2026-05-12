@@ -146,7 +146,7 @@ public class ServiceRequestService {
         }
         serviceRequest.setReviewedBy(admin);
         serviceRequest.setAdminRemarks(actionDTO.getAdminRemarks());
-        serviceRequest.setStatus(ServiceRequestStatus.CLOSED);
+        serviceRequest.setStatus(actionDTO.getStatus());
         ServiceRequest saved=serviceRequestRepository.save(serviceRequest);
         return toServiceRequestResponseDTO(saved);
     }
@@ -171,7 +171,7 @@ public class ServiceRequestService {
         deviceRepository.save(device);
         serviceRequest.setReviewedBy(admin);
         serviceRequest.setAdminRemarks(actionDTO.getAdminRemarks());
-        serviceRequest.setStatus(ServiceRequestStatus.CLOSED);
+        serviceRequest.setStatus(actionDTO.getStatus());
         ServiceRequest saved=serviceRequestRepository.save(serviceRequest);
         return toServiceRequestResponseDTO(saved);
     }
@@ -308,6 +308,7 @@ public class ServiceRequestService {
         repairBill.setRepairLog(savedLog);
         repairBillRepository.save(repairBill);
         deviceRepository.save(device);
+        request.setStatus(ServiceRequestStatus.CLOSED);
         ServiceRequest serviceRequest=serviceRequestRepository.save(request);
         return toServiceRequestResponseDTO(serviceRequest);
     }

@@ -876,6 +876,7 @@
 <script>
     const API = 'http://localhost:8080';
     let devicesCache = [], srCache = [], srAllCache = [], assignmentsCache = [], negotiationsCache = [];
+    let underRepairCache = [];
     let selectedNegotiationId = null;
     let currentModalDeviceId = null; // track which device is open in modal
 
@@ -947,43 +948,38 @@
     }
 
     // ── DASHBOARD ─────────────────────────────────────────────────────
-    function loadDashboard(){
-      document.getElementById('stat-total').textContent = devicesCache.length || 0;
-      document.getElementById('stat-avail').textContent = devicesCache.filter(d=>d.deviceStatus==='AVAILABLE').length || 0;
-      document.getElementById('stat-repair').textContent = srCache.length || 0;
-      document.getElementById('stat-open').textContent = srCache.length || 0;
+    function loadDashboard() {
+    document.getElementById('stat-total').textContent = devicesCache.length || 0;
+    document.getElementById('stat-avail').textContent = devicesCache.filter(d => d.deviceStatus === 'AVAILABLE').length || 0;
+    document.getElementById('stat-repair').textContent = underRepairCache.length || 0;  // devices actively under repair
+    document.getElementById('stat-open').textContent = srCache.length || 0;             // awaiting receipt
 
-      const badge = document.getElementById('sr-badge');
-      if(srCache.length){ badge.textContent=srCache.length; badge.style.display=''; }
-      else badge.style.display='none';
-
-      document.getElementById('dash-sr').innerHTML = srCache.slice(0,5).map(s=>`
+    // Repair Queue = awaiting receipt
+    document.getElementById('dash-sr').innerHTML = srCache.slice(0,5).map(s => `
         <tr>
-          <td class="main-cell">${s.deviceName||'Device #'+s.deviceId}</td>
-          <td>${(s.requestType||'').toLowerCase().replace('_',' ')}</td>
-          <td>${chip('SENT_FOR_REPAIR')}</td>
-        </tr>`).join('') ||
-        `<tr><td colspan="3" class="empty">No pending repairs</td></tr>`;
+            <td class="main-cell">${s.deviceName || 'Device #' + s.deviceId}</td>
+            <td>${(s.requestType||'').toLowerCase().replace('_',' ')}</td>
+            <td>${chip('SENT_FOR_REPAIR')}</td>
+        </tr>`).join('') || `<tr><td colspan="3" class="empty">No pending receipts</td></tr>`;
 
-      const resolvedSrs = (srAllCache||[]).filter(s => s.status==='REPAIR_DONE' || s.status==='IRREPARABLE').slice(0,5);
-      document.getElementById('dash-repairs').innerHTML = resolvedSrs.map(r=>`
+    // Active Repairs = under repair devices
+    document.getElementById('dash-repairs').innerHTML = underRepairCache.slice(0,5).map(d => `
         <tr>
-          <td class="main-cell">${r.deviceName||'—'}</td>
-          <td>${r.resolvedAt ? r.resolvedAt.split('T')[0] : '—'}</td>
-          <td>${chip(r.status)}</td>
-        </tr>`).join('') ||
-        `<tr><td colspan="3" class="empty">No completed repairs</td></tr>`;
+            <td class="main-cell">${d.deviceName || '—'}</td>
+            <td>${d.brand || '—'}</td>
+            <td>${chip(d.deviceStatus)}</td>
+        </tr>`).join('') || `<tr><td colspan="3" class="empty">No active repairs</td></tr>`;
 
-      document.getElementById('dash-devices').innerHTML = devicesCache.slice(0,8).map(d=>`
+    // Device overview unchanged
+    document.getElementById('dash-devices').innerHTML = devicesCache.slice(0,8).map(d => `
         <tr>
-          <td class="main-cell">${d.deviceName||'—'}</td>
-          <td>${chip(d.deviceType)}</td>
-          <td>${chip(d.deviceStatus)}</td>
-          <td>${d.warrantyExpiryDate||'—'}</td>
-          <td>${d.rentPerMonth||'—'}</td>
-        </tr>`).join('') ||
-        `<tr><td colspan="4" class="empty">No devices</td></tr>`;
-    }
+            <td class="main-cell">${d.deviceName || '—'}</td>
+            <td>${chip(d.deviceType)}</td>
+            <td>${chip(d.deviceStatus)}</td>
+            <td>${d.warrantyExpiryDate || '—'}</td>
+            <td>${d.rentPerMonth || '—'}</td>
+        </tr>`).join('') || `<tr><td colspan="5" class="empty">No devices</td></tr>`;
+}
 
     // ── DEVICES ───────────────────────────────────────────────────────
     async function loadMyDevices(){
@@ -1058,71 +1054,145 @@
 
     // ── SERVICE REQUESTS ──────────────────────────────────────────────
     let expandedLogRow = null;
+    async function loadServiceRequests() {
+    try {
+        const [sentData, underRepairData] = await Promise.all([
+            apiFetch('/service-requests/vendor/me'),
+            apiFetch('/service-requests/devices/repair')
+        ]);
 
-    async function loadServiceRequests(){
-      try{
-        const data = await apiFetch('/service-requests/vendor/me');
-        srAllCache = data || [];
-        srCache = srAllCache.filter(s => s.status === 'SENT_FOR_REPAIR');
+        srCache = sentData || [];
+        srAllCache = srCache;              // ← keep in sync
+        underRepairCache = underRepairData || [];
+
+        console.log('srCache sample:', srCache[0]);
+        console.log('underRepairCache sample:', underRepairCache[0]);
+
+        const totalBadge = srCache.length;
         const badge = document.getElementById('sr-badge');
-        if(srCache.length){ badge.textContent = srCache.length; badge.style.display = ''; }
+        if (totalBadge) { badge.textContent = totalBadge; badge.style.display = ''; }
         else badge.style.display = 'none';
+
         filterServiceRequests();
-      }catch(e){ renderServiceRequests([]); }
+    } catch(e) {
+        console.error('loadServiceRequests failed:', e);
+        renderServiceRequests([], []);
     }
+}
 
-    function filterServiceRequests(){
-      const q = (document.getElementById('sr-search')?.value || '').toLowerCase();
-      const f = document.getElementById('sr-filter')?.value || '';
-      const filtered = srAllCache.filter(s => {
-        const matchQ = !q
-          || (s.deviceName||'').toLowerCase().includes(q)
-          || (s.requestType||'').toLowerCase().includes(q)
-          || (s.issueDescription||'').toLowerCase().includes(q);
-        const matchF = !f || s.status === f;
+   function filterServiceRequests() {
+    const q = (document.getElementById('sr-search')?.value || '').toLowerCase();
+    const f = document.getElementById('sr-filter')?.value || '';
+
+    const filteredSent = srCache.filter(s => {
+        const matchQ = !q || (s.deviceName||'').toLowerCase().includes(q) || (s.issueDescription||'').toLowerCase().includes(q);
+        const matchF = !f || f === 'SENT_FOR_REPAIR';
         return matchQ && matchF;
-      });
-      renderServiceRequests(filtered);
-    }
+    });
 
-    function renderServiceRequests(list){
-      expandedLogRow = null;
-      document.getElementById('sr-list').innerHTML = list.length
-        ? list.map(s => {
-            const canUpdate = s.status === 'SENT_FOR_REPAIR';
-            return `<tr id="sr-row-${s.id}">
-              <td style="width:28px;padding:8px 6px 8px 12px">
-                <button class="btn btn-ghost btn-xs"
-                        style="padding:2px 6px;font-size:13px;line-height:1"
-                        title="View repair log"
-                        onclick="toggleRepairLog(${s.id}, this)">▶</button>
-              </td>
-              <td style="font-family:var(--mono);font-size:11px;color:var(--text3)">#${s.id}</td>
-              <td class="main-cell">${s.deviceName || 'Device #' + s.deviceId}</td>
-              <td>${(s.requestType||'').toLowerCase().replace(/_/g,' ')}</td>
-              <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text2)">${s.issueDescription||'—'}</td>
-              <td>${s.urgent
-                  ? '<span style="color:var(--red);font-family:var(--mono);font-size:10px;font-weight:700">⚠ URGENT</span>'
-                  : '<span style="color:var(--text3);font-family:var(--mono);font-size:10px">—</span>'}</td>
-              <td>${chip(s.status)}</td>
-              <td style="font-size:10px;font-family:var(--mono);color:var(--text3)">${s.raisedAt ? s.raisedAt.split('T')[0] : '—'}</td>
-              <td>
-                ${canUpdate
-                    ? `<button class="btn btn-success btn-xs" onclick="openRepairPanel(${s.id}, '${(s.deviceName||'Device #'+s.deviceId).replace(/'/g,"\\'")}')">⚙ Update Repair</button>`
-                    : `<span style="font-size:10px;font-family:var(--mono);color:var(--text3)">${s.resolvedAt ? s.resolvedAt.split('T')[0] : '—'}</span>`
-                }
-              </td>
+    const filteredRepair = underRepairCache.filter(d => {
+        const matchQ = !q || (d.deviceName||'').toLowerCase().includes(q) || (d.brand||'').toLowerCase().includes(q);
+        const matchF = !f || f === 'UNDER_REPAIR';
+        return matchQ && matchF;
+    });
+
+    renderServiceRequests(filteredSent, filteredRepair);
+}
+function renderServiceRequests(sentList, repairList) {
+    expandedLogRow = null;
+
+    // ── TABLE 1: Awaiting receipt (SENT_FOR_REPAIR) ──
+    const sentRows = sentList.length
+        ? sentList.map(s => `
+            <tr id="sr-row-${s.id}">
+                <td style="width:28px;padding:8px 6px 8px 12px">
+                    <button class="btn btn-ghost btn-xs" style="padding:2px 6px;font-size:13px"
+                            onclick="toggleRepairLog(${s.id}, this)">▶</button>
+                </td>
+                <td style="font-family:var(--mono);font-size:11px;color:var(--text3)">#${s.id}</td>
+                <td class="main-cell">${s.deviceName || 'Device #' + s.deviceId}</td>
+                <td>${(s.requestType||'').toLowerCase().replace(/_/g,' ')}</td>
+                <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text2)">${s.issueDescription||'—'}</td>
+                <td>${s.urgent
+                    ? '<span style="color:var(--red);font-family:var(--mono);font-size:10px;font-weight:700">⚠ URGENT</span>'
+                    : '<span style="color:var(--text3);font-family:var(--mono);font-size:10px">—</span>'}</td>
+                <td>${chip(s.status)}</td>
+                <td style="font-size:10px;font-family:var(--mono);color:var(--text3)">${s.raisedAt ? s.raisedAt.split('T')[0] : '—'}</td>
+                <td>
+                    <button class="btn btn-warn btn-xs"
+                            onclick="markReceivedByVendor(${s.id}, '${(s.deviceName||'').replace(/'/g,"\\'")}')">
+                        📦 Mark Received
+                    </button>
+                </td>
             </tr>
             <tr id="sr-log-${s.id}" style="display:none">
-              <td colspan="9" style="padding:0;background:var(--bg3)">
-                <div id="sr-log-content-${s.id}" style="padding:16px 20px">
-                  <div style="color:var(--text3);font-family:var(--mono);font-size:11px">Loading repair log…</div>
-                </div>
-              </td>
-            </tr>`;
-          }).join('')
-        : `<tr><td colspan="9"><div class="empty"><div class="empty-icon">⚙</div>No service requests found</div></td></tr>`;
-    }
+                <td colspan="9" style="padding:0;background:var(--bg3)">
+                    <div id="sr-log-content-${s.id}" style="padding:16px 20px">
+                        <div style="color:var(--text3);font-family:var(--mono);font-size:11px">Loading repair log…</div>
+                    </div>
+                </td>
+            </tr>`).join('')
+        : `<tr><td colspan="9"><div class="empty">No devices awaiting receipt</div></td></tr>`;
+
+    // ── TABLE 2: Under Repair (RECEIVED_BY_VENDOR → final update) ──
+    const repairRows = repairList.length
+    ? repairList.map(d => `
+        <tr>
+            <td style="font-family:var(--mono);font-size:11px;color:var(--text3)">#${d.id}</td>
+            <td class="main-cell">${d.deviceName || '—'}</td>
+            <td>${d.requestType || '—'}</td>
+            <td>${chip(d.status)}</td>
+            <td style="font-size:10px;font-family:var(--mono);color:var(--text3)">${d.raisedAt ? d.raisedAt.split('T')[0] : '—'}</td>
+            <td>
+                <button class="btn btn-success btn-xs"
+                        onclick="openRepairPanel(${d.id}, '${(d.deviceName||'').replace(/'/g,"\\'")}')">
+                    ⚙ Submit Result
+                </button>
+            </td>
+        </tr>`).join('')
+    : `<tr><td colspan="6"><div class="empty">No devices currently under repair</div></td></tr>`;
+
+    document.getElementById('sr-list').innerHTML = `
+        <!-- SECTION 1 -->
+        <tr>
+            <td colspan="9" style="padding:10px 16px 6px;background:var(--bg2)">
+                <span style="font-size:10px;font-weight:700;color:var(--amber);font-family:var(--mono);
+                             text-transform:uppercase;letter-spacing:1.5px">
+                    📦 Awaiting Receipt — ${sentList.length} request(s)
+                </span>
+            </td>
+        </tr>
+        ${sentRows}
+
+        <!-- SECTION 2 HEADER (different columns) -->
+        <tr>
+            <td colspan="9" style="padding:16px 16px 0;background:var(--bg2)">
+                <span style="font-size:10px;font-weight:700;color:var(--cyan);font-family:var(--mono);
+                             text-transform:uppercase;letter-spacing:1.5px">
+                    ⚙ Under Repair — ${repairList.length} device(s)
+                </span>
+            </td>
+        </tr>
+       <tr style="background:var(--bg3)">
+    <th style="padding:9px 16px;font-size:9px;color:var(--text3);font-weight:700;letter-spacing:1.5px;text-transform:uppercase;font-family:var(--mono)">ID</th>
+    <th style="padding:9px 16px;font-size:9px;color:var(--text3);font-weight:700;letter-spacing:1.5px;text-transform:uppercase;font-family:var(--mono)">Device</th>
+    <th style="padding:9px 16px;font-size:9px;color:var(--text3);font-weight:700;letter-spacing:1.5px;text-transform:uppercase;font-family:var(--mono)">Request Type</th>
+    <th style="padding:9px 16px;font-size:9px;color:var(--text3);font-weight:700;letter-spacing:1.5px;text-transform:uppercase;font-family:var(--mono)">Status</th>
+    <th style="padding:9px 16px;font-size:9px;color:var(--text3);font-weight:700;letter-spacing:1.5px;text-transform:uppercase;font-family:var(--mono)">Raised</th>
+    <th style="padding:9px 16px;font-size:9px;color:var(--text3);font-weight:700;letter-spacing:1.5px;text-transform:uppercase;font-family:var(--mono)">Actions</th>
+</tr>
+        ${repairRows}`;
+}
+
+async function markReceivedByVendor(serviceRequestId, deviceName) {
+    if (!confirm(`Confirm receipt of "${deviceName}"? Device will be marked as Under Repair.`)) return;
+    try {
+        await apiFetch(`/service-requests/vendor/${serviceRequestId}`, { method: 'PUT' });
+        showAlert(`"${deviceName}" marked as received — now Under Repair`, 'success');
+        await loadServiceRequests();
+        loadDashboard();
+    } catch(e) { showAlert('Failed: ' + e.message, 'error'); }
+}
 
     async function toggleRepairLog(srId, btn){
       const logRow = document.getElementById(`sr-log-${srId}`);
@@ -1253,7 +1323,7 @@
     };
 
     try{
-        await apiFetch('/service-requests/vendor', {method:'PUT', body:JSON.stringify(body)});
+        await apiFetch('/service-requests/vendor/finalUpdate', {method:'PUT', body:JSON.stringify(body)});
         const label = status === 'REPAIR_DONE'
             ? 'Repair marked done — device returned to employee'
             : 'Device condemned — marked irreparable';
