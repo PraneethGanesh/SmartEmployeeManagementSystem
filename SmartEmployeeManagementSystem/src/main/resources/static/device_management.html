@@ -317,8 +317,6 @@
                             <select id="sr-type">
                                 <option value="REPAIR">Repair</option>
                                 <option value="REPLACEMENT">Replacement</option>
-                                <option value="UPGRADE">Upgrade</option>
-                                <option value="MAINTENANCE">Maintenance</option>
                                 <option value="RETURN">Return</option>
                             </select>
                         </div>
@@ -442,6 +440,16 @@
         </div>
         <div id="admin-sr-repair-hint" style="font-size:11px;color:var(--amber);margin-top:6px;display:none;">
             ⚠ Selecting "Sent for Repair" will automatically mark the device as <strong>Under Repair</strong>.
+        </div>
+
+        <input type="hidden" id="admin-sr-request-type">
+
+        <!-- Show only for REPLACEMENT -->
+        <div class="form-group" id="replacement-device-group" style="display:none;margin-bottom:14px">
+            <label>Replacement Device</label>
+            <select id="admin-sr-replacement-device">
+                <option value="">-- Select Available Device --</option>
+            </select>
         </div>
 
         <div class="modal-actions">
@@ -848,7 +856,7 @@ if (d.deviceStatus === 'AVAILABLE') {
                 <td><span class="chip ${r.status?.toLowerCase()}">${r.status}</span></td>
                 <td style="font-size:12px;color:var(--text2)">${r.raisedAt ? new Date(r.raisedAt).toLocaleDateString() : '—'}</td>
                 <td>
-                    <button class="btn btn-primary btn-sm" onclick="openAdminSRModal(${r.id}, '${(r.deviceName || '').replace(/'/g, "\\'")}', '${(r.raisedByName || r.employeeId || '').replace(/'/g, "\\'")}')">
+                    <button class="btn btn-primary btn-sm" onclick="openAdminSRModal(${r.id}, '${(r.deviceName||'').replace(/'/g,"\\'")}', '${(r.raisedByName||'').replace(/'/g,"\\'")}', '${r.requestType}')">
                         Update
                     </button>
                 </td>
@@ -856,52 +864,131 @@ if (d.deviceStatus === 'AVAILABLE') {
         } catch (e) { console.error(e); }
     }
 
-    function openAdminSRModal(requestId, deviceName, employeeName) {
-        document.getElementById('admin-sr-id').value = requestId;
-        document.getElementById('admin-sr-modal-id').textContent = `#${requestId}`;
-        document.getElementById('admin-sr-device-display').value = deviceName;
-        document.getElementById('admin-sr-employee-display').value = employeeName;
-        document.getElementById('admin-sr-status').value = 'SENT_FOR_REPAIR';
-        document.getElementById('admin-sr-remarks').value = '';
+   function openAdminSRModal(requestId, deviceName, employeeName, requestType) {
+    document.getElementById('admin-sr-id').value = requestId;
+    document.getElementById('admin-sr-request-type').value = requestType;
+    document.getElementById('admin-sr-modal-id').textContent = `#${requestId}`;
+    document.getElementById('admin-sr-device-display').value = deviceName;
+    document.getElementById('admin-sr-employee-display').value = employeeName;
+    document.getElementById('admin-sr-remarks').value = '';
+    document.getElementById('admin-sr-repair-hint').style.display = 'none';
+    document.getElementById('replacement-device-group').style.display = 'none';
+
+    const statusSelect = document.getElementById('admin-sr-status');
+
+    if (requestType === 'REPAIR') {
+        // REPAIR: SENT_FOR_REPAIR or REJECTED
+        statusSelect.innerHTML = `
+            <option value="SENT_FOR_REPAIR">Sent for Repair — device marked Under Repair</option>
+            <option value="REJECTED">Rejected</option>
+        `;
         document.getElementById('admin-sr-repair-hint').style.display = 'block';
-        document.getElementById('admin-sr-modal').classList.add('open');
+
+    } else if (requestType === 'REPLACEMENT') {
+    statusSelect.innerHTML = `
+        <option value="APPROVED">Approved — assign replacement device</option>
+        <option value="REJECTED">Rejected</option>
+    `;
+    // Show the dropdown immediately since default is APPROVED
+    document.getElementById('replacement-device-group').style.display = 'block';
+    loadAvailableDevicesForReplacement();
+
+} else if (requestType === 'RETURN') {
+        // RETURN: APPROVED or REJECTED
+        statusSelect.innerHTML = `
+            <option value="APPROVED">Approved — device will be unassigned</option>
+            <option value="REJECTED">Rejected</option>
+        `;
     }
 
+    document.getElementById('admin-sr-modal').classList.add('open');
+}
+
     document.getElementById('admin-sr-status')?.addEventListener('change', function () {
-        document.getElementById('admin-sr-repair-hint').style.display =
-            this.value === 'SENT_FOR_REPAIR' ? 'block' : 'none';
-    });
+    const requestType = document.getElementById('admin-sr-request-type').value;
+
+    // REPAIR hint
+    document.getElementById('admin-sr-repair-hint').style.display =
+        (requestType === 'REPAIR' && this.value === 'SENT_FOR_REPAIR') ? 'block' : 'none';
+
+    // Replacement device dropdown
+    document.getElementById('replacement-device-group').style.display =
+        (requestType === 'REPLACEMENT' && this.value === 'APPROVED') ? 'block' : 'none';
+});
 
     async function submitAdminSRUpdate() {
-        const serviceRequestId = parseInt(document.getElementById('admin-sr-id').value);
-        const status = document.getElementById('admin-sr-status').value;
-        const adminRemarks = document.getElementById('admin-sr-remarks').value.trim();
+    const serviceRequestId = parseInt(document.getElementById('admin-sr-id').value);
+    const status           = document.getElementById('admin-sr-status').value;
+    const adminRemarks     = document.getElementById('admin-sr-remarks').value.trim();
+    const requestType      = document.getElementById('admin-sr-request-type').value;
 
-        if (!adminRemarks) {
-            showAlert('Please add remarks before updating', 'error');
-            return;
-        }
+    if (!adminRemarks) {
+        showAlert('Please add remarks before updating', 'error');
+        return;
+    }
 
-        try {
-            await apiFetch('/service-requests/admin', {
+    try {
+        if (requestType === 'REPAIR') {
+            // POST to /admin/repair with AdminActionDTO
+            await apiFetch('/service-requests/admin/repair', {
                 method: 'PUT',
                 body: JSON.stringify({ serviceRequestId, status, adminRemarks })
             });
-            const statusLabel = status.replace(/_/g, ' ').toLowerCase();
-            showAlert(`Service request marked as "${statusLabel}" successfully!`, 'success');
-            closeAdminSRModal();
-            loadAdminServiceRequests();
-            loadOverview();
-        } catch (e) { showAlert('Failed: ' + e.message, 'error'); }
+
+        } else {
+            // REPLACEMENT or RETURN → /admin/other with ApprovalActionDTO
+            const replacementDeviceId = requestType === 'REPLACEMENT' && status === 'APPROVED'
+                ? parseInt(document.getElementById('admin-sr-replacement-device').value) || null
+                : null;
+
+            if (requestType === 'REPLACEMENT' && status === 'APPROVED' && !replacementDeviceId) {
+                showAlert('Please select a replacement device', 'error');
+                return;
+            }
+
+            await apiFetch('/service-requests/admin/other', {
+                method: 'PUT',
+                body: JSON.stringify({ serviceRequestId, status, adminRemarks, replacementDeviceId })
+            });
+        }
+
+        showAlert('Service request updated successfully!', 'success');
+        closeAdminSRModal();
+        loadAdminServiceRequests();
+        loadOverview();
+
+    } catch (e) {
+        showAlert('Failed: ' + e.message, 'error');
     }
+}
 
     function closeAdminSRModal() {
-        document.getElementById('admin-sr-modal').classList.remove('open');
-        document.getElementById('admin-sr-id').value = '';
-        document.getElementById('admin-sr-remarks').value = '';
-        document.getElementById('admin-sr-repair-hint').style.display = 'none';
-    }
+    document.getElementById('admin-sr-modal').classList.remove('open');
+    document.getElementById('admin-sr-id').value = '';
+    document.getElementById('admin-sr-request-type').value = '';
+    document.getElementById('admin-sr-remarks').value = '';
+    document.getElementById('admin-sr-repair-hint').style.display = 'none';
+    document.getElementById('replacement-device-group').style.display = 'none';
+}
 
+    async function loadAvailableDevicesForReplacement() {
+    const select = document.getElementById('admin-sr-replacement-device');
+    select.innerHTML = '<option value="">Loading...</option>';
+    try {
+        const devices = await apiFetch('/devices/all');
+        const available = (devices || []).filter(d => d.deviceStatus === 'AVAILABLE');
+        if (!available.length) {
+            select.innerHTML = '<option value="">No available devices</option>';
+            return;
+        }
+        select.innerHTML = '<option value="">-- Select Available Device --</option>' +
+            available.map(d =>
+                `<option value="${d.id}">${escapeHtml(d.deviceName)} — ${escapeHtml(d.brand || '')} (${titleCase(d.deviceType)})</option>`
+            ).join('');
+    } catch (e) {
+        select.innerHTML = '<option value="">Failed to load devices</option>';
+    }
+}
     // ============ ASSIGN DEVICE ============
     async function openAssignModal(deviceId, deviceName) {
         document.getElementById('assign-device-id').value = deviceId;
@@ -1056,6 +1143,14 @@ async function loadRepairBills() {
                         <div class="bill-meta-value">${escapeHtml(b.repairedBy || '—')}</div>
                     </div>
                 </div>
+                <div class="bill-card-divider"></div>
+                <button
+                    class="btn btn-primary"
+                    style="width:100%"
+                    id="pay-repair-btn-${b.billId}"
+                    onclick="payRepairBill(${b.billId})">
+                    💳 Pay &amp; Send Invoice
+                </button>
             </div>
         `).join('');
     } catch (e) { console.error(e); }
@@ -1100,9 +1195,48 @@ async function loadRentalBills() {
                         <div class="bill-meta-value">${b.paymentStatus || '—'}</div>
                     </div>
                 </div>
+                <div class="bill-card-divider"></div>
+                <button
+                    class="btn btn-primary"
+                    style="width:100%"
+                    id="pay-rental-btn-${b.id}"
+                    onclick="payRentalBill(${b.id})">
+                    💳 Pay &amp; Send Invoice
+                </button>
             </div>
         `).join('');
     } catch (e) { console.error(e); }
+}
+async function payRepairBill(billId) {
+    if (!confirm('Generate invoice and send to vendor?')) return;
+    const btn = document.getElementById(`pay-repair-btn-${billId}`);
+    btn.disabled = true;
+    btn.textContent = 'Processing...';
+    try {
+        await apiFetch(`/bills/repairBill/${billId}/pay`, { method: 'POST' });
+        showAlert('Invoice sent to vendor!', 'success');
+        loadRepairBills(); // refresh — paid bill disappears if your API filters it out
+    } catch (e) {
+        showAlert('Failed: ' + e.message, 'error');
+        btn.disabled = false;
+        btn.textContent = '💳 Pay & Send Invoice';
+    }
+}
+
+async function payRentalBill(billId) {
+    if (!confirm('Generate invoice and send to vendor?')) return;
+    const btn = document.getElementById(`pay-rental-btn-${billId}`);
+    btn.disabled = true;
+    btn.textContent = 'Processing...';
+    try {
+        await apiFetch(`/bills/rentalBill/${billId}/pay`, { method: 'POST' });
+        showAlert('Invoice sent to vendor!', 'success');
+        loadRentalBills();
+    } catch (e) {
+        showAlert('Failed: ' + e.message, 'error');
+        btn.disabled = false;
+        btn.textContent = '💳 Pay & Send Invoice';
+    }
 }
 
     // ============ LOGOUT ============

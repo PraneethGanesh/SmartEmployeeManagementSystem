@@ -21,6 +21,11 @@ public interface ServiceRequestRepository extends JpaRepository<ServiceRequest,L
             ServiceRequestStatus status
     );
 
+    List<ServiceRequest> findByRaisedByAndStatusNotOrderByRaisedAtDesc(
+            Employee raisedBy,
+            ServiceRequestStatus status
+    );
+
     List<ServiceRequest> findByDeviceId(Long deviceId);
 
 }

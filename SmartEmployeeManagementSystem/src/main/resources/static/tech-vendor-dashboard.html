@@ -213,6 +213,133 @@
         .repair-log-remarks{padding:8px 12px;background:var(--panel);border:1px solid var(--border);border-radius:5px;font-size:11px;font-family:var(--mono);color:var(--text2);line-height:1.6;margin-top:8px}
         .repair-log-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border)}
         .repair-log-id{font-size:10px;font-family:var(--mono);color:var(--text3)}
+
+        /* ── INVOICE CARDS ─────────────────────────────────────────── */
+.invoice-card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+}
+
+.invoice-card {
+    background: var(--panel);
+    border: 1px solid var(--inv-border, var(--border2));
+    border-radius: 10px;
+    overflow: hidden;
+    transition: border-color 0.2s, transform 0.15s;
+    position: relative;
+}
+
+.invoice-card:hover {
+    border-color: var(--inv-accent);
+    transform: translateY(-2px);
+}
+
+.invoice-card-strip {
+    height: 3px;
+    background: var(--inv-accent);
+    width: 100%;
+}
+
+.invoice-card-inner {
+    padding: 18px 20px 20px;
+}
+
+.invoice-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
+}
+
+.invoice-type-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    background: var(--inv-dim);
+    border: 1px solid var(--inv-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.invoice-card-id {
+    font-size: 10px;
+    font-family: var(--mono);
+    color: var(--inv-accent);
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    margin-bottom: 2px;
+}
+
+.invoice-card-type {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.invoice-amount-row {
+    background: var(--inv-dim);
+    border: 1px solid var(--inv-border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.invoice-amount-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-family: var(--mono);
+}
+
+.invoice-amount {
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--inv-accent);
+    font-family: var(--mono);
+    letter-spacing: -0.5px;
+}
+
+.invoice-meta-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.invoice-meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.invoice-meta-label {
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    font-family: var(--mono);
+}
+
+.invoice-meta-value {
+    font-size: 12px;
+    color: var(--text2);
+    font-family: var(--mono);
+}
+
+.invoice-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
     </style>
 </head>
 <body>
@@ -257,6 +384,11 @@
             <div class="nav-item" onclick="showView('negotiations',this)">
                 <svg class="nav-icon" fill="none" viewBox="0 0 16 16"><path d="M2 4.5h12M2 8h12M2 11.5h7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="12" cy="11.5" r="2" stroke="currentColor" stroke-width="1.5"/></svg>
                 Negotiations
+            </div>
+            <div class="nav-item" onclick="showView('invoices',this)">
+                <svg class="nav-icon" fill="none" viewBox="0 0 16 16"><rect x="1" y="2" width="14" height="12" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M4 6h8M4 9h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                Invoices
+                <span class="nav-badge amber" id="invoice-badge" style="display:none">0</span>
             </div>
 
             <div class="nav-section">Account</div>
@@ -625,6 +757,23 @@
                 </div>
             </div>
 
+
+            <!-- INVOICES -->
+            <div id="invoices-view" class="view">
+                <div class="card">
+                    <div class="card-head">
+                        <div>
+                            <div class="card-title">My Invoices</div>
+                            <div class="card-sub">payment invoices sent by admin — acknowledge to confirm receipt</div>
+                        </div>
+                        <button class="btn btn-ghost btn-sm" onclick="loadInvoices()">↺ Refresh</button>
+                    </div>
+                    <div style="padding:20px">
+                        <div id="invoices-container" class="invoice-card-grid"></div>
+                    </div>
+                </div>
+            </div>
+
             <!-- TWO-FACTOR AUTH -->
             <div id="two-factor-view" class="view">
                 <div class="card" style="max-width:560px">
@@ -727,6 +876,7 @@
 <script>
     const API = 'http://localhost:8080';
     let devicesCache = [], srCache = [], srAllCache = [], assignmentsCache = [], negotiationsCache = [];
+    let underRepairCache = [];
     let selectedNegotiationId = null;
     let currentModalDeviceId = null; // track which device is open in modal
 
@@ -785,55 +935,51 @@
         'assignments': loadAssignments,
         'profile': loadProfile,
         'two-factor': loadTotpStatus,
-        'add-device': ()=>{}
+        'add-device': ()=>{},
+        'invoices': loadInvoices
       };
       if(loaders[name]) loaders[name]();
     }
 
     // ── INIT ──────────────────────────────────────────────────────────
     async function initDashboard(){
-      await Promise.all([loadMyDevices(), loadServiceRequests(), loadAssignments(), loadNegotiations()]);
+      await Promise.all([loadMyDevices(), loadServiceRequests(), loadAssignments(), loadNegotiations(),loadInvoices()]);
       loadDashboard();
     }
 
     // ── DASHBOARD ─────────────────────────────────────────────────────
-    function loadDashboard(){
-      document.getElementById('stat-total').textContent = devicesCache.length || 0;
-      document.getElementById('stat-avail').textContent = devicesCache.filter(d=>d.deviceStatus==='AVAILABLE').length || 0;
-      document.getElementById('stat-repair').textContent = srCache.length || 0;
-      document.getElementById('stat-open').textContent = srCache.length || 0;
+    function loadDashboard() {
+    document.getElementById('stat-total').textContent = devicesCache.length || 0;
+    document.getElementById('stat-avail').textContent = devicesCache.filter(d => d.deviceStatus === 'AVAILABLE').length || 0;
+    document.getElementById('stat-repair').textContent = underRepairCache.length || 0;  // devices actively under repair
+    document.getElementById('stat-open').textContent = srCache.length || 0;             // awaiting receipt
 
-      const badge = document.getElementById('sr-badge');
-      if(srCache.length){ badge.textContent=srCache.length; badge.style.display=''; }
-      else badge.style.display='none';
-
-      document.getElementById('dash-sr').innerHTML = srCache.slice(0,5).map(s=>`
+    // Repair Queue = awaiting receipt
+    document.getElementById('dash-sr').innerHTML = srCache.slice(0,5).map(s => `
         <tr>
-          <td class="main-cell">${s.deviceName||'Device #'+s.deviceId}</td>
-          <td>${(s.requestType||'').toLowerCase().replace('_',' ')}</td>
-          <td>${chip('SENT_FOR_REPAIR')}</td>
-        </tr>`).join('') ||
-        `<tr><td colspan="3" class="empty">No pending repairs</td></tr>`;
+            <td class="main-cell">${s.deviceName || 'Device #' + s.deviceId}</td>
+            <td>${(s.requestType||'').toLowerCase().replace('_',' ')}</td>
+            <td>${chip('SENT_FOR_REPAIR')}</td>
+        </tr>`).join('') || `<tr><td colspan="3" class="empty">No pending receipts</td></tr>`;
 
-      const resolvedSrs = (srAllCache||[]).filter(s => s.status==='REPAIR_DONE' || s.status==='IRREPARABLE').slice(0,5);
-      document.getElementById('dash-repairs').innerHTML = resolvedSrs.map(r=>`
+    // Active Repairs = under repair devices
+    document.getElementById('dash-repairs').innerHTML = underRepairCache.slice(0,5).map(d => `
         <tr>
-          <td class="main-cell">${r.deviceName||'—'}</td>
-          <td>${r.resolvedAt ? r.resolvedAt.split('T')[0] : '—'}</td>
-          <td>${chip(r.status)}</td>
-        </tr>`).join('') ||
-        `<tr><td colspan="3" class="empty">No completed repairs</td></tr>`;
+            <td class="main-cell">${d.deviceName || '—'}</td>
+            <td>${d.brand || '—'}</td>
+            <td>${chip(d.deviceStatus)}</td>
+        </tr>`).join('') || `<tr><td colspan="3" class="empty">No active repairs</td></tr>`;
 
-      document.getElementById('dash-devices').innerHTML = devicesCache.slice(0,8).map(d=>`
+    // Device overview unchanged
+    document.getElementById('dash-devices').innerHTML = devicesCache.slice(0,8).map(d => `
         <tr>
-          <td class="main-cell">${d.deviceName||'—'}</td>
-          <td>${chip(d.deviceType)}</td>
-          <td>${chip(d.deviceStatus)}</td>
-          <td>${d.warrantyExpiryDate||'—'}</td>
-          <td>${d.rentPerMonth||'—'}</td>
-        </tr>`).join('') ||
-        `<tr><td colspan="4" class="empty">No devices</td></tr>`;
-    }
+            <td class="main-cell">${d.deviceName || '—'}</td>
+            <td>${chip(d.deviceType)}</td>
+            <td>${chip(d.deviceStatus)}</td>
+            <td>${d.warrantyExpiryDate || '—'}</td>
+            <td>${d.rentPerMonth || '—'}</td>
+        </tr>`).join('') || `<tr><td colspan="5" class="empty">No devices</td></tr>`;
+}
 
     // ── DEVICES ───────────────────────────────────────────────────────
     async function loadMyDevices(){
@@ -908,71 +1054,145 @@
 
     // ── SERVICE REQUESTS ──────────────────────────────────────────────
     let expandedLogRow = null;
+    async function loadServiceRequests() {
+    try {
+        const [sentData, underRepairData] = await Promise.all([
+            apiFetch('/service-requests/vendor/me'),
+            apiFetch('/service-requests/devices/repair')
+        ]);
 
-    async function loadServiceRequests(){
-      try{
-        const data = await apiFetch('/service-requests/vendor/me');
-        srAllCache = data || [];
-        srCache = srAllCache.filter(s => s.status === 'SENT_FOR_REPAIR');
+        srCache = sentData || [];
+        srAllCache = srCache;              // ← keep in sync
+        underRepairCache = underRepairData || [];
+
+        console.log('srCache sample:', srCache[0]);
+        console.log('underRepairCache sample:', underRepairCache[0]);
+
+        const totalBadge = srCache.length;
         const badge = document.getElementById('sr-badge');
-        if(srCache.length){ badge.textContent = srCache.length; badge.style.display = ''; }
+        if (totalBadge) { badge.textContent = totalBadge; badge.style.display = ''; }
         else badge.style.display = 'none';
+
         filterServiceRequests();
-      }catch(e){ renderServiceRequests([]); }
+    } catch(e) {
+        console.error('loadServiceRequests failed:', e);
+        renderServiceRequests([], []);
     }
+}
 
-    function filterServiceRequests(){
-      const q = (document.getElementById('sr-search')?.value || '').toLowerCase();
-      const f = document.getElementById('sr-filter')?.value || '';
-      const filtered = srAllCache.filter(s => {
-        const matchQ = !q
-          || (s.deviceName||'').toLowerCase().includes(q)
-          || (s.requestType||'').toLowerCase().includes(q)
-          || (s.issueDescription||'').toLowerCase().includes(q);
-        const matchF = !f || s.status === f;
+   function filterServiceRequests() {
+    const q = (document.getElementById('sr-search')?.value || '').toLowerCase();
+    const f = document.getElementById('sr-filter')?.value || '';
+
+    const filteredSent = srCache.filter(s => {
+        const matchQ = !q || (s.deviceName||'').toLowerCase().includes(q) || (s.issueDescription||'').toLowerCase().includes(q);
+        const matchF = !f || f === 'SENT_FOR_REPAIR';
         return matchQ && matchF;
-      });
-      renderServiceRequests(filtered);
-    }
+    });
 
-    function renderServiceRequests(list){
-      expandedLogRow = null;
-      document.getElementById('sr-list').innerHTML = list.length
-        ? list.map(s => {
-            const canUpdate = s.status === 'SENT_FOR_REPAIR';
-            return `<tr id="sr-row-${s.id}">
-              <td style="width:28px;padding:8px 6px 8px 12px">
-                <button class="btn btn-ghost btn-xs"
-                        style="padding:2px 6px;font-size:13px;line-height:1"
-                        title="View repair log"
-                        onclick="toggleRepairLog(${s.id}, this)">▶</button>
-              </td>
-              <td style="font-family:var(--mono);font-size:11px;color:var(--text3)">#${s.id}</td>
-              <td class="main-cell">${s.deviceName || 'Device #' + s.deviceId}</td>
-              <td>${(s.requestType||'').toLowerCase().replace(/_/g,' ')}</td>
-              <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text2)">${s.issueDescription||'—'}</td>
-              <td>${s.urgent
-                  ? '<span style="color:var(--red);font-family:var(--mono);font-size:10px;font-weight:700">⚠ URGENT</span>'
-                  : '<span style="color:var(--text3);font-family:var(--mono);font-size:10px">—</span>'}</td>
-              <td>${chip(s.status)}</td>
-              <td style="font-size:10px;font-family:var(--mono);color:var(--text3)">${s.raisedAt ? s.raisedAt.split('T')[0] : '—'}</td>
-              <td>
-                ${canUpdate
-                    ? `<button class="btn btn-success btn-xs" onclick="openRepairPanel(${s.id}, '${(s.deviceName||'Device #'+s.deviceId).replace(/'/g,"\\'")}')">⚙ Update Repair</button>`
-                    : `<span style="font-size:10px;font-family:var(--mono);color:var(--text3)">${s.resolvedAt ? s.resolvedAt.split('T')[0] : '—'}</span>`
-                }
-              </td>
+    const filteredRepair = underRepairCache.filter(d => {
+        const matchQ = !q || (d.deviceName||'').toLowerCase().includes(q) || (d.brand||'').toLowerCase().includes(q);
+        const matchF = !f || f === 'UNDER_REPAIR';
+        return matchQ && matchF;
+    });
+
+    renderServiceRequests(filteredSent, filteredRepair);
+}
+function renderServiceRequests(sentList, repairList) {
+    expandedLogRow = null;
+
+    // ── TABLE 1: Awaiting receipt (SENT_FOR_REPAIR) ──
+    const sentRows = sentList.length
+        ? sentList.map(s => `
+            <tr id="sr-row-${s.id}">
+                <td style="width:28px;padding:8px 6px 8px 12px">
+                    <button class="btn btn-ghost btn-xs" style="padding:2px 6px;font-size:13px"
+                            onclick="toggleRepairLog(${s.id}, this)">▶</button>
+                </td>
+                <td style="font-family:var(--mono);font-size:11px;color:var(--text3)">#${s.id}</td>
+                <td class="main-cell">${s.deviceName || 'Device #' + s.deviceId}</td>
+                <td>${(s.requestType||'').toLowerCase().replace(/_/g,' ')}</td>
+                <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text2)">${s.issueDescription||'—'}</td>
+                <td>${s.urgent
+                    ? '<span style="color:var(--red);font-family:var(--mono);font-size:10px;font-weight:700">⚠ URGENT</span>'
+                    : '<span style="color:var(--text3);font-family:var(--mono);font-size:10px">—</span>'}</td>
+                <td>${chip(s.status)}</td>
+                <td style="font-size:10px;font-family:var(--mono);color:var(--text3)">${s.raisedAt ? s.raisedAt.split('T')[0] : '—'}</td>
+                <td>
+                    <button class="btn btn-warn btn-xs"
+                            onclick="markReceivedByVendor(${s.id}, '${(s.deviceName||'').replace(/'/g,"\\'")}')">
+                        📦 Mark Received
+                    </button>
+                </td>
             </tr>
             <tr id="sr-log-${s.id}" style="display:none">
-              <td colspan="9" style="padding:0;background:var(--bg3)">
-                <div id="sr-log-content-${s.id}" style="padding:16px 20px">
-                  <div style="color:var(--text3);font-family:var(--mono);font-size:11px">Loading repair log…</div>
-                </div>
-              </td>
-            </tr>`;
-          }).join('')
-        : `<tr><td colspan="9"><div class="empty"><div class="empty-icon">⚙</div>No service requests found</div></td></tr>`;
-    }
+                <td colspan="9" style="padding:0;background:var(--bg3)">
+                    <div id="sr-log-content-${s.id}" style="padding:16px 20px">
+                        <div style="color:var(--text3);font-family:var(--mono);font-size:11px">Loading repair log…</div>
+                    </div>
+                </td>
+            </tr>`).join('')
+        : `<tr><td colspan="9"><div class="empty">No devices awaiting receipt</div></td></tr>`;
+
+    // ── TABLE 2: Under Repair (RECEIVED_BY_VENDOR → final update) ──
+    const repairRows = repairList.length
+    ? repairList.map(d => `
+        <tr>
+            <td style="font-family:var(--mono);font-size:11px;color:var(--text3)">#${d.id}</td>
+            <td class="main-cell">${d.deviceName || '—'}</td>
+            <td>${d.requestType || '—'}</td>
+            <td>${chip(d.status)}</td>
+            <td style="font-size:10px;font-family:var(--mono);color:var(--text3)">${d.raisedAt ? d.raisedAt.split('T')[0] : '—'}</td>
+            <td>
+                <button class="btn btn-success btn-xs"
+                        onclick="openRepairPanel(${d.id}, '${(d.deviceName||'').replace(/'/g,"\\'")}')">
+                    ⚙ Submit Result
+                </button>
+            </td>
+        </tr>`).join('')
+    : `<tr><td colspan="6"><div class="empty">No devices currently under repair</div></td></tr>`;
+
+    document.getElementById('sr-list').innerHTML = `
+        <!-- SECTION 1 -->
+        <tr>
+            <td colspan="9" style="padding:10px 16px 6px;background:var(--bg2)">
+                <span style="font-size:10px;font-weight:700;color:var(--amber);font-family:var(--mono);
+                             text-transform:uppercase;letter-spacing:1.5px">
+                    📦 Awaiting Receipt — ${sentList.length} request(s)
+                </span>
+            </td>
+        </tr>
+        ${sentRows}
+
+        <!-- SECTION 2 HEADER (different columns) -->
+        <tr>
+            <td colspan="9" style="padding:16px 16px 0;background:var(--bg2)">
+                <span style="font-size:10px;font-weight:700;color:var(--cyan);font-family:var(--mono);
+                             text-transform:uppercase;letter-spacing:1.5px">
+                    ⚙ Under Repair — ${repairList.length} device(s)
+                </span>
+            </td>
+        </tr>
+       <tr style="background:var(--bg3)">
+    <th style="padding:9px 16px;font-size:9px;color:var(--text3);font-weight:700;letter-spacing:1.5px;text-transform:uppercase;font-family:var(--mono)">ID</th>
+    <th style="padding:9px 16px;font-size:9px;color:var(--text3);font-weight:700;letter-spacing:1.5px;text-transform:uppercase;font-family:var(--mono)">Device</th>
+    <th style="padding:9px 16px;font-size:9px;color:var(--text3);font-weight:700;letter-spacing:1.5px;text-transform:uppercase;font-family:var(--mono)">Request Type</th>
+    <th style="padding:9px 16px;font-size:9px;color:var(--text3);font-weight:700;letter-spacing:1.5px;text-transform:uppercase;font-family:var(--mono)">Status</th>
+    <th style="padding:9px 16px;font-size:9px;color:var(--text3);font-weight:700;letter-spacing:1.5px;text-transform:uppercase;font-family:var(--mono)">Raised</th>
+    <th style="padding:9px 16px;font-size:9px;color:var(--text3);font-weight:700;letter-spacing:1.5px;text-transform:uppercase;font-family:var(--mono)">Actions</th>
+</tr>
+        ${repairRows}`;
+}
+
+async function markReceivedByVendor(serviceRequestId, deviceName) {
+    if (!confirm(`Confirm receipt of "${deviceName}"? Device will be marked as Under Repair.`)) return;
+    try {
+        await apiFetch(`/service-requests/vendor/${serviceRequestId}`, { method: 'PUT' });
+        showAlert(`"${deviceName}" marked as received — now Under Repair`, 'success');
+        await loadServiceRequests();
+        loadDashboard();
+    } catch(e) { showAlert('Failed: ' + e.message, 'error'); }
+}
 
     async function toggleRepairLog(srId, btn){
       const logRow = document.getElementById(`sr-log-${srId}`);
@@ -1103,7 +1323,7 @@
     };
 
     try{
-        await apiFetch('/service-requests/vendor', {method:'PUT', body:JSON.stringify(body)});
+        await apiFetch('/service-requests/vendor/finalUpdate', {method:'PUT', body:JSON.stringify(body)});
         const label = status === 'REPAIR_DONE'
             ? 'Repair marked done — device returned to employee'
             : 'Device condemned — marked irreparable';
@@ -1502,6 +1722,167 @@
         showAlert('Failed: ' + e.message, 'error');
       }
     }
+
+    // ── INVOICES ──────────────────────────────────────────────────────────
+async function loadInvoices() {
+    try {
+        const invoices = await apiFetch('/invoices/vendor/me');
+
+        // Update badge
+        const badge = document.getElementById('invoice-badge');
+        if (invoices && invoices.length) {
+            badge.textContent = invoices.length;
+            badge.style.display = '';
+        } else {
+            badge.style.display = 'none';
+        }
+
+        const container = document.getElementById('invoices-container');
+
+        if (!invoices || !invoices.length) {
+            container.innerHTML = `
+                <div class="empty">
+                    <div class="empty-icon">📄</div>
+                    No pending invoices — all caught up!
+                </div>`;
+            return;
+        }
+
+        container.innerHTML = invoices.map(inv => {
+            const isRepair  = (inv.invoiceType || '').toUpperCase() === 'REPAIR';
+            const accentColor = isRepair ? 'var(--orange)' : 'var(--cyan)';
+            const accentDim   = isRepair ? 'var(--orange-dim)' : 'var(--cyan-dim)';
+            const accentBorder = isRepair
+                ? 'rgba(251,146,60,0.25)'
+                : 'rgba(0,210,255,0.25)';
+            const typeIcon = isRepair ? '⚙' : '📦';
+
+            return `
+            <div class="invoice-card" id="invoice-row-${inv.id}"
+                 style="--inv-accent:${accentColor};--inv-dim:${accentDim};--inv-border:${accentBorder}">
+
+                <!-- TOP STRIP -->
+                <div class="invoice-card-strip"></div>
+
+                <div class="invoice-card-inner">
+
+                    <!-- HEADER ROW -->
+                    <div class="invoice-card-header">
+                        <div style="display:flex;align-items:center;gap:10px">
+                            <div class="invoice-type-icon">${typeIcon}</div>
+                            <div>
+                                <div class="invoice-card-id">INVOICE #${String(inv.id).padStart(4,'0')}</div>
+                                <div class="invoice-card-type">${(inv.invoiceType || '—').replace(/_/g,' ')} Invoice</div>
+                            </div>
+                        </div>
+                        <div style="text-align:right">
+                            ${chip(inv.status)}
+                            <div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:4px">
+                                Issued ${inv.issuedDate || '—'}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AMOUNT -->
+                    <div class="invoice-amount-row">
+                        <div class="invoice-amount-label">Amount Due</div>
+                        <div class="invoice-amount">
+                            ${inv.amount
+                                ? '₹' + Number(inv.amount).toLocaleString('en-IN', {minimumFractionDigits: 2})
+                                : '—'}
+                        </div>
+                    </div>
+
+                    <!-- DIVIDER -->
+                    <div style="height:1px;background:var(--border);margin:14px 0"></div>
+
+                    <!-- META GRID -->
+                    <div class="invoice-meta-grid">
+                        <div class="invoice-meta-item">
+                            <div class="invoice-meta-label">Vendor</div>
+                            <div class="invoice-meta-value">${inv.vendorName || '—'}</div>
+                        </div>
+                        <div class="invoice-meta-item">
+                            <div class="invoice-meta-label">Invoice Type</div>
+                            <div class="invoice-meta-value">${(inv.invoiceType || '—').replace(/_/g,' ')}</div>
+                        </div>
+                        <div class="invoice-meta-item">
+                            <div class="invoice-meta-label">Issued On</div>
+                            <div class="invoice-meta-value">${inv.issuedDate || '—'}</div>
+                        </div>
+                        <div class="invoice-meta-item">
+                            <div class="invoice-meta-label">Acknowledged On</div>
+                            <div class="invoice-meta-value" style="color:${inv.seenAt ? 'var(--green)' : 'var(--text3)'}">
+                                ${inv.seenAt || 'Pending'}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- DIVIDER -->
+                    <div style="height:1px;background:var(--border);margin:14px 0"></div>
+
+                    <!-- FOOTER -->
+                    <div class="invoice-card-footer">
+                        <div style="font-size:11px;color:var(--text3);font-family:var(--mono);line-height:1.6">
+                            By acknowledging, you confirm<br>receipt of this payment from admin.
+                        </div>
+                        <button
+                            class="btn btn-success"
+                            id="ack-btn-${inv.id}"
+                            style="min-width:150px"
+                            onclick="acknowledgeInvoice(${inv.id})">
+                            ✓ Acknowledge
+                        </button>
+                    </div>
+
+                </div>
+            </div>`;
+        }).join('');
+
+    } catch(e) {
+        const container = document.getElementById('invoices-container');
+        if (container) container.innerHTML = `
+            <div class="empty">
+                <div class="empty-icon">⚠</div>
+                Could not load invoices: ${e.message}
+            </div>`;
+    }
+}
+
+async function acknowledgeInvoice(invoiceId) {
+    if (!confirm('Acknowledge this invoice? This confirms you have received the payment.')) return;
+    const btn = document.getElementById(`ack-btn-${invoiceId}`);
+    btn.disabled = true;
+    btn.textContent = 'Processing...';
+    try {
+        await apiFetch(`/invoices/${invoiceId}/acknowledge`, { method: 'PUT' });
+        showAlert('Invoice acknowledged successfully!', 'success');
+
+        // Remove the card immediately
+        const row = document.getElementById(`invoice-row-${invoiceId}`);
+        if (row) row.remove();
+
+        // Count remaining cards
+        const remaining = document.querySelectorAll('[id^="invoice-row-"]').length;
+        const badge = document.getElementById('invoice-badge');
+
+        if (remaining === 0) {
+            badge.style.display = 'none';
+            // ✅ Fix: target invoices-container, not invoices-list
+            document.getElementById('invoices-container').innerHTML = `
+                <div class="empty">
+                    <div class="empty-icon">📄</div>
+                    No pending invoices — all caught up!
+                </div>`;
+        } else {
+            badge.textContent = remaining;
+        }
+    } catch(e) {
+        showAlert('Failed: ' + e.message, 'error');
+        btn.disabled = false;
+        btn.textContent = '✓ Acknowledge';
+    }
+}
 
     async function removeDevice(deviceId, deviceName) {
   if (!confirm(`Remove "${deviceName}" from your catalog? This cannot be undone.`)) return;

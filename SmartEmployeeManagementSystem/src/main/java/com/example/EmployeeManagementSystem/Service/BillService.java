@@ -14,7 +14,9 @@ import com.example.EmployeeManagementSystem.Exception.RepairBillNotFoundExceptio
 import com.example.EmployeeManagementSystem.Repository.InvoiceRepository;
 import com.example.EmployeeManagementSystem.Repository.RentalBillRepository;
 import com.example.EmployeeManagementSystem.Repository.RepairBillRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -33,8 +35,8 @@ public class BillService {
     }
 
     public List<RepairBillDTO> getRepairBills(){
-       List<RepairBill> repairBills=repairBillRepository.findByPaymentStatusNotAndRepairCostGreaterThan(
-               PaymentStatus.PAID,
+       List<RepairBill> repairBills=repairBillRepository.findByPaymentStatusNotInAndRepairCostGreaterThan(
+               List.of(PaymentStatus.PAID,PaymentStatus.ACKNOWLEDGED),
                BigDecimal.ZERO
        );
       return repairBills.stream().map(this::toRepairBillDTO).toList();
@@ -53,8 +55,8 @@ public class BillService {
     }
 
     public List<RentalBillDTO> getRentalBill(){
-        List<RentalBill> rentalBills=rentalBillRepository.findByPaymentStatusNotAndAmountGreaterThan(
-                PaymentStatus.PAID,
+        List<RentalBill> rentalBills=rentalBillRepository.findByPaymentStatusNotInAndAmountGreaterThan(
+                List.of(PaymentStatus.PAID,PaymentStatus.ACKNOWLEDGED),
                 BigDecimal.ZERO
         );
         return rentalBills.stream().map(this::toRentalBillDTO).toList();
@@ -75,6 +77,13 @@ public class BillService {
         RepairBill repairBill=repairBillRepository.findById(id).orElseThrow(
                 ()->new RepairBillNotFoundException("Bill with Id: "+id+" Not Found")
         );
+
+        if (invoiceRepository.existsByRepairBill(repairBill)) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Invoice already generated for this rental bill"
+            );
+        }
         repairBill.setPaymentStatus(PaymentStatus.PAID);
         Invoice invoice=new Invoice();
         invoice.setInvoiceType(InvoiceType.REPAIR);
@@ -92,9 +101,15 @@ public class BillService {
         RentalBill rentalBill=rentalBillRepository.findById(id).orElseThrow(
                 ()->new RentalBillNotFoundException("Bill with Id: "+id+" Not Found")
         );
+        if (invoiceRepository.existsByRentalBill(rentalBill)) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Invoice already generated for this rental bill"
+            );
+        }
         rentalBill.setPaymentStatus(PaymentStatus.PAID);
         Invoice invoice=new Invoice();
-        invoice.setInvoiceType(InvoiceType.REPAIR);
+        invoice.setInvoiceType(InvoiceType.RENTAL);
         invoice.setRentalBill(rentalBill);
         invoice.setAmount(rentalBill.getAmount());
         invoice.setStatus(InvoiceStatus.SENT);
