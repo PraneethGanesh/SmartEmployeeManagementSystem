@@ -103,7 +103,7 @@ public class DeviceService {
         return deviceAssignmentRepo.findByAssignedToEmployeeIdAndStatus(employee.getEmployeeId(), AssignmentStatus.ACTIVE)
                 .stream()
                 .map(DeviceAssignment::getDevice)
-                .filter(device -> device.getDeviceStatus() == DeviceStatus.ASSIGNED)
+                .filter(device -> device.getDeviceStatus() != DeviceStatus.CONDEMNED)
                 .map(this::toDeviceResponse)
                 .toList();
     }
@@ -126,7 +126,7 @@ public class DeviceService {
     }
 
     public List<DeviceResponseDTO> getAllDevices() {
-        return deviceRepository.findByStatus(DeviceStatus.RETURNED_TO_VENDOR.name()).stream()
+        return deviceRepository.findByStatusNot(DeviceStatus.RETURNED_TO_VENDOR.name()).stream()
                 .map(this::toDeviceResponse)
                 .toList();
     }
@@ -465,5 +465,14 @@ public class DeviceService {
         deviceRepository.delete(device);
         return ResponseEntity.ok("Device removed from stock");
 
+    }
+
+    public List<DeviceResponseDTO> getDevicesUnderRepair(Authentication authentication) {
+        String email=AuthUtil.extractEmail(authentication);
+        Vendor vendor=vendorRepo.findByEmail(email).orElseThrow(
+                ()->new VendorNotFoundException("Vendor Not Found:"+email)
+        );
+        List<Device> devices=deviceRepository.findByTechVendorAndDeviceStatus(vendor,DeviceStatus.UNDER_REPAIR);
+        return devices.stream().map(device -> toDeviceResponse(device)).toList();
     }
 }
