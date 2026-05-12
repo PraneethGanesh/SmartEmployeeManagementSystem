@@ -168,6 +168,7 @@ public class ServiceRequestService {
                 device.setDeviceStatus(DeviceStatus.ASSIGNED);
                 break;
         }
+        deviceRepository.save(device);
         serviceRequest.setReviewedBy(admin);
         serviceRequest.setAdminRemarks(actionDTO.getAdminRemarks());
         serviceRequest.setStatus(ServiceRequestStatus.CLOSED);
@@ -175,24 +176,24 @@ public class ServiceRequestService {
         return toServiceRequestResponseDTO(saved);
     }
 
-    public void handelApproval(ServiceRequest serviceRequest, Device device,long deviceId) {
+    public void handelApproval(ServiceRequest serviceRequest, Device device,Long deviceId) {
         ServiceRequestType type=serviceRequest.getRequestType();
         DeviceAssignment current= device.getCurrentAssignment();
         if(type==ServiceRequestType.RETURN){
+            device.setCurrentAssignment(null);
+            device.setDeviceStatus(DeviceStatus.AVAILABLE);
             deviceAssignmentRepo.delete(current);
             System.out.println("deleted related assignment details for device:"+device.getDeviceName());
-            device.setDeviceStatus(DeviceStatus.AVAILABLE);
-            device.setCurrentAssignment(null);
         }
         if(type==ServiceRequestType.REPLACEMENT){
+            device.setCurrentAssignment(null);
+            device.setDeviceStatus(DeviceStatus.AVAILABLE);
             deviceAssignmentRepo.delete(current);
             System.out.println("deleted related assignment details for device:"+device.getDeviceName());
-            device.setDeviceStatus(DeviceStatus.AVAILABLE);
-            device.setCurrentAssignment(null);
             Device newDevice=deviceRepository.findById(deviceId).orElseThrow(
                     ()->new RuntimeException("Device not found:"+deviceId)
             );
-            if(device.getDeviceStatus()!=DeviceStatus.AVAILABLE){
+            if(newDevice.getDeviceStatus()!=DeviceStatus.AVAILABLE){
                 throw new RuntimeException("Device not available");
             }
             if(newDevice.getCurrentAssignment()!=null){
@@ -204,12 +205,12 @@ public class ServiceRequestService {
             DeviceAssignment deviceAssignment=new DeviceAssignment();
             deviceAssignment.setAssignedTo(employee);
             deviceAssignment.setAssignedDate(LocalDate.now());
-            deviceAssignment.setDevice(device);
+            deviceAssignment.setDevice(newDevice);
             deviceAssignment.setStatus(AssignmentStatus.ACTIVE);
             DeviceAssignment saved=deviceAssignmentRepo.save(deviceAssignment);
-            device.setCurrentAssignment(saved);
-            device.setDeviceStatus(DeviceStatus.ASSIGNED);
-            deviceRepository.save(device);
+            newDevice.setCurrentAssignment(saved);
+            newDevice.setDeviceStatus(DeviceStatus.ASSIGNED);
+            deviceRepository.save(newDevice);
         }
 
     }
