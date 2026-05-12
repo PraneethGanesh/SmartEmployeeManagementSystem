@@ -125,5 +125,12 @@ public class DeviceController {
         return deviceService.removeDevice(deviceId, authentication);
     }
 
+    @GetMapping("/repair")
+    @PreAuthorize("hasRole('TECH_VENDOR')")
+    public List<DeviceResponseDTO> getDevicesUnderRepair(Authentication authentication) {
+        return deviceService.getDevicesUnderRepair(authentication);
+    }
+
+
 
 }
