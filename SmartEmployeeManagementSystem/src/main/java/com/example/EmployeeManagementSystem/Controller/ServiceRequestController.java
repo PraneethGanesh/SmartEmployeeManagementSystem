@@ -72,7 +72,7 @@ public class ServiceRequestController {
         return ResponseEntity.ok(serviceRequestService.updateServiceRequestByVendor(authentication, repairDTO));
     }
 
-    @PutMapping("/vendor")
+    @PutMapping("/vendor/{serviceRequestId}")
     @PreAuthorize("hasRole('TECH_VENDOR')")
     public ResponseEntity<String> updateServiceRequest(Authentication authentication,
                                                        @PathVariable long serviceRequestId
