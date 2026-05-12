@@ -8,8 +8,8 @@ import java.math.BigDecimal;
 import java.util.List;
 
 public interface RepairBillRepository extends JpaRepository<RepairBill,Long> {
-    List<RepairBill> findByPaymentStatusNotAndRepairCostGreaterThan(
-            PaymentStatus paymentStatus,
+    List<RepairBill> findByPaymentStatusNotInAndRepairCostGreaterThan(
+            List<PaymentStatus> statusList,
             BigDecimal repairCost
     );
 

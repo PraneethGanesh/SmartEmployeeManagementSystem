@@ -213,6 +213,133 @@
         .repair-log-remarks{padding:8px 12px;background:var(--panel);border:1px solid var(--border);border-radius:5px;font-size:11px;font-family:var(--mono);color:var(--text2);line-height:1.6;margin-top:8px}
         .repair-log-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border)}
         .repair-log-id{font-size:10px;font-family:var(--mono);color:var(--text3)}
+
+        /* ── INVOICE CARDS ─────────────────────────────────────────── */
+.invoice-card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+}
+
+.invoice-card {
+    background: var(--panel);
+    border: 1px solid var(--inv-border, var(--border2));
+    border-radius: 10px;
+    overflow: hidden;
+    transition: border-color 0.2s, transform 0.15s;
+    position: relative;
+}
+
+.invoice-card:hover {
+    border-color: var(--inv-accent);
+    transform: translateY(-2px);
+}
+
+.invoice-card-strip {
+    height: 3px;
+    background: var(--inv-accent);
+    width: 100%;
+}
+
+.invoice-card-inner {
+    padding: 18px 20px 20px;
+}
+
+.invoice-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
+}
+
+.invoice-type-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    background: var(--inv-dim);
+    border: 1px solid var(--inv-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.invoice-card-id {
+    font-size: 10px;
+    font-family: var(--mono);
+    color: var(--inv-accent);
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    margin-bottom: 2px;
+}
+
+.invoice-card-type {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.invoice-amount-row {
+    background: var(--inv-dim);
+    border: 1px solid var(--inv-border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.invoice-amount-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-family: var(--mono);
+}
+
+.invoice-amount {
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--inv-accent);
+    font-family: var(--mono);
+    letter-spacing: -0.5px;
+}
+
+.invoice-meta-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.invoice-meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.invoice-meta-label {
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    font-family: var(--mono);
+}
+
+.invoice-meta-value {
+    font-size: 12px;
+    color: var(--text2);
+    font-family: var(--mono);
+}
+
+.invoice-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
     </style>
 </head>
 <body>
@@ -257,6 +384,11 @@
             <div class="nav-item" onclick="showView('negotiations',this)">
                 <svg class="nav-icon" fill="none" viewBox="0 0 16 16"><path d="M2 4.5h12M2 8h12M2 11.5h7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="12" cy="11.5" r="2" stroke="currentColor" stroke-width="1.5"/></svg>
                 Negotiations
+            </div>
+            <div class="nav-item" onclick="showView('invoices',this)">
+                <svg class="nav-icon" fill="none" viewBox="0 0 16 16"><rect x="1" y="2" width="14" height="12" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M4 6h8M4 9h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                Invoices
+                <span class="nav-badge amber" id="invoice-badge" style="display:none">0</span>
             </div>
 
             <div class="nav-section">Account</div>
@@ -625,6 +757,23 @@
                 </div>
             </div>
 
+
+            <!-- INVOICES -->
+            <div id="invoices-view" class="view">
+                <div class="card">
+                    <div class="card-head">
+                        <div>
+                            <div class="card-title">My Invoices</div>
+                            <div class="card-sub">payment invoices sent by admin — acknowledge to confirm receipt</div>
+                        </div>
+                        <button class="btn btn-ghost btn-sm" onclick="loadInvoices()">↺ Refresh</button>
+                    </div>
+                    <div style="padding:20px">
+                        <div id="invoices-container" class="invoice-card-grid"></div>
+                    </div>
+                </div>
+            </div>
+
             <!-- TWO-FACTOR AUTH -->
             <div id="two-factor-view" class="view">
                 <div class="card" style="max-width:560px">
@@ -785,14 +934,15 @@
         'assignments': loadAssignments,
         'profile': loadProfile,
         'two-factor': loadTotpStatus,
-        'add-device': ()=>{}
+        'add-device': ()=>{},
+        'invoices': loadInvoices
       };
       if(loaders[name]) loaders[name]();
     }
 
     // ── INIT ──────────────────────────────────────────────────────────
     async function initDashboard(){
-      await Promise.all([loadMyDevices(), loadServiceRequests(), loadAssignments(), loadNegotiations()]);
+      await Promise.all([loadMyDevices(), loadServiceRequests(), loadAssignments(), loadNegotiations(),loadInvoices()]);
       loadDashboard();
     }
 
@@ -1502,6 +1652,167 @@
         showAlert('Failed: ' + e.message, 'error');
       }
     }
+
+    // ── INVOICES ──────────────────────────────────────────────────────────
+async function loadInvoices() {
+    try {
+        const invoices = await apiFetch('/invoices/vendor/me');
+
+        // Update badge
+        const badge = document.getElementById('invoice-badge');
+        if (invoices && invoices.length) {
+            badge.textContent = invoices.length;
+            badge.style.display = '';
+        } else {
+            badge.style.display = 'none';
+        }
+
+        const container = document.getElementById('invoices-container');
+
+        if (!invoices || !invoices.length) {
+            container.innerHTML = `
+                <div class="empty">
+                    <div class="empty-icon">📄</div>
+                    No pending invoices — all caught up!
+                </div>`;
+            return;
+        }
+
+        container.innerHTML = invoices.map(inv => {
+            const isRepair  = (inv.invoiceType || '').toUpperCase() === 'REPAIR';
+            const accentColor = isRepair ? 'var(--orange)' : 'var(--cyan)';
+            const accentDim   = isRepair ? 'var(--orange-dim)' : 'var(--cyan-dim)';
+            const accentBorder = isRepair
+                ? 'rgba(251,146,60,0.25)'
+                : 'rgba(0,210,255,0.25)';
+            const typeIcon = isRepair ? '⚙' : '📦';
+
+            return `
+            <div class="invoice-card" id="invoice-row-${inv.id}"
+                 style="--inv-accent:${accentColor};--inv-dim:${accentDim};--inv-border:${accentBorder}">
+
+                <!-- TOP STRIP -->
+                <div class="invoice-card-strip"></div>
+
+                <div class="invoice-card-inner">
+
+                    <!-- HEADER ROW -->
+                    <div class="invoice-card-header">
+                        <div style="display:flex;align-items:center;gap:10px">
+                            <div class="invoice-type-icon">${typeIcon}</div>
+                            <div>
+                                <div class="invoice-card-id">INVOICE #${String(inv.id).padStart(4,'0')}</div>
+                                <div class="invoice-card-type">${(inv.invoiceType || '—').replace(/_/g,' ')} Invoice</div>
+                            </div>
+                        </div>
+                        <div style="text-align:right">
+                            ${chip(inv.status)}
+                            <div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:4px">
+                                Issued ${inv.issuedDate || '—'}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AMOUNT -->
+                    <div class="invoice-amount-row">
+                        <div class="invoice-amount-label">Amount Due</div>
+                        <div class="invoice-amount">
+                            ${inv.amount
+                                ? '₹' + Number(inv.amount).toLocaleString('en-IN', {minimumFractionDigits: 2})
+                                : '—'}
+                        </div>
+                    </div>
+
+                    <!-- DIVIDER -->
+                    <div style="height:1px;background:var(--border);margin:14px 0"></div>
+
+                    <!-- META GRID -->
+                    <div class="invoice-meta-grid">
+                        <div class="invoice-meta-item">
+                            <div class="invoice-meta-label">Vendor</div>
+                            <div class="invoice-meta-value">${inv.vendorName || '—'}</div>
+                        </div>
+                        <div class="invoice-meta-item">
+                            <div class="invoice-meta-label">Invoice Type</div>
+                            <div class="invoice-meta-value">${(inv.invoiceType || '—').replace(/_/g,' ')}</div>
+                        </div>
+                        <div class="invoice-meta-item">
+                            <div class="invoice-meta-label">Issued On</div>
+                            <div class="invoice-meta-value">${inv.issuedDate || '—'}</div>
+                        </div>
+                        <div class="invoice-meta-item">
+                            <div class="invoice-meta-label">Acknowledged On</div>
+                            <div class="invoice-meta-value" style="color:${inv.seenAt ? 'var(--green)' : 'var(--text3)'}">
+                                ${inv.seenAt || 'Pending'}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- DIVIDER -->
+                    <div style="height:1px;background:var(--border);margin:14px 0"></div>
+
+                    <!-- FOOTER -->
+                    <div class="invoice-card-footer">
+                        <div style="font-size:11px;color:var(--text3);font-family:var(--mono);line-height:1.6">
+                            By acknowledging, you confirm<br>receipt of this payment from admin.
+                        </div>
+                        <button
+                            class="btn btn-success"
+                            id="ack-btn-${inv.id}"
+                            style="min-width:150px"
+                            onclick="acknowledgeInvoice(${inv.id})">
+                            ✓ Acknowledge
+                        </button>
+                    </div>
+
+                </div>
+            </div>`;
+        }).join('');
+
+    } catch(e) {
+        const container = document.getElementById('invoices-container');
+        if (container) container.innerHTML = `
+            <div class="empty">
+                <div class="empty-icon">⚠</div>
+                Could not load invoices: ${e.message}
+            </div>`;
+    }
+}
+
+async function acknowledgeInvoice(invoiceId) {
+    if (!confirm('Acknowledge this invoice? This confirms you have received the payment.')) return;
+    const btn = document.getElementById(`ack-btn-${invoiceId}`);
+    btn.disabled = true;
+    btn.textContent = 'Processing...';
+    try {
+        await apiFetch(`/invoices/${invoiceId}/acknowledge`, { method: 'PUT' });
+        showAlert('Invoice acknowledged successfully!', 'success');
+
+        // Remove the card immediately
+        const row = document.getElementById(`invoice-row-${invoiceId}`);
+        if (row) row.remove();
+
+        // Count remaining cards
+        const remaining = document.querySelectorAll('[id^="invoice-row-"]').length;
+        const badge = document.getElementById('invoice-badge');
+
+        if (remaining === 0) {
+            badge.style.display = 'none';
+            // ✅ Fix: target invoices-container, not invoices-list
+            document.getElementById('invoices-container').innerHTML = `
+                <div class="empty">
+                    <div class="empty-icon">📄</div>
+                    No pending invoices — all caught up!
+                </div>`;
+        } else {
+            badge.textContent = remaining;
+        }
+    } catch(e) {
+        showAlert('Failed: ' + e.message, 'error');
+        btn.disabled = false;
+        btn.textContent = '✓ Acknowledge';
+    }
+}
 
     async function removeDevice(deviceId, deviceName) {
   if (!confirm(`Remove "${deviceName}" from your catalog? This cannot be undone.`)) return;
