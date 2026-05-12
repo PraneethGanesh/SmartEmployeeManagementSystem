@@ -4,6 +4,7 @@ import com.example.EmployeeManagementSystem.Entity.Employee;
 import com.example.EmployeeManagementSystem.Entity.LeaveEntitlement;
 import com.example.EmployeeManagementSystem.Entity.LeaveType;
 import com.example.EmployeeManagementSystem.Enum.Gender;
+import com.example.EmployeeManagementSystem.Enum.Role;
 import com.example.EmployeeManagementSystem.Enum.Status;
 import com.example.EmployeeManagementSystem.Repository.EmployeeRepo;
 import com.example.EmployeeManagementSystem.Repository.LeaveEntitlementRepository;
@@ -40,7 +41,7 @@ public class LeaveAccrualService {
 
     @Transactional
     public void runMonthlyAccrual(LocalDate accrualDate) {
-        List<Employee> activeEmployees = employeeRepository.findByStatus(Status.ACTIVE);
+        List<Employee> activeEmployees = employeeRepository.findByStatusAndRole(Status.ACTIVE, Role.EMPLOYEE);
         List<LeaveType> allLeaveTypes = leaveTypeRepository.findAll();
 
         log.info("Starting monthly accrual for {} — {} active employees",
