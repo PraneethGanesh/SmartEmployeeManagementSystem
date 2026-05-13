@@ -37,6 +37,7 @@ public class LeaveRequestService {
     private final LeaveEntitlementRepository leaveEntitlementRepository;
     private final NotificationService notificationService;
     private static final Logger log = LoggerFactory.getLogger(LeaveRequestService.class);
+    private static final long SICK_LEAVE_RETROACTIVE_DAYS = 7;
 
     public LeaveRequestService(LeaveRequestRepo leaveRequestRepo,
                                EmployeeRepo employeeRepo,
@@ -71,6 +72,13 @@ public class LeaveRequestService {
             return ResponseEntity.badRequest()
                     .body(Map.of("error", "Only active employees can apply for leave"));
         }
+        if(requestDTO.getLeaveType()==null){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Leave type is required..");
+        }
+
+        LeaveType originalLeaveType = requestDTO.getLeaveType();
+        boolean lateSickLeaveConvertedToUnpaid = false;
 
         if (requestDTO.getLeaveType() == LeaveType.MATERNITY) {
             if(employee.getGender()==Gender.M){
@@ -89,7 +97,14 @@ public class LeaveRequestService {
                 : "UTC");
         LocalDate today = LocalDate.now(zoneId);
         if (requestDTO.getStartDate().isBefore(today)) {
-            throw new InvalidStartDateException("Start date cannot be before current date");
+            if (requestDTO.getLeaveType() != LeaveType.SICK) {
+                throw new InvalidStartDateException("Start date cannot be before current date");
+            }
+            long daysAfterLeaveDate = ChronoUnit.DAYS.between(requestDTO.getStartDate(), today);
+            if (daysAfterLeaveDate > SICK_LEAVE_RETROACTIVE_DAYS) {
+                requestDTO.setLeaveType(LeaveType.UNPAID);
+                lateSickLeaveConvertedToUnpaid = true;
+            }
         }
         //Checking if the end date is before start date
         if (requestDTO.getEndDate().isBefore(requestDTO.getStartDate())) {
@@ -108,7 +123,7 @@ public class LeaveRequestService {
                         .body(Map.of("error", "Sick leave is limited to 1 day per month."));
             }
             long sickDaysUsedThisMonth = leaveRequestRepo.countApprovedSickDaysInMonth(
-                    employee, today.getYear(), today.getMonthValue());
+                    employee, requestDTO.getStartDate().getYear(), requestDTO.getStartDate().getMonthValue());
 
             var sickLeaveType = leaveTypeRepository.findByName("SICK")
                     .orElseThrow(() -> new RuntimeException("SICK leave type not configured"));
@@ -117,8 +132,8 @@ public class LeaveRequestService {
                     .findByEmployeeEmployeeIdAndLeaveTypeIdAndYear(
                             employee.getEmployeeId(),
                             sickLeaveType.getId(),
-                            today.getYear())
-                    .orElseGet(() -> createEntitlement(employee, sickLeaveType, today.getYear()));
+                            requestDTO.getStartDate().getYear())
+                    .orElseGet(() -> createEntitlement(employee, sickLeaveType, requestDTO.getStartDate().getYear()));
 
             BigDecimal availableSick = entitlement.getAvailableBalance();
 
@@ -161,29 +176,31 @@ public class LeaveRequestService {
 
         // ---------------- UNPAID cap ----------------
         if (requestDTO.getLeaveType() == LeaveType.UNPAID) {
-            // Max unpaid days = number of leave types exhausted this month
-            // (1 for exhausted sick + 1 for exhausted casual = max 2)
-            long sickUsedThisMonth = leaveRequestRepo.countApprovedSickDaysInMonth(
-                    employee, today.getYear(), today.getMonthValue());
-            long casualBalance = getCasualBalance(employee, today.getYear());
+            if (!lateSickLeaveConvertedToUnpaid) {
+                // Max unpaid days = number of leave types exhausted this month
+                // (1 for exhausted sick + 1 for exhausted casual = max 2)
+                long sickUsedThisMonth = leaveRequestRepo.countApprovedSickDaysInMonth(
+                        employee, requestDTO.getStartDate().getYear(), requestDTO.getStartDate().getMonthValue());
+                long casualBalance = getCasualBalance(employee, requestDTO.getStartDate().getYear());
 
-            int maxUnpaid = 0;
-            if (sickUsedThisMonth >= 1) maxUnpaid++;   // sick exhausted
-            if (casualBalance <= 0) maxUnpaid++;        // casual exhausted
+                int maxUnpaid = 0;
+                if (sickUsedThisMonth >= 1) maxUnpaid++;   // sick exhausted
+                if (casualBalance <= 0) maxUnpaid++;        // casual exhausted
 
-            long unpaidDaysThisMonth = leaveRequestRepo.countUnpaidDaysInMonth(
-                    employee,requestDTO.getStartDate().getYear(),
-                    requestDTO.getStartDate().getMonthValue());
+                long unpaidDaysThisMonth = leaveRequestRepo.countUnpaidDaysInMonth(
+                        employee,requestDTO.getStartDate().getYear(),
+                        requestDTO.getStartDate().getMonthValue());
 
-            if (maxUnpaid == 0) {
-                return ResponseEntity.badRequest()
-                        .body(Map.of("error",
-                                "You still have paid leave available. Please use sick or casual leave first."));
-            }
-            if (unpaidDaysThisMonth >= maxUnpaid) {
-                return ResponseEntity.badRequest()
-                        .body(Map.of("error",
-                                "Unpaid leave limit (" + maxUnpaid + " day(s) this month) already reached."));
+                if (maxUnpaid == 0) {
+                    return ResponseEntity.badRequest()
+                            .body(Map.of("error",
+                                    "You still have paid leave available. Please use sick or casual leave first."));
+                }
+                if (unpaidDaysThisMonth >= maxUnpaid) {
+                    return ResponseEntity.badRequest()
+                            .body(Map.of("error",
+                                    "Unpaid leave limit (" + maxUnpaid + " day(s) this month) already reached."));
+                }
             }
         }
 
@@ -209,11 +226,6 @@ public class LeaveRequestService {
          leaveRequest.setStartDate(requestDTO.getStartDate());
          leaveRequest.setEndDate(requestDTO.getEndDate());
 
-         if(requestDTO.getLeaveType()==null){
-             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                     .body("Leave type is required..");
-         }
-        LeaveType originalLeaveType = requestDTO.getLeaveType();
          leaveRequest.setLeaveType(requestDTO.getLeaveType());
          if(requestDTO.getReason()!=null){
              leaveRequest.setReason(requestDTO.getReason());
@@ -241,8 +253,13 @@ public class LeaveRequestService {
         if (savedRequest.getLeaveType() == LeaveType.UNPAID && savedRequest.getLeaveType() != originalLeaveType) {
             Map<String, Object> body = new java.util.LinkedHashMap<>();
             body.put("leave", responseDTO);
-            body.put("warning", "Your " + originalLeaveType.name().toLowerCase() +
-                    " leave quota for this month is exhausted. Request recorded as Unpaid leave.");
+            if (lateSickLeaveConvertedToUnpaid) {
+                body.put("warning", "Sick leave must be applied within " + SICK_LEAVE_RETROACTIVE_DAYS +
+                        " days of the leave date. Request recorded as Unpaid leave.");
+            } else {
+                body.put("warning", "Your " + originalLeaveType.name().toLowerCase() +
+                        " leave quota for this month is exhausted. Request recorded as Unpaid leave.");
+            }
             return ResponseEntity.status(HttpStatus.CREATED).body(body);
         }
         return ResponseEntity.status(HttpStatus.CREATED).body(responseDTO);
