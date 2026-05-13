@@ -26,6 +26,7 @@ public class LeaveAccrualService {
     private static final Logger log = LoggerFactory.getLogger(LeaveAccrualService.class);
     private static final BigDecimal ONE_DAY = BigDecimal.ONE;
     private static final Set<String> SUPPORTED_LEAVE_TYPES = Set.of("SICK", "CASUAL");
+    private static final Set<Role> LEAVE_ACCRUAL_ROLES = Set.of(Role.EMPLOYEE, Role.MANAGER, Role.ADMIN);
 
     private final EmployeeRepo employeeRepository;
     private final LeaveTypeRepository leaveTypeRepository;
@@ -41,7 +42,10 @@ public class LeaveAccrualService {
 
     @Transactional
     public void runMonthlyAccrual(LocalDate accrualDate) {
-        List<Employee> activeEmployees = employeeRepository.findByStatusAndRole(Status.ACTIVE, Role.EMPLOYEE);
+        List<Employee> activeEmployees = employeeRepository.findByStatus(Status.ACTIVE).stream()
+                .filter(employee -> employee.getRole() != null)
+                .filter(employee -> LEAVE_ACCRUAL_ROLES.contains(employee.getRole()))
+                .toList();
         List<LeaveType> allLeaveTypes = leaveTypeRepository.findAll();
 
         log.info("Starting monthly accrual for {} — {} active employees",
