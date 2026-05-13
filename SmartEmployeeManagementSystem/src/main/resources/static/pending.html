@@ -67,10 +67,19 @@
         } catch(e) {}
     }
 
-    function logout() {
-        localStorage.clear();
-        window.location.href = '/google.html';
-    }
+    async function logout() {
+    try {
+        // Destroy the server-side OAuth2 session
+        await fetch('/session/logout', {
+            method: 'POST',
+            credentials: 'include'
+        });
+    } catch(e) {}
+
+    localStorage.clear();
+    sessionStorage.clear();
+    window.location.href = '/google.html';
+}
 </script>
 </body>
 </html>
