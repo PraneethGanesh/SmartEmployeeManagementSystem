@@ -1315,7 +1315,7 @@
     async function deleteEmployee(employeeId) {
         if (!confirm(`Delete employee #${employeeId}?`)) return;
         try {
-            await apiFetch(`/admin/employee/${employeeId}`, { method: 'DELETE' });
+            await apiFetch(`/employee/${employeeId}`, { method: 'DELETE' });
             showAlert('Employee deleted successfully!', 'success');
             loadEmployees();
             loadDashboard();
