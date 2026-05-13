@@ -5,6 +5,7 @@ import com.example.EmployeeManagementSystem.Entity.Employee;
 import com.example.EmployeeManagementSystem.Entity.LeaveEntitlement;
 import com.example.EmployeeManagementSystem.Entity.LeaveType;
 import com.example.EmployeeManagementSystem.Enum.Gender;
+import com.example.EmployeeManagementSystem.Enum.Role;
 import com.example.EmployeeManagementSystem.Enum.Status;
 import com.example.EmployeeManagementSystem.Repository.EmployeeRepo;
 import com.example.EmployeeManagementSystem.Repository.LeaveEntitlementRepository;
@@ -134,12 +135,43 @@ class LeaveAccrualServiceTest {
         verify(entitlementRepo, atLeastOnce()).save(any());
     }
 
+    @Test
+    void activeAdminReceivesMonthlySickAndCasualAccrual() {
+        Employee admin = employee(Gender.M);
+        admin.setRole(Role.ADMIN);
+        LeaveType sick = leaveType("SICK", false, null);
+        sick.setId(1);
+        LeaveType casual = leaveType("CASUAL", false, null);
+        casual.setId(2);
+
+        when(employeeRepo.findByStatus(Status.ACTIVE)).thenReturn(List.of(admin));
+        when(leaveTypeRepo.findAll()).thenReturn(List.of(sick, casual));
+        when(entitlementRepo.findByEmployeeEmployeeIdAndLeaveTypeIdAndYear(any(), any(), any()))
+                .thenReturn(Optional.empty());
+        when(entitlementRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        service.runMonthlyAccrual(LocalDate.of(2025, 6, 1));
+
+        ArgumentCaptor<LeaveEntitlement> captor = ArgumentCaptor.forClass(LeaveEntitlement.class);
+        verify(entitlementRepo, atLeast(2)).save(captor.capture());
+
+        assertThat(captor.getAllValues()).anySatisfy(e -> {
+            assertThat(e.getLeaveType().getName()).isEqualTo("SICK");
+            assertThat(e.getAccruedThisYear()).isEqualByComparingTo(BigDecimal.ONE);
+        });
+        assertThat(captor.getAllValues()).anySatisfy(e -> {
+            assertThat(e.getLeaveType().getName()).isEqualTo("CASUAL");
+            assertThat(e.getAccruedThisYear()).isEqualByComparingTo(BigDecimal.ONE);
+        });
+    }
+
     // --- helpers ---
     private Employee employee(Gender gender) {
         Employee e = new Employee();
         e.setEmployeeId(1L);
         e.setGender(gender);
         e.setStatus(Status.ACTIVE);
+        e.setRole(Role.EMPLOYEE);
         e.setJoined_at(LocalDate.of(2023, 1, 1));
         return e;
     }

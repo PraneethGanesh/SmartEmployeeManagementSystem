@@ -95,6 +95,7 @@ public class EmployeeService {
         employee.setPassword(passwordEncoder.encode(employeeDTO.getPassword()));
         employee.setGender(employeeDTO.getGender());
         Employee savedEmployee = employeeRepo.save(employee);
+        leaveAccrualService.grantInitialMonthlyAccrual(savedEmployee, savedEmployee.getJoined_at());
         return savedEmployee;
     }
 

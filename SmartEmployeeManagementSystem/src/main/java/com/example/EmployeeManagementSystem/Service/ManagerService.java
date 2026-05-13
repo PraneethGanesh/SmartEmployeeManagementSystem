@@ -18,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -29,17 +30,21 @@ public class ManagerService {
     private final PasswordEncoder passwordEncoder;
     private final LeaveRequestRepo leaveRequestRepo;
     private final DeviceAssignmentRepo deviceAssignmentRepo;
+    private final LeaveAccrualService leaveAccrualService;
 
     public ManagerService(EmployeeRepo employeeRepo,
                           PasswordEncoder passwordEncoder,
                           LeaveRequestRepo leaveRequestRepo,
-                          DeviceAssignmentRepo deviceAssignmentRepo) {
+                          DeviceAssignmentRepo deviceAssignmentRepo,
+                          LeaveAccrualService leaveAccrualService) {
         this.employeeRepo = employeeRepo;
         this.passwordEncoder = passwordEncoder;
         this.leaveRequestRepo = leaveRequestRepo;
         this.deviceAssignmentRepo = deviceAssignmentRepo;
+        this.leaveAccrualService = leaveAccrualService;
     }
 
+    @Transactional
     public Employee createEmp(EmployeeDetails employeeDetails, Authentication authentication) {
         String email= AuthUtil.extractEmail(authentication);
         Employee manager= employeeRepo.findByEmail(email).orElseThrow(
@@ -54,7 +59,9 @@ public class ManagerService {
         employee.setRole(Role.EMPLOYEE);
         employee.setManager(manager);
         employee.setTimezone(employeeDetails.getTimezone());
-        return employeeRepo.save(employee);
+        Employee savedEmployee = employeeRepo.save(employee);
+        leaveAccrualService.grantInitialMonthlyAccrual(savedEmployee, savedEmployee.getJoined_at());
+        return savedEmployee;
     }
 
 
@@ -110,6 +117,7 @@ public class ManagerService {
         return employeeDTO;
     }
 
+    @Transactional
     public Employee createAdmin(EmployeeDetails employeeDetails) {
         Employee employee=new Employee();
         employee.setName(employeeDetails.getName());
@@ -117,8 +125,11 @@ public class ManagerService {
         employee.setPassword(passwordEncoder.encode(employeeDetails.getPassword()));
         employee.setDept("Main");
         employee.setRole(Role.ADMIN);
+        employee.setGender(employeeDetails.getGender());
         employee.setTimezone(employeeDetails.getTimezone());
-        return employeeRepo.save(employee);
+        Employee savedEmployee = employeeRepo.save(employee);
+        leaveAccrualService.grantInitialMonthlyAccrual(savedEmployee, savedEmployee.getJoined_at());
+        return savedEmployee;
     }
 
     public List<LeaveResponseDTO> getAllThePendingLeaveRequests(Authentication authentication) {
