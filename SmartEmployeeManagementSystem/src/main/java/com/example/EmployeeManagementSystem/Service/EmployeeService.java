@@ -10,6 +10,7 @@ import com.example.EmployeeManagementSystem.Repository.EmployeeRepo;
 import com.example.EmployeeManagementSystem.Repository.LeaveRequestRepo;
 import com.example.EmployeeManagementSystem.Repository.RefreshTokenRepository;
 import com.example.EmployeeManagementSystem.Util.AuthUtil;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -217,6 +218,33 @@ public class EmployeeService {
         dto.setName(employee.getName());
         dto.setEmail(employee.getEmail());
         dto.setDept(employee.getDept());
+        return dto;
+    }
+
+    public String promoteEmployee(long employeeId) {
+        Employee employee=employeeRepo.findById(employeeId).orElseThrow(
+                ()->new EmployeeNotFound("Employee Not Found:"+employeeId)
+        );
+        employee.setRole(Role.MANAGER);
+        employee.setManager(null);
+        Employee saved=employeeRepo.save(employee);
+        return "Employee:"+saved.getName()+" is promoted to Manager";
+    }
+
+    public List<EmployeeDTO> getAllEmployeesByRole() {
+        List<Employee> employees=employeeRepo.findByRole(Role.EMPLOYEE);
+        return employees.stream().map(employee -> convertToDTO(employee)).toList();
+    }
+    private EmployeeDTO convertToDTO(Employee employee) {
+        EmployeeDTO dto = new EmployeeDTO();
+
+        dto.setName(employee.getName());
+        dto.setEmail(employee.getEmail());
+        dto.setDept(employee.getDept());
+        dto.setPassword(employee.getPassword());
+        dto.setGender(employee.getGender());
+        dto.setTimezone(employee.getTimezone());
+
         return dto;
     }
 }
