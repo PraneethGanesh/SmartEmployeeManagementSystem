@@ -52,6 +52,19 @@ public class AdminController {
         return ResponseEntity.ok(employeeService.getAllEmployees());
     }
 
+    @GetMapping("/getEmployees")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> getAllEmployeesByRole() {
+        return ResponseEntity.ok(employeeService.getAllEmployeesByRole());
+    }
+
+    @PutMapping("/employees/promote/{employeeId}")
+    public ResponseEntity<?> promoteEmployee(@PathVariable long employeeId){
+        return ResponseEntity.ok(employeeService.promoteEmployee(employeeId));
+    }
+
+
+
     /** Create a regular employee. */
     @PostMapping("/employees")
     public ResponseEntity<Employee> createEmployee(@RequestBody AdminEmployeeDTO dto) {
@@ -179,5 +192,7 @@ public class AdminController {
         resetService.runMonthlyReset(resetDate);
         return ResponseEntity.ok("Sick leave reset complete for " + resetDate);
     }
+
+
 
 }
