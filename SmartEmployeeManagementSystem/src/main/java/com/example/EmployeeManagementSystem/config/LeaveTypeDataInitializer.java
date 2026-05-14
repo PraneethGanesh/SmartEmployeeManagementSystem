@@ -4,9 +4,11 @@ import com.example.EmployeeManagementSystem.Entity.LeaveType;
 import com.example.EmployeeManagementSystem.Enum.Gender;
 import com.example.EmployeeManagementSystem.Repository.LeaveTypeRepository;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 @Component
+@Order(1)
 public class LeaveTypeDataInitializer implements CommandLineRunner {
 
     private final LeaveTypeRepository leaveTypeRepository;
@@ -17,7 +19,7 @@ public class LeaveTypeDataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        ensureLeaveType("SICK", false, true, 0, false, null);
+        ensureLeaveType("SICK", false, false, 0, false, null);
         ensureLeaveType("CASUAL", true, false, 30, false, null);
         ensureLeaveType("MATERNITY", false, false, 0, true, Gender.F);
         ensureLeaveType("UNPAID",false,false,0,false,null);
@@ -29,7 +31,14 @@ public class LeaveTypeDataInitializer implements CommandLineRunner {
                                  int maxCarryForward,
                                  boolean genderRestricted,
                                  Gender genderRestriction) {
-        leaveTypeRepository.findByName(name).orElseGet(() -> {
+        leaveTypeRepository.findByName(name).map(existing -> {
+            existing.setCarriesForward(carriesForward);
+            existing.setMonthlyReset(monthlyReset);
+            existing.setMaxCarryForward(maxCarryForward);
+            existing.setGenderRestricted(genderRestricted);
+            existing.setGenderRestriction(genderRestriction);
+            return leaveTypeRepository.save(existing);
+        }).orElseGet(() -> {
             LeaveType leaveType = new LeaveType();
             leaveType.setName(name);
             leaveType.setCarriesForward(carriesForward);

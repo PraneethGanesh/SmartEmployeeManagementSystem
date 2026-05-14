@@ -16,7 +16,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.YearMonth;
 import java.util.List;
 import java.util.Set;
 
@@ -24,7 +23,7 @@ import java.util.Set;
 public class LeaveAccrualService {
 
     private static final Logger log = LoggerFactory.getLogger(LeaveAccrualService.class);
-    private static final BigDecimal ONE_DAY = BigDecimal.ONE;
+    private static final BigDecimal ANNUAL_ENTITLEMENT_DAYS = BigDecimal.valueOf(12);
     private static final Set<String> SUPPORTED_LEAVE_TYPES = Set.of("SICK", "CASUAL");
     private static final Set<Role> LEAVE_ACCRUAL_ROLES = Set.of(Role.EMPLOYEE, Role.MANAGER, Role.ADMIN);
 
@@ -42,20 +41,25 @@ public class LeaveAccrualService {
 
     @Transactional
     public void runMonthlyAccrual(LocalDate accrualDate) {
+        syncAnnualEntitlements(accrualDate);
+    }
+
+    @Transactional
+    public void syncAnnualEntitlements(LocalDate accrualDate) {
         List<Employee> activeEmployees = employeeRepository.findByStatus(Status.ACTIVE).stream()
                 .filter(employee -> employee.getRole() != null)
                 .filter(employee -> LEAVE_ACCRUAL_ROLES.contains(employee.getRole()))
                 .toList();
         List<LeaveType> allLeaveTypes = leaveTypeRepository.findAll();
 
-        log.info("Starting monthly accrual for {} — {} active employees",
+        log.info("Starting annual leave entitlement sync for {} — {} active employees",
                 accrualDate, activeEmployees.size());
 
         for (Employee employee : activeEmployees) {
             accrueForEmployee(employee, allLeaveTypes, accrualDate);
         }
 
-        log.info("Monthly accrual complete for {}", accrualDate);
+        log.info("Annual leave entitlement sync complete for {}", accrualDate);
     }
 
     @Transactional
@@ -64,15 +68,8 @@ public class LeaveAccrualService {
             joinDate = LocalDate.now();
         }
 
-        LocalDate firstDayOfLastWeek = YearMonth.from(joinDate).atEndOfMonth().minusDays(6);
-        if (!joinDate.isBefore(firstDayOfLastWeek)) {
-            log.info("Initial leave accrual skipped for employee {} joining in the last week of month {}",
-                    employee.getEmployeeId(), joinDate);
-            return;
-        }
-
         accrueForEmployee(employee, leaveTypeRepository.findAll(), joinDate);
-        log.info("Initial monthly leave accrual complete for employee {} on {}",
+        log.info("Initial annual leave entitlement complete for employee {} on {}",
                 employee.getEmployeeId(), joinDate);
     }
 
@@ -92,9 +89,11 @@ public class LeaveAccrualService {
                             employee.getEmployeeId(), leaveType.getId(), year)
                     .orElseGet(() -> createNewEntitlement(employee, leaveType, year));
 
-            entitlement.setAccruedThisYear(
-                    entitlement.getAccruedThisYear().add(ONE_DAY)
-            );
+            if (entitlement.getAccruedThisYear().compareTo(ANNUAL_ENTITLEMENT_DAYS) >= 0) {
+                continue;
+            }
+
+            entitlement.setAccruedThisYear(ANNUAL_ENTITLEMENT_DAYS);
 
             entitlement.setClosingBalance(
                     entitlement.getOpeningBalance()
@@ -103,8 +102,8 @@ public class LeaveAccrualService {
             );
 
             entitlementRepository.save(entitlement);
-            log.debug("Accrued 1 {} day for employee {} (year {})",
-                    leaveType.getName(), employee.getEmployeeId(), year);
+            log.debug("Synced {} annual entitlement to {} day(s) for employee {} (year {})",
+                    leaveType.getName(), ANNUAL_ENTITLEMENT_DAYS, employee.getEmployeeId(), year);
         }
     }
 
@@ -152,6 +151,12 @@ public class LeaveAccrualService {
 
             entitlement.setOpeningBalance(lastYearClosing);
         }
+        entitlement.setAccruedThisYear(ANNUAL_ENTITLEMENT_DAYS);
+        entitlement.setClosingBalance(
+                entitlement.getOpeningBalance()
+                        .add(entitlement.getAccruedThisYear())
+                        .subtract(entitlement.getUsedThisYear())
+        );
 
         return entitlementRepository.save(entitlement);
     }

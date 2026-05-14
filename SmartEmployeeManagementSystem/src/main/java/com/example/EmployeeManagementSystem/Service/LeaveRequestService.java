@@ -38,6 +38,7 @@ public class LeaveRequestService {
     private final NotificationService notificationService;
     private static final Logger log = LoggerFactory.getLogger(LeaveRequestService.class);
     private static final long SICK_LEAVE_RETROACTIVE_DAYS = 7;
+    private static final BigDecimal ANNUAL_ENTITLEMENT_DAYS = BigDecimal.valueOf(12);
 
     public LeaveRequestService(LeaveRequestRepo leaveRequestRepo,
                                EmployeeRepo employeeRepo,
@@ -118,13 +119,6 @@ public class LeaveRequestService {
         }
         // ---------------- SICK ----------------
         if (requestDTO.getLeaveType() == LeaveType.SICK) {
-            if (daysRequested > 1) {
-                return ResponseEntity.badRequest()
-                        .body(Map.of("error", "Sick leave is limited to 1 day per month."));
-            }
-            long sickDaysUsedThisMonth = leaveRequestRepo.countApprovedSickDaysInMonth(
-                    employee, requestDTO.getStartDate().getYear(), requestDTO.getStartDate().getMonthValue());
-
             var sickLeaveType = leaveTypeRepository.findByName("SICK")
                     .orElseThrow(() -> new RuntimeException("SICK leave type not configured"));
 
@@ -133,12 +127,23 @@ public class LeaveRequestService {
                             employee.getEmployeeId(),
                             sickLeaveType.getId(),
                             requestDTO.getStartDate().getYear())
+                    .map(this::ensureAnnualEntitlement)
                     .orElseGet(() -> createEntitlement(employee, sickLeaveType, requestDTO.getStartDate().getYear()));
 
             BigDecimal availableSick = entitlement.getAvailableBalance();
+            BigDecimal requestedSick = BigDecimal.valueOf(daysRequested);
 
-            if (sickDaysUsedThisMonth >= 1 || availableSick.compareTo(BigDecimal.ONE) < 0) {
-                requestDTO.setLeaveType(LeaveType.UNPAID);
+            if (availableSick.compareTo(BigDecimal.ZERO) <= 0) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error", "No sick leave balance available."));
+            }
+
+            if (requestedSick.compareTo(availableSick) > 0) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of(
+                                "error",
+                                "Requested sick leave exceeds available balance. Available: " + availableSick
+                        ));
             }
         }
 
@@ -155,7 +160,8 @@ public class LeaveRequestService {
                     employee.getEmployeeId(),
                     leaveType.getId(),
                     leaveYear
-            ).orElseGet(()->createEntitlement(employee,leaveType,leaveYear));
+            ).map(this::ensureAnnualEntitlement)
+                    .orElseGet(()->createEntitlement(employee,leaveType,leaveYear));
 
             BigDecimal availableCasual = leaveEntitlement.getAvailableBalance(); // opening + accrued - used
             BigDecimal requestedCasual = BigDecimal.valueOf(daysRequested);
@@ -531,6 +537,7 @@ public class LeaveRequestService {
         var entitlement = leaveEntitlementRepository
                 .findByEmployeeEmployeeIdAndLeaveTypeIdAndYear(
                         leaveRequest.getEmployee().getEmployeeId(), leaveType.getId(), year)
+                .map(this::ensureAnnualEntitlement)
                 .orElseGet(() -> createEntitlement(leaveRequest.getEmployee(), leaveType, year));
 
         BigDecimal newUsed = entitlement.getUsedThisYear().add(delta);
@@ -562,6 +569,7 @@ public class LeaveRequestService {
         var entitlement = leaveEntitlementRepository
                 .findByEmployeeEmployeeIdAndLeaveTypeIdAndYear(
                         leaveRequest.getEmployee().getEmployeeId(), leaveType.getId(), year)
+                .map(this::ensureAnnualEntitlement)
                 .orElseGet(() -> createEntitlement(leaveRequest.getEmployee(), leaveType, year));
 
         BigDecimal availableBalance = entitlement.getAvailableBalance();
@@ -591,7 +599,37 @@ public class LeaveRequestService {
                     .orElse(BigDecimal.ZERO);
             entitlement.setOpeningBalance(lastYearClosing);
         }
+        if (isAnnualLeaveType(leaveType)) {
+            entitlement.setAccruedThisYear(ANNUAL_ENTITLEMENT_DAYS);
+            entitlement.setClosingBalance(
+                    entitlement.getOpeningBalance()
+                            .add(entitlement.getAccruedThisYear())
+                            .subtract(entitlement.getUsedThisYear())
+            );
+        }
 
+        return leaveEntitlementRepository.save(entitlement);
+    }
+
+    private boolean isAnnualLeaveType(com.example.EmployeeManagementSystem.Entity.LeaveType leaveType) {
+        return leaveType != null && List.of("SICK", "CASUAL").contains(leaveType.getName());
+    }
+
+    private com.example.EmployeeManagementSystem.Entity.LeaveEntitlement ensureAnnualEntitlement(
+            com.example.EmployeeManagementSystem.Entity.LeaveEntitlement entitlement) {
+        if (!isAnnualLeaveType(entitlement.getLeaveType())) {
+            return entitlement;
+        }
+        if (entitlement.getAccruedThisYear().compareTo(ANNUAL_ENTITLEMENT_DAYS) >= 0) {
+            return entitlement;
+        }
+
+        entitlement.setAccruedThisYear(ANNUAL_ENTITLEMENT_DAYS);
+        entitlement.setClosingBalance(
+                entitlement.getOpeningBalance()
+                        .add(entitlement.getAccruedThisYear())
+                        .subtract(entitlement.getUsedThisYear())
+        );
         return leaveEntitlementRepository.save(entitlement);
     }
 
@@ -603,7 +641,8 @@ public class LeaveRequestService {
         return leaveTypeRepository.findByName("CASUAL")
                 .flatMap(lt -> leaveEntitlementRepository
                         .findByEmployeeEmployeeIdAndLeaveTypeIdAndYear(
-                                employee.getEmployeeId(), lt.getId(), year))
+                                employee.getEmployeeId(), lt.getId(), year)
+                        .map(this::ensureAnnualEntitlement))
                 .map(e -> e.getAvailableBalance().longValue())
                 .orElse(0L);
     }
