@@ -714,7 +714,7 @@
                                     <option value="UNPAID">Unpaid Leave</option>
                                 </select>
                                 <div id="sick-leave-hint" style="display:none;margin-top:6px;font-size:11px;color:var(--amber);background:var(--amber-dim);border:1px solid rgba(251,191,36,0.2);border-radius:6px;padding:8px 12px;">
-                                    ⚠️ Sick leave is limited to <strong>1 day per month</strong>. If already used this month, please select Unpaid Leave.
+                                    Sick leave balance is available for the year. You can use up to your remaining yearly balance.
                                 </div>
                                 <div id="casual-leave-hint" style="display:none; margin-top:6px; font-size:11px; color:var(--accent); background:var(--accent-dim); border:1px solid rgba(167,139,250,0.2); border-radius:6px; padding:6px 10px;">
                                     You have <strong id="casual-balance-text">...</strong> casual leave days available.
@@ -778,7 +778,7 @@
                             <span class="lbc-icon">🤒</span>
                             <span class="lbc-label">Sick Leave</span>
                             <span class="lbc-count" id="cal-sick-remaining">--</span>
-                            <span class="lbc-sub">day available this month</span>
+                            <span class="lbc-sub">days available this year</span>
                             <div id="cal-sick-month-badge" style="
                             display:inline-flex; align-items:center; gap:5px;
                             margin-top:8px; padding:4px 10px;
@@ -1805,35 +1805,22 @@ function clearSubscriptionForm(){
 
  async function loadCalendarBalanceCards() {
     try {
-        const [dashboard, sickMonthData] = await Promise.all([
-            apiFetch('/api/employees/me/leave-dashboard'),
-            apiFetch('/leave_requests/sick/used-this-month')
-        ]);
+        const dashboard = await apiFetch('/api/employees/me/leave-dashboard');
 
         /* ── SICK ── */
         const sickBadge = document.getElementById('cal-sick-month-badge');
         const sick      = dashboard?.sick;
         const sickAvail = Number(sick?.available ?? 0);
-        const usedThisMonth = sickMonthData?.usedThisMonth === true;
 
-        if (usedThisMonth) {
-            // Explicitly used this month
+        if (sickAvail === 0) {
             document.getElementById('cal-sick-remaining').textContent = '0';
-            sickBadge.textContent      = '✗ Used this month';
-            sickBadge.style.background = 'var(--red-dim)';
-            sickBadge.style.color      = 'var(--red)';
-            sickBadge.style.border     = '1px solid rgba(248,113,113,0.25)';
-        } else if (sickAvail === 0) {
-            // New employee — accrual hasn't run yet
-            document.getElementById('cal-sick-remaining').textContent = '0';
-            sickBadge.textContent      = '⏳ Accrual pending';
+            sickBadge.textContent      = 'No sick balance';
             sickBadge.style.background = 'var(--amber-dim)';
             sickBadge.style.color      = 'var(--amber)';
             sickBadge.style.border     = '1px solid rgba(251,191,36,0.25)';
         } else {
-            // Has balance and not used
             document.getElementById('cal-sick-remaining').textContent = sickAvail;
-            sickBadge.textContent      = '✓ Available this month';
+            sickBadge.textContent      = 'Available this year';
             sickBadge.style.background = 'var(--green-dim)';
             sickBadge.style.color      = 'var(--green)';
             sickBadge.style.border     = '1px solid rgba(52,211,153,0.25)';

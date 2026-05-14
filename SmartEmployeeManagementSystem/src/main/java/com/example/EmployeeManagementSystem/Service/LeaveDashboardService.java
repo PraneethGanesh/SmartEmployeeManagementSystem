@@ -25,6 +25,7 @@ import java.util.Map;
 public class LeaveDashboardService {
 
     private static final Set<String> SUPPORTED_LEAVE_TYPES = Set.of("SICK", "CASUAL", "MATERNITY");
+    private static final BigDecimal ANNUAL_ENTITLEMENT_DAYS = BigDecimal.valueOf(12);
 
     private final EmployeeRepo employeeRepository;
     private final LeaveEntitlementRepository leaveEntitlementRepository;
@@ -135,6 +136,7 @@ public class LeaveDashboardService {
             leaveEntitlementRepository
                     .findByEmployeeEmployeeIdAndLeaveTypeIdAndYear(
                             employee.getEmployeeId(), leaveType.getId(), year)
+                    .map(this::ensureAnnualEntitlement)
                     .orElseGet(() -> createEntitlement(employee, leaveType, year));
         }
     }
@@ -162,7 +164,32 @@ public class LeaveDashboardService {
                     .orElse(BigDecimal.ZERO);
             entitlement.setOpeningBalance(lastYearClosing);
         }
+        if (isAnnualLeaveType(leaveType)) {
+            entitlement.setAccruedThisYear(ANNUAL_ENTITLEMENT_DAYS);
+            entitlement.setClosingBalance(
+                    entitlement.getOpeningBalance()
+                            .add(entitlement.getAccruedThisYear())
+                            .subtract(entitlement.getUsedThisYear())
+            );
+        }
 
+        return leaveEntitlementRepository.save(entitlement);
+    }
+
+    private LeaveEntitlement ensureAnnualEntitlement(LeaveEntitlement entitlement) {
+        if (!isAnnualLeaveType(entitlement.getLeaveType())) {
+            return entitlement;
+        }
+        if (entitlement.getAccruedThisYear().compareTo(ANNUAL_ENTITLEMENT_DAYS) >= 0) {
+            return entitlement;
+        }
+
+        entitlement.setAccruedThisYear(ANNUAL_ENTITLEMENT_DAYS);
+        entitlement.setClosingBalance(
+                entitlement.getOpeningBalance()
+                        .add(entitlement.getAccruedThisYear())
+                        .subtract(entitlement.getUsedThisYear())
+        );
         return leaveEntitlementRepository.save(entitlement);
     }
 
@@ -201,6 +228,10 @@ public class LeaveDashboardService {
 
     private boolean isSupportedLeaveType(LeaveType leaveType) {
         return leaveType != null && SUPPORTED_LEAVE_TYPES.contains(leaveType.getName());
+    }
+
+    private boolean isAnnualLeaveType(LeaveType leaveType) {
+        return leaveType != null && Set.of("SICK", "CASUAL").contains(leaveType.getName());
     }
 
     private void assertAccess(Long targetId, Long callerId, String role) {
