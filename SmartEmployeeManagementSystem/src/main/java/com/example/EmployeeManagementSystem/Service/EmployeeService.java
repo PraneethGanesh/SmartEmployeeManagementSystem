@@ -1,6 +1,7 @@
 package com.example.EmployeeManagementSystem.Service;
 
 import com.example.EmployeeManagementSystem.DTO.*;
+import com.example.EmployeeManagementSystem.EmployeeCreatedEvent;
 import com.example.EmployeeManagementSystem.Entity.Employee;
 import com.example.EmployeeManagementSystem.Entity.LeaveRequest;
 import com.example.EmployeeManagementSystem.Enum.Role;
@@ -13,14 +14,18 @@ import com.example.EmployeeManagementSystem.Util.AuthUtil;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -33,17 +38,19 @@ public class EmployeeService {
     private final PasswordEncoder passwordEncoder;
     private final RefreshTokenRepository refreshTokenRepository; // FIX: added
     private final LeaveAccrualService leaveAccrualService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public EmployeeService(EmployeeRepo employeeRepo,
                            LeaveRequestRepo leaveRequestRepo,
                            PasswordEncoder passwordEncoder,
                            RefreshTokenRepository refreshTokenRepository,
-                           LeaveAccrualService leaveAccrualService) {
+                           LeaveAccrualService leaveAccrualService, ApplicationEventPublisher eventPublisher) {
         this.employeeRepo = employeeRepo;
         this.leaveRequestRepo = leaveRequestRepo;
         this.passwordEncoder = passwordEncoder;
         this.refreshTokenRepository = refreshTokenRepository; // FIX: injected
         this.leaveAccrualService = leaveAccrualService;
+        this.eventPublisher = eventPublisher;
     }
 
     public List<Employee> getAllEmployees() {
@@ -65,15 +72,20 @@ public class EmployeeService {
         if (employeeDTO.getPassword() == null) {
             throw new RuntimeException("Password is required");
         }
-        employee.setPassword(passwordEncoder.encode(employeeDTO.getPassword()));
+        String rawPassword=employeeDTO.getPassword();
+        employee.setPassword(passwordEncoder.encode(rawPassword));
         employee.setGender(employeeDTO.getGender());
         Employee manager=employeeRepo.findById(employeeDTO.getManagerId()).orElseThrow(
                 ()->new EmployeeNotFound("Employee with not found"+ employeeDTO.getManagerId())
         );
         employee.setDept(manager.getDept());
         employee.setManager(manager);
+        employee.setResetToken(UUID.randomUUID().toString());
+        employee.setResetTokenExpiry(LocalDateTime.now().plusHours(24));
         Employee savedEmployee = employeeRepo.save(employee);
         leaveAccrualService.grantInitialMonthlyAccrual(savedEmployee, savedEmployee.getJoined_at());
+
+        eventPublisher.publishEvent(new EmployeeCreatedEvent(savedEmployee,rawPassword));
         return savedEmployee;
     }
 

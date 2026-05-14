@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 0; padding: 0; }
+        .container { max-width: 580px; margin: 40px auto; background: #ffffff;
+                     border-radius: 8px; overflow: hidden; }
+        .header { background: #1e40af; padding: 32px; text-align: center; }
+        .header h1 { color: #ffffff; margin: 0; font-size: 24px; }
+        .body { padding: 32px; color: #374151; }
+        .body p { line-height: 1.6; }
+        .credentials { background: #f9fafb; border: 1px solid #e5e7eb;
+                       border-radius: 6px; padding: 16px; margin: 20px 0; }
+        .credentials p { margin: 6px 0; font-size: 14px; }
+        .credentials strong { color: #111827; }
+        .btn { display: inline-block; margin: 24px 0; padding: 12px 28px;
+               background: #1e40af; color: #ffffff; text-decoration: none;
+               border-radius: 6px; font-weight: bold; }
+        .footer { padding: 20px 32px; font-size: 12px; color: #9ca3af;
+                  border-top: 1px solid #e5e7eb; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>Welcome to SmartHR</h1>
+    </div>
+    <div class="body">
+        <p>Hi <strong th:text="${employeeName}">Employee</strong>,</p>
+        <p>Your account has been created by your administrator. Here are your login credentials:</p>
+
+        <div class="credentials">
+            <p><strong>Email:</strong> <span th:text="${email}"></span></p>
+            <p><strong>Temporary Password:</strong> <span th:text="${tempPassword}"></span></p>
+        </div>
+
+        <p>For security, please reset your password immediately using the button below.
+            This link will expire in <strong>24 hours</strong>.</p>
+
+        <a th:href="${resetLink}" class="btn">Reset My Password</a>
+
+        <p>If the button doesn't work, copy and paste this link into your browser:</p>
+        <p style="font-size:12px;color:#6b7280;word-break:break-all" th:text="${resetLink}"></p>
+    </div>
+    <div class="footer">
+        <p>If you didn't expect this email, please contact your HR administrator.</p>
+    </div>
+</div>
+</body>
+</html>

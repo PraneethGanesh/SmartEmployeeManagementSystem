@@ -10,6 +10,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -50,6 +51,10 @@ public class Employee implements UserDetails, TotpUser {
     @Enumerated(EnumType.STRING)
     @Column(nullable = true)
     private Gender gender;
+
+    private String resetToken;
+    private LocalDateTime resetTokenExpiry;
+
 
     public String getTimezone() {
         return timezone;
@@ -194,4 +199,19 @@ public class Employee implements UserDetails, TotpUser {
         this.manager = manager;
     }
 
+    public String getResetToken() {
+        return resetToken;
+    }
+
+    public void setResetToken(String resetToken) {
+        this.resetToken = resetToken;
+    }
+
+    public LocalDateTime getResetTokenExpiry() {
+        return resetTokenExpiry;
+    }
+
+    public void setResetTokenExpiry(LocalDateTime resetTokenExpiry) {
+        this.resetTokenExpiry = resetTokenExpiry;
+    }
 }
