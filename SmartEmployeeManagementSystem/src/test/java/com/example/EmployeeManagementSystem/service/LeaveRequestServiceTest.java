@@ -204,6 +204,85 @@ class LeaveRequestServiceTest {
     }
 
     @Test
+    void createRequest_allowsSickLeaveWithinSevenDaysAfterLeaveDate() {
+        Authentication authentication = mock(Authentication.class);
+        authUtilMock.when(() -> AuthUtil.extractEmail(authentication)).thenReturn("emp@test.com");
+
+        Employee employee = activeEmployee();
+        LocalDate sickDate = LocalDate.now().minusDays(1);
+
+        LeaveRequestDTO dto = new LeaveRequestDTO();
+        dto.setLeaveType(LeaveType.SICK);
+        dto.setStartDate(sickDate);
+        dto.setEndDate(sickDate);
+        dto.setReason("Fever");
+
+        com.example.EmployeeManagementSystem.Entity.LeaveType sick =
+                new com.example.EmployeeManagementSystem.Entity.LeaveType();
+        sick.setId(1);
+        sick.setName("SICK");
+
+        LeaveEntitlement entitlement = new LeaveEntitlement();
+        entitlement.setEmployee(employee);
+        entitlement.setLeaveType(sick);
+        entitlement.setYear(sickDate.getYear());
+        entitlement.setOpeningBalance(BigDecimal.ZERO);
+        entitlement.setAccruedThisYear(BigDecimal.ONE);
+        entitlement.setUsedThisYear(BigDecimal.ZERO);
+
+        when(employeeRepo.findByEmail("emp@test.com")).thenReturn(Optional.of(employee));
+        when(leaveRequestRepo.countApprovedSickDaysInMonth(employee, sickDate.getYear(), sickDate.getMonthValue()))
+                .thenReturn(0L);
+        when(leaveTypeRepository.findByName("SICK")).thenReturn(Optional.of(sick));
+        when(leaveEntitlementRepository.findByEmployeeEmployeeIdAndLeaveTypeIdAndYear(1L, 1, sickDate.getYear()))
+                .thenReturn(Optional.of(entitlement));
+        when(leaveRequestRepo.checkDuplicate(1L, sickDate, sickDate, LeaveStatus.PENDING.name()))
+                .thenReturn(0L);
+        when(leaveRequestRepo.countOverlappingLeave(1L, sickDate, sickDate)).thenReturn(0L);
+        when(leaveRequestRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(employeeRepo.findByRole(Role.ADMIN)).thenReturn(List.of());
+
+        ResponseEntity<?> response = service.createRequest(authentication, dto);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(response.getBody()).isInstanceOf(com.example.EmployeeManagementSystem.DTO.LeaveResponseDTO.class);
+        assertThat(((com.example.EmployeeManagementSystem.DTO.LeaveResponseDTO) response.getBody()).getLeaveType())
+                .isEqualTo(LeaveType.SICK);
+    }
+
+    @Test
+    void createRequest_convertsLateSickLeaveToUnpaidAfterSevenDays() {
+        Authentication authentication = mock(Authentication.class);
+        authUtilMock.when(() -> AuthUtil.extractEmail(authentication)).thenReturn("emp@test.com");
+
+        Employee employee = activeEmployee();
+        LocalDate sickDate = LocalDate.now().minusDays(8);
+
+        LeaveRequestDTO dto = new LeaveRequestDTO();
+        dto.setLeaveType(LeaveType.SICK);
+        dto.setStartDate(sickDate);
+        dto.setEndDate(sickDate);
+        dto.setReason("Forgot to regularize sick leave");
+
+        when(employeeRepo.findByEmail("emp@test.com")).thenReturn(Optional.of(employee));
+        when(leaveRequestRepo.checkDuplicate(1L, sickDate, sickDate, LeaveStatus.PENDING.name()))
+                .thenReturn(0L);
+        when(leaveRequestRepo.countOverlappingLeave(1L, sickDate, sickDate)).thenReturn(0L);
+        when(leaveRequestRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(employeeRepo.findByRole(Role.ADMIN)).thenReturn(List.of());
+
+        ResponseEntity<?> response = service.createRequest(authentication, dto);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(response.getBody()).isInstanceOf(Map.class);
+        Map<?, ?> body = (Map<?, ?>) response.getBody();
+        assertThat(body.get("warning").toString()).contains("within 7 days");
+        com.example.EmployeeManagementSystem.DTO.LeaveResponseDTO leave =
+                (com.example.EmployeeManagementSystem.DTO.LeaveResponseDTO) body.get("leave");
+        assertThat(leave.getLeaveType()).isEqualTo(LeaveType.UNPAID);
+    }
+
+    @Test
     void approveLeave_rejectsWhenPendingRequestWouldOverdrawBalance() {
         Employee employee = new Employee();
         employee.setEmployeeId(1L);
@@ -238,5 +317,16 @@ class LeaveRequestServiceTest {
         assertThatThrownBy(() -> service.approveLeave(10L))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Insufficient casual leave balance");
+    }
+
+    private Employee activeEmployee() {
+        Employee employee = new Employee();
+        employee.setEmployeeId(1L);
+        employee.setEmail("emp@test.com");
+        employee.setStatus(Status.ACTIVE);
+        employee.setRole(Role.EMPLOYEE);
+        employee.setTimezone("UTC");
+        employee.setName("Emp");
+        return employee;
     }
 }
