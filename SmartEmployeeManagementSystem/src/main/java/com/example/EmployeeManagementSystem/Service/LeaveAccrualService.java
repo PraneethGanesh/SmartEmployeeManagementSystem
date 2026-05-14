@@ -70,7 +70,6 @@ public class LeaveAccrualService {
                     employee.getEmployeeId(), joinDate);
             return;
         }
-
         accrueForEmployee(employee, leaveTypeRepository.findAll(), joinDate);
         log.info("Initial monthly leave accrual complete for employee {} on {}",
                 employee.getEmployeeId(), joinDate);
