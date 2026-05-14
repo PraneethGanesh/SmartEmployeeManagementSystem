@@ -88,6 +88,9 @@ public class DeliveryService {
                 .orElseThrow(() -> new RuntimeException("Subscription not found"));
         return deliveryRepository.findRecentDeliveriesBySubscription(subscription, DeliveryStatus.SCHEDULED);
     }
+    public List<Delivery> getAllDeliveries() {
+        return deliveryRepository.findAll();
+    }
 
     @Service
     public static class VendorService {

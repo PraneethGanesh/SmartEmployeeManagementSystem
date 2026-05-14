@@ -29,4 +29,13 @@ public class DeliveryController {
             @PathVariable Long subscriptionId) {
         return ResponseEntity.ok(deliveryService.getDeliveriesBySubscription(subscriptionId));
     }
+
+    @PutMapping("/{id}/delivered")
+    public ResponseEntity<Delivery> markDelivered(@PathVariable Long id) {
+        return ResponseEntity.ok(deliveryService.updateDeliveryStatus(id, DeliveryStatus.DELIVERED));
+    }
+    @GetMapping
+    public ResponseEntity<List<Delivery>> getAllDeliveries() {
+        return ResponseEntity.ok(deliveryService.getAllDeliveries());
+    }
 }
