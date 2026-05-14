@@ -259,4 +259,19 @@ public class EmployeeService {
 
         return dto;
     }
+
+    @Transactional
+    public void resetPassword(String token, String newPassword) {
+        Employee employee = employeeRepo.findByResetToken(token)
+                .orElseThrow(() -> new RuntimeException("Invalid or expired token"));
+
+        if (LocalDateTime.now().isAfter(employee.getResetTokenExpiry())) {
+            throw new RuntimeException("Reset link has expired");
+        }
+
+        employee.setPassword(passwordEncoder.encode(newPassword));
+        employee.setResetToken(null);           // one-time use
+        employee.setResetTokenExpiry(null);
+        employeeRepo.save(employee);
+    }
 }

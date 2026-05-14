@@ -2,6 +2,7 @@ package com.example.EmployeeManagementSystem.Controller;
 
 import com.example.EmployeeManagementSystem.DTO.EmployeeAttendanceResponseDTO;
 import com.example.EmployeeManagementSystem.DTO.EmployeeDTO;
+import com.example.EmployeeManagementSystem.DTO.ResetPasswordRequest;
 import com.example.EmployeeManagementSystem.Entity.Employee;
 import com.example.EmployeeManagementSystem.Service.EmployeeService;
 import org.springframework.http.HttpStatus;
@@ -54,5 +55,14 @@ public class EmployeeController {
     @PreAuthorize("hasAnyRole('MANAGER','ADMIN')")
     public ResponseEntity<String> inactivateEmployee(@RequestParam long employeeId) {
         return employeeService.inactivateUser(employeeId);
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<String> resetPassword(
+            @RequestParam String token,
+            @RequestBody ResetPasswordRequest request) {
+
+        employeeService.resetPassword(token, request.getNewPassword());
+        return ResponseEntity.ok("Password updated successfully");
     }
 }
