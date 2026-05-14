@@ -130,7 +130,7 @@ public class JWTAuthConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Auth endpoints
                         .requestMatchers("/Authenticate", "/Authenticate/totp","/Authenticate/refresh").permitAll()
-                        .requestMatchers("/session/login", "/session/logout").permitAll()
+                        .requestMatchers("/session/login", "/session/logout","/employee/reset-password").permitAll()
 
                         // OAuth2 endpoints
                         .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
