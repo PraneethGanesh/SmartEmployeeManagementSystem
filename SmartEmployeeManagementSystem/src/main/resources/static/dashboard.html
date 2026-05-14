@@ -217,6 +217,7 @@
             <div class="nav-item active" onclick="showView('dashboard', event)">&#9632; Dashboard</div>
             <div class="nav-item" onclick="showView('employees', event)">&#9632; Employees</div>
             <div class="nav-item" onclick="showView('add-employee', event)">&#9632; Add Employee</div>
+            <div class="nav-item" onclick="showView('promote-employee', event)">&#9632; Promote Employee</div>
             <div class="nav-item" onclick="showView('add-manager', event)">&#9632; Add Manager</div>
             <div class="nav-item" onclick="showView('create-admin', event)">&#9632; Create Admin</div>
             <div class="nav-item" onclick="showView('add-vendor', event)">&#9632; Add Vendor</div>
@@ -400,6 +401,19 @@
                         <button class="btn btn-primary" onclick="createAdmin()">Create Admin</button>
                         <button class="btn btn-secondary" onclick="clearAdminForm()">Clear</button>
                     </div>
+                </div>
+            </div>
+
+            <div id="promote-employee-view" class="view">
+                <div class="section-head">
+                    <div class="section-title">Promote Employee to Manager</div>
+                    <button class="btn btn-primary btn-sm" onclick="loadPromotableEmployees()">Refresh</button>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr><th>Name</th><th>Email</th><th>Department</th><th>Gender</th><th>Timezone</th><th>Action</th></tr></thead>
+                        <tbody id="promotable-employees-list"></tbody>
+                    </table>
                 </div>
             </div>
 
@@ -1181,7 +1195,8 @@
     'my-profile': loadAdminProfile,
             'two-factor': loadTotpStatus,
       'my-calendar': loadMyCalendar,
-      'create-admin': () => {}
+      'create-admin': () => {},
+      'promote-employee': loadPromotableEmployees
 };
         if (loaders[viewName]) loaders[viewName]();
     }
@@ -2489,6 +2504,41 @@ document.addEventListener('mousemove', function(e) {
     } catch(e) {
         showAlert('Failed to create admin: ' + e.message, 'error');
     }
+}
+
+   async function loadPromotableEmployees() {
+    try {
+        const employees = await apiFetch('/admin/getEmployees');
+        const tbody = document.getElementById('promotable-employees-list');
+        if (!employees || !employees.length) {
+            tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No employees found</td></tr>';
+            return;
+        }
+        tbody.innerHTML = employees.map(e => `<tr>
+            <td><strong>${e.name || '—'}</strong></td>
+            <td>${e.email || '—'}</td>
+            <td>${e.dept || '—'}</td>
+            <td>${e.gender || '—'}</td>
+            <td>${e.timezone || '—'}</td>
+            <td>
+                <button class="btn btn-primary btn-sm" onclick="promoteEmployee('${e.email}', ${e.employeeId})">
+                    ⬆ Promote
+                </button>
+            </td>
+        </tr>`).join('');
+    } catch(e) { console.error(e); }
+}
+
+async function promoteEmployee(name, employeeId) {
+    if (!confirm(`Promote ${name} to Manager?`)) return;
+    try {
+        console.log(employeeId);
+        const msg = await apiFetch(`/admin/employees/promote/${employeeId}`, { method: 'PUT' });
+        console.log(msg);
+        showAlert(msg || 'Employee promoted to Manager!', 'success');
+        loadPromotableEmployees();
+        loadEmployees(); // refresh the employees list too
+    } catch(e) { showAlert('Failed: ' + e.message, 'error'); }
 }
 
 function clearAdminForm() {
