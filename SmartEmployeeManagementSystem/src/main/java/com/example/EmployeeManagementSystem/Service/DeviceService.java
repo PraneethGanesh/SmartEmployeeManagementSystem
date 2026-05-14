@@ -16,14 +16,7 @@ import com.example.EmployeeManagementSystem.Enum.DeviceStatus;
 import com.example.EmployeeManagementSystem.Enum.Role;
 import com.example.EmployeeManagementSystem.Enum.Status;
 import com.example.EmployeeManagementSystem.Exception.VendorNotFoundException;
-import com.example.EmployeeManagementSystem.Repository.DeviceAssignmentRepo;
-import com.example.EmployeeManagementSystem.Repository.DeviceRepository;
-import com.example.EmployeeManagementSystem.Repository.EmployeeRepo;
-import com.example.EmployeeManagementSystem.Repository.RepairBillRepository;
-import com.example.EmployeeManagementSystem.Repository.RepairLogRepository;
-import com.example.EmployeeManagementSystem.Repository.ServiceRequestRepository;
-import com.example.EmployeeManagementSystem.Repository.VendorRepo;
-import com.example.EmployeeManagementSystem.Repository.VendorNegotiationRepository;
+import com.example.EmployeeManagementSystem.Repository.*;
 import com.example.EmployeeManagementSystem.Util.AuthUtil;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -49,6 +42,7 @@ public class DeviceService {
     private final ServiceRequestRepository serviceRequestRepository;
     private final RepairBillRepository repairBillRepository;
     private final VendorNegotiationRepository vendorNegotiationRepository;
+    private final InvoiceRepository invoiceRepository;
 
     public DeviceService(DeviceRepository deviceRepository,
                          VendorRepo vendorRepo,
@@ -57,7 +51,7 @@ public class DeviceService {
                          RepairLogRepository repairLogRepository,
                          ServiceRequestRepository serviceRequestRepository,
                          RepairBillRepository repairBillRepository,
-                         VendorNegotiationRepository vendorNegotiationRepository) {
+                         VendorNegotiationRepository vendorNegotiationRepository, InvoiceRepository invoiceRepository) {
         this.deviceRepository = deviceRepository;
         this.vendorRepo = vendorRepo;
         this.deviceAssignmentRepo = deviceAssignmentRepo;
@@ -66,6 +60,7 @@ public class DeviceService {
         this.serviceRequestRepository = serviceRequestRepository;
         this.repairBillRepository = repairBillRepository;
         this.vendorNegotiationRepository = vendorNegotiationRepository;
+        this.invoiceRepository = invoiceRepository;
     }
 
     public Device addDevice(DeviceDTO deviceDTO, Authentication authentication) {
@@ -454,6 +449,7 @@ public class DeviceService {
         repairBillRepository.deleteAll(repairBillRepository.findByDeviceId(deviceId));
         repairLogRepository.deleteAll(repairLogRepository.findByDeviceIdIn(List.of(deviceId)));
         serviceRequestRepository.deleteAll(serviceRequestRepository.findByDeviceId(deviceId));
+        invoiceRepository.deleteAll(invoiceRepository.findByRepairBillDeviceId(deviceId));
 
         List<DeviceAssignment> deviceAssignments = deviceAssignmentRepo.findByDeviceIdOrderByAssignedDateDescIdDesc(deviceId);
         device.setCurrentAssignment(null);
