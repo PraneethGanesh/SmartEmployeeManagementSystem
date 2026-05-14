@@ -4,6 +4,7 @@ package com.example.EmployeeManagementSystem.DTO;
 import com.example.EmployeeManagementSystem.Enum.Gender;
 
 public class EmployeeDTO {
+    private long employeeId;
     private String name;
     private String email;
     private String dept;
@@ -57,5 +58,13 @@ public class EmployeeDTO {
 
     public void setGender(Gender gender) {
         this.gender = gender;
+    }
+
+    public long getEmployeeId() {
+        return employeeId;
+    }
+
+    public void setEmployeeId(long employeeId) {
+        this.employeeId = employeeId;
     }
 }

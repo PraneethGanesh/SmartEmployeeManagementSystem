@@ -237,7 +237,7 @@ public class EmployeeService {
     }
     private EmployeeDTO convertToDTO(Employee employee) {
         EmployeeDTO dto = new EmployeeDTO();
-
+       dto.setEmployeeId(employee.getEmployeeId());
         dto.setName(employee.getName());
         dto.setEmail(employee.getEmail());
         dto.setDept(employee.getDept());
