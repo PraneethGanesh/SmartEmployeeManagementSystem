@@ -541,8 +541,8 @@
         try {
             const [rests, subs, deliveries] = await Promise.all([
                 apiFetch('/restaurants/vendor').catch(() => []),
-                apiFetch('/subscriptions').catch(() => []),
-                apiFetch('/deliveries').catch(() => [])
+                apiFetch('/subscription').catch(() => []),
+                apiFetch('/delivery').catch(() => [])
             ]);
 
             const restArr = rests || [];
@@ -658,7 +658,7 @@
 
     async function loadSubscriptions() {
         try {
-            const data = await apiFetch('/subscriptions');
+            const data = await apiFetch('/subscription');
             document.getElementById('subscriptions-list').innerHTML = (data || []).length
                 ? data.map(s => `
                     <tr>
@@ -677,7 +677,7 @@
 
     async function loadDeliveries() {
         try {
-            const data = await apiFetch('/deliveries');
+            const data = await apiFetch('/delivery');
             document.getElementById('deliveries-list').innerHTML = (data || []).length
                 ? data.map(d => {
                     const did = d.id || d.deliveryId;
@@ -699,7 +699,7 @@
 
     async function markDelivered(id) {
         try {
-            await apiFetch(`/deliveries/${id}/delivered`, { method: 'PUT' });
+            await apiFetch(`/delivery/${id}/delivered`, { method: 'PUT' });
             showAlert('MARKED AS DELIVERED', 'success');
             loadDeliveries();
             loadDashboard();

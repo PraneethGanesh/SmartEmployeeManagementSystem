@@ -26,6 +26,7 @@ public enum Role {
     FOOD_VENDOR(Set.of(
             VENDOR_WRITE,
             VENDOR_DELETE,
+            SUBSCRIPTION_READ,
             RESTAURANTS_ADD,
             RESTAURANTS_DELETE,
             RESTAURANTS_READ,
