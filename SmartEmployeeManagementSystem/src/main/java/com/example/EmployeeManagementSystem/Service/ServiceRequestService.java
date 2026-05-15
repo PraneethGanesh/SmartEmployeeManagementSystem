@@ -237,7 +237,7 @@ public class ServiceRequestService {
         device.setDeviceStatus(DeviceStatus.UNDER_REPAIR);
         serviceRequestRepository.save(serviceRequest);
         deviceRepository.save(device);
-        notificationService.notify(serviceRequest.getReviewedBy(),"Device:"+device+"is being repaired","DEVICE UNDER REPAIR");
+        notificationService.notify(serviceRequest.getReviewedBy(),"Device:"+device.getDeviceName()+" is being repaired","DEVICE UNDER REPAIR");
         return ResponseEntity.ok(
                 "Recieved the device and started the repair"
         );

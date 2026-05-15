@@ -1,6 +1,6 @@
 package com.example.EmployeeManagementSystem.Listeners;
 
-import com.example.EmployeeManagementSystem.EmployeeCreatedEvent;
+import com.example.EmployeeManagementSystem.Event.EmployeeCreatedEvent;
 import com.example.EmployeeManagementSystem.Service.EmailService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;

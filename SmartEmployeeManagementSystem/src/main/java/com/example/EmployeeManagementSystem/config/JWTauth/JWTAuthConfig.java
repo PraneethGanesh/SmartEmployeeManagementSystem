@@ -155,7 +155,8 @@ public class JWTAuthConfig {
                                 "/pending.html",
                                 "/leave_management.html",
                                 "/totp-setup.html",
-                                "/device_management.html").permitAll()
+                                "/device_management.html",
+                                "/reset-password.html").permitAll()
 
                         // Vendor pages
                         .requestMatchers("/vendor-login.html").permitAll()
