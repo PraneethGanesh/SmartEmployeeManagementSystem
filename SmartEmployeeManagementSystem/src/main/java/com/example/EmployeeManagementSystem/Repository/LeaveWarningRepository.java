@@ -1,5 +1,6 @@
 package com.example.EmployeeManagementSystem.Repository;
 
+import com.example.EmployeeManagementSystem.Entity.Employee;
 import com.example.EmployeeManagementSystem.Entity.LeaveWarning;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -18,4 +19,6 @@ public interface LeaveWarningRepository extends JpaRepository<LeaveWarning, Long
     boolean existsByEmployeeEmployeeIdAndWarningTypeAndWarningDate(
             Long employeeId, LeaveWarning.WarningType warningType, LocalDate date
     );
+
+    List<LeaveWarning> findByEmployee(Employee employee);
 }
