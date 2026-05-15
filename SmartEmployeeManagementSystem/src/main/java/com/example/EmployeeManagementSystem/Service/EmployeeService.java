@@ -259,7 +259,7 @@ public class EmployeeService {
     }
 
     @Transactional
-    public void resetPassword(String token, String newPassword) {
+    public Employee resetPassword(String token, String newPassword) {
         Employee employee = employeeRepo.findByResetToken(token)
                 .orElseThrow(() -> new RuntimeException("Invalid or expired token"));
 
@@ -270,6 +270,6 @@ public class EmployeeService {
         employee.setPassword(passwordEncoder.encode(newPassword));
         employee.setResetToken(null);           // one-time use
         employee.setResetTokenExpiry(null);
-        employeeRepo.save(employee);
+        return employeeRepo.save(employee);
     }
 }

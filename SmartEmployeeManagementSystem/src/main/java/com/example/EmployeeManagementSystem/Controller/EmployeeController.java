@@ -10,6 +10,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
+
 @RestController
 @RequestMapping("/employee")
 public class EmployeeController {
@@ -58,11 +61,14 @@ public class EmployeeController {
     }
 
     @PostMapping("/reset-password")
-    public ResponseEntity<String> resetPassword(
+    public ResponseEntity<?> resetPassword(
             @RequestParam String token,
             @RequestBody ResetPasswordRequest request) {
 
-        employeeService.resetPassword(token, request.getNewPassword());
-        return ResponseEntity.ok("Password updated successfully");
+        Employee employee=employeeService.resetPassword(token, request.getNewPassword());
+        return ResponseEntity.ok(Map.of(
+                "message", "Password updated successfully",
+                "role",    employee.getRole().name()   // e.g. "EMPLOYEE", "ADMIN"
+        ));
     }
 }
