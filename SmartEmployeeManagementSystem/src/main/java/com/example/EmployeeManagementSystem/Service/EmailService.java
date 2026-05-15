@@ -40,10 +40,11 @@ public class EmailService {
             helper.setSubject("Welcome — your account is ready");
 
             Context ctx = new Context();
-            ctx.setVariable("name", employee.getName());
+            ctx.setVariable("employeeName", employee.getName());
             ctx.setVariable("email", employee.getEmail());
             ctx.setVariable("tempPassword", rawPassword);
-            ctx.setVariable("resetLink", baseUrl + "/employee/reset-password?token=" + employee.getResetToken());
+            ctx.setVariable("resetLink", baseUrl + "/reset-password.html");
+            ctx.setVariable("resetToken", employee.getResetToken());
 
             helper.setText(templateEngine.process("emails/welcome-employee", ctx), true);
             mailSender.send(message);

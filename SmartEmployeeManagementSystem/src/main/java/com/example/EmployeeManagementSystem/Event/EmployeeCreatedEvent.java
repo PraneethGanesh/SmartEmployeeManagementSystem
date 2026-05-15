@@ -1,4 +1,4 @@
-package com.example.EmployeeManagementSystem;
+package com.example.EmployeeManagementSystem.Event;
 
 import com.example.EmployeeManagementSystem.Entity.Employee;
 
