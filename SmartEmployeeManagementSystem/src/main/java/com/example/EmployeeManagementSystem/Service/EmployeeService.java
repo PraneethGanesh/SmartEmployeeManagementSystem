@@ -243,7 +243,7 @@ public class EmployeeService {
 
     public List<EmployeeDTO> getAllEmployeesByRole() {
         List<Employee> employees=employeeRepo.findByRole(Role.EMPLOYEE);
-        return employees.stream().map(employee -> convertToDTO(employee)).toList();
+        return employees.stream().map(this::convertToDTO).toList();
     }
     private EmployeeDTO convertToDTO(Employee employee) {
         EmployeeDTO dto = new EmployeeDTO();
