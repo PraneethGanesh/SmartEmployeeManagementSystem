@@ -78,6 +78,18 @@ public class AdminController {
         return employeeService.getAllManagers();
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/employees/managers")
+    public ResponseEntity<List<EmployeeDTO>> getAllEmployeeWithNoManagers(){
+        return employeeService.getAllEmployeeWithNoManagers();
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/employees/{managerId}/{employeeId}")
+    public ResponseEntity<String> addManagerToEmployee(@PathVariable long managerId,@PathVariable long employeeId){
+        return ResponseEntity.ok(employeeService.addManagerToEmployee(managerId,employeeId));
+    }
+
 
     /** Promote / create a manager. */
     @PostMapping("/employees/manager")

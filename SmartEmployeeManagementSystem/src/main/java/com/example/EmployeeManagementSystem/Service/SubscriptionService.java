@@ -11,12 +11,14 @@ import com.example.EmployeeManagementSystem.Enum.SubscriptionStatus;
 import com.example.EmployeeManagementSystem.Exception.EmployeeNotFound;
 import com.example.EmployeeManagementSystem.Exception.RestaurantNotFoundException;
 import com.example.EmployeeManagementSystem.Exception.SubscriptionAlreadyExists;
+import com.example.EmployeeManagementSystem.Repository.DeliveryRepository;
 import com.example.EmployeeManagementSystem.Repository.EmployeeRepo;
 import com.example.EmployeeManagementSystem.Repository.RestaurantRepository;
 import com.example.EmployeeManagementSystem.Repository.SubscriptionRepository;
 import com.example.EmployeeManagementSystem.Util.AuthUtil;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -30,15 +32,18 @@ public class SubscriptionService {
     private final EmployeeRepo employeeRepo;
     private final DeliveryTimeService deliveryTimeService;
     private final RestaurantRepository restaurantRepository;
+    private final DeliveryRepository deliveryRepository;
 
     public SubscriptionService(SubscriptionRepository subscriptionRepository,
                                EmployeeRepo employeeRepo,
                                DeliveryTimeService deliveryTimeService,
-                               RestaurantRepository restaurantRepository) {
+                               RestaurantRepository restaurantRepository,
+                               DeliveryRepository deliveryRepository) {
         this.subscriptionRepository = subscriptionRepository;
         this.employeeRepo = employeeRepo;
         this.deliveryTimeService = deliveryTimeService;
         this.restaurantRepository = restaurantRepository;
+        this.deliveryRepository = deliveryRepository;
     }
 
     /**
@@ -202,6 +207,24 @@ public class SubscriptionService {
     }
 
     // ── helpers ──────────────────────────────────────────────────────────────
+
+    @Transactional
+    public void deleteSubscription(Long id) {
+        Subscription subscription = subscriptionRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Subscription not found"));
+        deliveryRepository.deleteBySubscription(subscription);
+        subscriptionRepository.delete(subscription);
+    }
+
+    @Transactional
+    public void deleteSubscriptionsByEmployeeEmail(String email) {
+        List<Subscription> subscriptions = subscriptionRepository.findByEmployee_Email(email);
+        if (subscriptions.isEmpty()) {
+            return;
+        }
+        deliveryRepository.deleteBySubscriptionIn(subscriptions);
+        subscriptionRepository.deleteAll(subscriptions);
+    }
 
     private SubscriptionDTO convertToDTO(Subscription s) {
         SubscriptionDTO dto = new SubscriptionDTO();
