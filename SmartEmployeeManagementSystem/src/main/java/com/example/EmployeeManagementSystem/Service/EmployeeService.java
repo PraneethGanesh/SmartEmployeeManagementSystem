@@ -207,6 +207,14 @@ public class EmployeeService {
         //delete year log
         yearEndCarryForwardLogRepository.deleteAll(yearEndCarryForwardLogRepository.findByEmployee(employee));
 
+        if(employee.getRole()==Role.MANAGER){
+            List<Employee> employees=employeeRepo.findByManager(employee);
+            for (Employee employee1:employees){
+                employee1.setManager(null);
+                employeeRepo.save(employee1);
+            }
+        }
+
         // Step 3: delete the employee
         employeeRepo.delete(employee);
     }
