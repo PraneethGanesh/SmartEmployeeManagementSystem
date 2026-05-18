@@ -14,6 +14,8 @@ public interface LeaveEntitlementRepository extends JpaRepository<LeaveEntitleme
     Optional<LeaveEntitlement> findByEmployeeEmployeeIdAndLeaveTypeIdAndYear(
             Long employeeId, Integer leaveTypeId, Integer year);
 
+    List<LeaveEntitlement> findByEmployeeEmployeeId(long employeeId);
+
     List<LeaveEntitlement> findByEmployeeEmployeeIdAndYear(Long employeeId, Integer year);
 
     @Query("""

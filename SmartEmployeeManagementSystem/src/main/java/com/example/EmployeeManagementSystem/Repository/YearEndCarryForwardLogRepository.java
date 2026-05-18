@@ -1,6 +1,7 @@
 package com.example.EmployeeManagementSystem.Repository;
 
 
+import com.example.EmployeeManagementSystem.Entity.Employee;
 import com.example.EmployeeManagementSystem.Entity.YearEndCarryForwardLog;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -15,4 +16,6 @@ public interface YearEndCarryForwardLogRepository
 
     // Check if year-end has already been run for this year (idempotency guard)
     boolean existsByProcessedYear(Integer year);
+
+    List<YearEndCarryForwardLog> findByEmployee(Employee employee);
 }

@@ -5,6 +5,7 @@ import com.example.EmployeeManagementSystem.Entity.RefreshToken;
 import com.example.EmployeeManagementSystem.Entity.Vendor;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long> {
@@ -16,4 +17,6 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long
 
     // Needed so VendorService can clean up tokens before deleting a vendor
     void deleteByVendor(Vendor vendor);
+
+    List<RefreshToken> findByEmployee(Employee employee);
 }

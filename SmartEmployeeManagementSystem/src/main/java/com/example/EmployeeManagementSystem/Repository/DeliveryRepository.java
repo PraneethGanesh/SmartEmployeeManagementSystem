@@ -19,4 +19,8 @@ public interface DeliveryRepository extends JpaRepository<Delivery,Long> {
     List<Delivery> findRecentDeliveriesBySubscription(
             @Param("subscription") Subscription subscription,
             @Param("status") DeliveryStatus status);
+
+    void deleteBySubscription(Subscription subscription);
+
+    void deleteBySubscriptionIn(List<Subscription> subscriptions);
 }

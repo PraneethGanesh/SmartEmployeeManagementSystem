@@ -1,15 +1,13 @@
 package com.example.EmployeeManagementSystem.Service;
 
 import com.example.EmployeeManagementSystem.DTO.*;
+import com.example.EmployeeManagementSystem.Entity.*;
+import com.example.EmployeeManagementSystem.Enum.DeviceStatus;
 import com.example.EmployeeManagementSystem.Event.EmployeeCreatedEvent;
-import com.example.EmployeeManagementSystem.Entity.Employee;
-import com.example.EmployeeManagementSystem.Entity.LeaveRequest;
 import com.example.EmployeeManagementSystem.Enum.Role;
 import com.example.EmployeeManagementSystem.Enum.Status;
 import com.example.EmployeeManagementSystem.Exception.EmployeeNotFound;
-import com.example.EmployeeManagementSystem.Repository.EmployeeRepo;
-import com.example.EmployeeManagementSystem.Repository.LeaveRequestRepo;
-import com.example.EmployeeManagementSystem.Repository.RefreshTokenRepository;
+import com.example.EmployeeManagementSystem.Repository.*;
 import com.example.EmployeeManagementSystem.Util.AuthUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,18 +35,34 @@ public class EmployeeService {
     private final RefreshTokenRepository refreshTokenRepository; // FIX: added
     private final LeaveAccrualService leaveAccrualService;
     private final ApplicationEventPublisher eventPublisher;
+    private final LeaveEntitlementRepository leaveEntitlementRepository;
+    private final NotificationRepository notificationRepository;
+    private final DeviceAssignmentRepo deviceAssignmentRepo;
+    private final DeviceRepository deviceRepository;
+    private final LeaveWarningRepository leaveWarningRepository;
+    private final ServiceRequestRepository serviceRequestRepository;
+    private final YearEndCarryForwardLogRepository yearEndCarryForwardLogRepository;
+    private final SubscriptionService subscriptionService;
 
     public EmployeeService(EmployeeRepo employeeRepo,
                            LeaveRequestRepo leaveRequestRepo,
                            PasswordEncoder passwordEncoder,
                            RefreshTokenRepository refreshTokenRepository,
-                           LeaveAccrualService leaveAccrualService, ApplicationEventPublisher eventPublisher) {
+                           LeaveAccrualService leaveAccrualService, ApplicationEventPublisher eventPublisher, LeaveEntitlementRepository leaveEntitlementRepository, NotificationRepository notificationRepository, DeviceAssignmentRepo deviceAssignmentRepo, DeviceRepository deviceRepository, LeaveWarningRepository leaveWarningRepository, ServiceRequestRepository serviceRequestRepository, YearEndCarryForwardLogRepository yearEndCarryForwardLogRepository, SubscriptionService subscriptionService) {
         this.employeeRepo = employeeRepo;
         this.leaveRequestRepo = leaveRequestRepo;
         this.passwordEncoder = passwordEncoder;
         this.refreshTokenRepository = refreshTokenRepository; // FIX: injected
         this.leaveAccrualService = leaveAccrualService;
         this.eventPublisher = eventPublisher;
+        this.leaveEntitlementRepository = leaveEntitlementRepository;
+        this.notificationRepository = notificationRepository;
+        this.deviceAssignmentRepo = deviceAssignmentRepo;
+        this.deviceRepository = deviceRepository;
+        this.leaveWarningRepository = leaveWarningRepository;
+        this.serviceRequestRepository = serviceRequestRepository;
+        this.yearEndCarryForwardLogRepository = yearEndCarryForwardLogRepository;
+        this.subscriptionService = subscriptionService;
     }
 
     public List<Employee> getAllEmployees() {
@@ -148,6 +162,58 @@ public class EmployeeService {
         List<LeaveRequest> leaveRequests =
                 leaveRequestRepo.findByEmployeeOrderByStartDateDesc(employee);
         leaveRequestRepo.deleteAll(leaveRequests);
+
+        List<LeaveEntitlement> entitlements=leaveEntitlementRepository.findByEmployeeEmployeeId(employee.getEmployeeId());
+        leaveEntitlementRepository.deleteAll(entitlements);
+
+        refreshTokenRepository.deleteAll(refreshTokenRepository.findByEmployee(employee));
+
+        notificationRepository.deleteAll(notificationRepository.findByRecipient(employee));
+
+        //delete related device assignment
+        List<DeviceAssignment> deviceAssignments=deviceAssignmentRepo.findByAssignedTo(employee);
+        for(DeviceAssignment assignment:deviceAssignments){
+            Device device= assignment.getDevice();
+            device.setCurrentAssignment(null);
+            device.setDeviceStatus(DeviceStatus.AVAILABLE);
+            deviceRepository.save(device);
+            deviceAssignmentRepo.delete(assignment);
+        }
+
+        //delete related warning
+        leaveWarningRepository.deleteAll(leaveWarningRepository.findByEmployee(employee));
+
+        //disconnect the related service request
+        List<ServiceRequest> requests =
+                serviceRequestRepository.findByRaisedBy(employee);
+
+        for(ServiceRequest request : requests){
+            request.setRaisedBy(null);
+        }
+
+        List<ServiceRequest> reviewed =
+                serviceRequestRepository.findByReviewedBy(employee);
+
+        for(ServiceRequest request : reviewed){
+            request.setReviewedBy(null);
+        }
+
+        serviceRequestRepository.saveAll(requests);
+        serviceRequestRepository.saveAll(reviewed);
+
+        // Delete deliveries before subscriptions to satisfy the FK on delivery.subscription_id.
+        subscriptionService.deleteSubscriptionsByEmployeeEmail(employee.getEmail());
+
+        //delete year log
+        yearEndCarryForwardLogRepository.deleteAll(yearEndCarryForwardLogRepository.findByEmployee(employee));
+
+        if(employee.getRole()==Role.MANAGER){
+            List<Employee> employees=employeeRepo.findByManager(employee);
+            for (Employee employee1:employees){
+                employee1.setManager(null);
+                employeeRepo.save(employee1);
+            }
+        }
 
         // Step 3: delete the employee
         employeeRepo.delete(employee);
@@ -271,5 +337,28 @@ public class EmployeeService {
         employee.setResetToken(null);           // one-time use
         employee.setResetTokenExpiry(null);
         return employeeRepo.save(employee);
+    }
+
+    public ResponseEntity<List<EmployeeDTO>> getAllEmployeeWithNoManagers() {
+        List<Employee> employeeList=employeeRepo.findByManagerAndRole(null,Role.EMPLOYEE);
+        List<EmployeeDTO> employeeDTOS=employeeList
+                .stream()
+                .map(employee -> convertToDTO(employee)).toList();
+        return ResponseEntity.ok(employeeDTOS);
+    }
+
+    public String addManagerToEmployee(long managerId,long employeeId) {
+        Employee manager=employeeRepo.findById(managerId).orElseThrow(
+                ()->new EmployeeNotFound("Manager not found")
+        );
+
+        Employee employee=employeeRepo.findById(employeeId).orElseThrow(
+                ()->new EmployeeNotFound("Employee Not Found")
+        );
+        employee.setManager(manager);
+        employeeRepo.save(employee);
+        return "Manager:"+manager.getEmail()+" set to Employee:"+employee.getEmail();
+
+
     }
 }

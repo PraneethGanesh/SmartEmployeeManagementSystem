@@ -28,4 +28,7 @@ public interface ServiceRequestRepository extends JpaRepository<ServiceRequest,L
 
     List<ServiceRequest> findByDeviceId(Long deviceId);
 
+    List<ServiceRequest> findByRaisedBy(Employee employee);
+
+    List<ServiceRequest> findByReviewedBy(Employee employee);
 }

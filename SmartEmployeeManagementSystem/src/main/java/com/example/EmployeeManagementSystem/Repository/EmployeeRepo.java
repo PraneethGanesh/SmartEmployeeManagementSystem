@@ -25,4 +25,6 @@ public interface EmployeeRepo extends JpaRepository<Employee,Long> {
     List<Employee> findByStatusAndRole(Status status, Role role);
 
     Optional<Employee> findByResetToken(String token);
+
+    List<Employee> findByManagerAndRole(Employee manager,Role role);
 }
