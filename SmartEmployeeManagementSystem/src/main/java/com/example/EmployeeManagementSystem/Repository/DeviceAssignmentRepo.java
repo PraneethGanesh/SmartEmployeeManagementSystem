@@ -1,6 +1,7 @@
 package com.example.EmployeeManagementSystem.Repository;
 
 import com.example.EmployeeManagementSystem.Entity.DeviceAssignment;
+import com.example.EmployeeManagementSystem.Entity.Employee;
 import com.example.EmployeeManagementSystem.Enum.AssignmentStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -16,6 +17,8 @@ public interface DeviceAssignmentRepo extends JpaRepository<DeviceAssignment,Lon
 
     @Query(value = "SELECT da.* FROM device_assignment da JOIN device d ON da.device_id = d.id WHERE d.vendor_id = :vendorId",nativeQuery = true)
     List<DeviceAssignment> getAllAssignmentsByVendorId(@Param("vendorId") long vendorId);
+
+    List<DeviceAssignment> findByAssignedTo(Employee employee);
 
 
 }
