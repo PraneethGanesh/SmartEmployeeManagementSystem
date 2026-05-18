@@ -38,17 +38,17 @@ public class EmployeeService {
     private final LeaveEntitlementRepository leaveEntitlementRepository;
     private final NotificationRepository notificationRepository;
     private final DeviceAssignmentRepo deviceAssignmentRepo;
-    private final SubscriptionRepository subscriptionRepository;
     private final DeviceRepository deviceRepository;
     private final LeaveWarningRepository leaveWarningRepository;
     private final ServiceRequestRepository serviceRequestRepository;
     private final YearEndCarryForwardLogRepository yearEndCarryForwardLogRepository;
+    private final SubscriptionService subscriptionService;
 
     public EmployeeService(EmployeeRepo employeeRepo,
                            LeaveRequestRepo leaveRequestRepo,
                            PasswordEncoder passwordEncoder,
                            RefreshTokenRepository refreshTokenRepository,
-                           LeaveAccrualService leaveAccrualService, ApplicationEventPublisher eventPublisher, LeaveEntitlementRepository leaveEntitlementRepository, NotificationRepository notificationRepository, DeviceAssignmentRepo deviceAssignmentRepo, SubscriptionRepository subscriptionRepository, DeviceRepository deviceRepository, LeaveWarningRepository leaveWarningRepository, ServiceRequestRepository serviceRequestRepository, YearEndCarryForwardLogRepository yearEndCarryForwardLogRepository) {
+                           LeaveAccrualService leaveAccrualService, ApplicationEventPublisher eventPublisher, LeaveEntitlementRepository leaveEntitlementRepository, NotificationRepository notificationRepository, DeviceAssignmentRepo deviceAssignmentRepo, DeviceRepository deviceRepository, LeaveWarningRepository leaveWarningRepository, ServiceRequestRepository serviceRequestRepository, YearEndCarryForwardLogRepository yearEndCarryForwardLogRepository, SubscriptionService subscriptionService) {
         this.employeeRepo = employeeRepo;
         this.leaveRequestRepo = leaveRequestRepo;
         this.passwordEncoder = passwordEncoder;
@@ -58,11 +58,11 @@ public class EmployeeService {
         this.leaveEntitlementRepository = leaveEntitlementRepository;
         this.notificationRepository = notificationRepository;
         this.deviceAssignmentRepo = deviceAssignmentRepo;
-        this.subscriptionRepository = subscriptionRepository;
         this.deviceRepository = deviceRepository;
         this.leaveWarningRepository = leaveWarningRepository;
         this.serviceRequestRepository = serviceRequestRepository;
         this.yearEndCarryForwardLogRepository = yearEndCarryForwardLogRepository;
+        this.subscriptionService = subscriptionService;
     }
 
     public List<Employee> getAllEmployees() {
@@ -201,8 +201,8 @@ public class EmployeeService {
         serviceRequestRepository.saveAll(requests);
         serviceRequestRepository.saveAll(reviewed);
 
-        //delete the subscription
-        subscriptionRepository.deleteAll(subscriptionRepository.findByEmployee_Email(employee.getEmail()));
+        // Delete deliveries before subscriptions to satisfy the FK on delivery.subscription_id.
+        subscriptionService.deleteSubscriptionsByEmployeeEmail(employee.getEmail());
 
         //delete year log
         yearEndCarryForwardLogRepository.deleteAll(yearEndCarryForwardLogRepository.findByEmployee(employee));
@@ -337,5 +337,28 @@ public class EmployeeService {
         employee.setResetToken(null);           // one-time use
         employee.setResetTokenExpiry(null);
         return employeeRepo.save(employee);
+    }
+
+    public ResponseEntity<List<EmployeeDTO>> getAllEmployeeWithNoManagers() {
+        List<Employee> employeeList=employeeRepo.findByManagerAndRole(null,Role.EMPLOYEE);
+        List<EmployeeDTO> employeeDTOS=employeeList
+                .stream()
+                .map(employee -> convertToDTO(employee)).toList();
+        return ResponseEntity.ok(employeeDTOS);
+    }
+
+    public String addManagerToEmployee(long managerId,long employeeId) {
+        Employee manager=employeeRepo.findById(managerId).orElseThrow(
+                ()->new EmployeeNotFound("Manager not found")
+        );
+
+        Employee employee=employeeRepo.findById(employeeId).orElseThrow(
+                ()->new EmployeeNotFound("Employee Not Found")
+        );
+        employee.setManager(manager);
+        employeeRepo.save(employee);
+        return "Manager:"+manager.getEmail()+" set to Employee:"+employee.getEmail();
+
+
     }
 }
