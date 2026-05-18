@@ -409,6 +409,9 @@
             <div class="nav-item" onclick="showView('add-subscription',this)">
                 <span>＋</span> Subscribe to Meal
             </div>
+            <div class="nav-item" onclick="showView('meal-order',this)">
+                <span>▣</span> Meal Orders
+            </div>
             <div class="nav-item" onclick="showView('restaurants',this)">
                 <span>🏪</span> Restaurants
             </div>
@@ -829,6 +832,13 @@
                 </div>
             </div>
             <!-- END CALENDAR VIEW -->
+
+            <div id="meal-order-view" class="view">
+                <div class="section">
+                    <div class="section-head"><div class="section-title">Meal Orders</div></div>
+                    <div class="empty-state">Loading meal orders...</div>
+                </div>
+            </div>
 
             <!-- MY SUBSCRIPTIONS -->
             <div id="my-subscriptions-view" class="view">
@@ -1291,6 +1301,7 @@ const TYPE_LABEL = { SICK:'🤒 Sick', CASUAL:'🏖️ Casual', MATERNITY:'👶 
     'promote-users': loadUsers,
     'my-subscriptions': loadMySubscriptions,
     'add-subscription': () => {},
+    'meal-order': loadMealOrderWorkspace,
     restaurants: loadRestaurants,
     'my-devices': loadMyAssignedDevices,
     'service-requests': loadServiceRequests,
@@ -2381,5 +2392,6 @@ async function applyMaternityLeave() {
         }
     }
 </script>
+<script src="/meal-order.js"></script>
 </body>
 </html>

@@ -361,6 +361,7 @@
             <div class="nav-item" onclick="showView('restaurants',this)"><span class="icon">⊕</span> Restaurants</div>
             <div class="nav-item" onclick="showView('subscriptions',this)"><span class="icon">◈</span> My Subscriptions</div>
             <div class="nav-item" onclick="showView('add-subscription',this)"><span class="icon">＋</span> Add Subscription</div>
+            <div class="nav-item" onclick="showView('meal-order',this)"><span class="icon">▣</span> Meal Orders</div>
             <div class="nav-section">Account</div>
             <div class="nav-item" onclick="showView('profile',this)"><span class="icon">◉</span> My Profile</div>
             <div class="nav-item" onclick="showView('my-devices',this)"><span class="icon">⊞</span> My Devices</div>
@@ -579,6 +580,13 @@
                 </div>
             </div>
             <!-- END CALENDAR VIEW -->
+
+            <div id="meal-order-view" class="view">
+                <div class="section">
+                    <div class="section-head"><div class="section-title">Meal Orders</div></div>
+                    <div class="empty-state">Loading meal orders...</div>
+                </div>
+            </div>
 
             <!-- RESTAURANTS -->
             <div id="restaurants-view" class="view">
@@ -1024,6 +1032,7 @@
             restaurants:loadRestaurants,
             subscriptions:loadSubscriptions,
             'add-subscription':()=>{},
+            'meal-order':loadMealOrderWorkspace,
             profile:()=>{},
             'my-devices':loadMyAssignedDevices,
             'service-requests':loadServiceRequests,
@@ -1759,5 +1768,6 @@
         }
     }
 </script>
+<script src="/meal-order.js"></script>
 </body>
 </html>

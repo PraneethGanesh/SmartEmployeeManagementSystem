@@ -226,6 +226,7 @@
             <div class="nav-item" onclick="showView('restaurants', event)">&#9632; Restaurants</div>
             <div class="nav-item" onclick="showView('subscriptions', event)">&#9632; Subscriptions</div>
             <div class="nav-item" onclick="showView('add-subscription', event)">&#9632; Add Subscription</div>
+            <div class="nav-item" onclick="showView('meal-order', event)">&#9632; Meal Orders</div>
             <div class="nav-item" onclick="showView('vendors', event)">&#9632; Vendors</div>
             <div class="nav-item" onclick="showView('vendor-negotiations', event)">&#9632; Vendor Negotiations</div>
             <div class="nav-item" onclick="window.location.href='/device_management.html'">&#9632; Device Management</div>
@@ -516,6 +517,13 @@
             <div id="pending-leaves-view" class="view">
                 <div class="section-head"><div class="section-title">Pending Leave Approvals</div><button class="btn btn-primary btn-sm" onclick="loadPendingLeaves()">Refresh</button></div>
                 <div class="table-wrap"><table><thead><tr><th>ID</th><th>Employee</th><th>Type</th><th>Start</th><th>End</th><th>Reason</th><th>Actions</th></tr></thead><tbody id="pending-leaves-list"></tbody></table></div>
+            </div>
+
+            <div id="meal-order-view" class="view">
+                <div class="form-card" style="max-width:none">
+                    <div class="section-title">Meal Orders</div>
+                    <div class="empty-state">Loading meal orders...</div>
+                </div>
             </div>
 
             <!-- RESTAURANTS VIEW -->
@@ -1185,6 +1193,7 @@
     'restaurants': loadRestaurants,
     'subscriptions': loadSubscriptions,
     'add-subscription': loadRestaurantDropdown,
+    'meal-order': loadMealOrderWorkspace,
     'deliveries': loadDeliveries,
     'vendors': loadVendors,
     'vendor-negotiations': loadVendorNegotiations,
@@ -2535,5 +2544,6 @@ function clearAdminForm() {
     document.getElementById('admin-timezone').value = 'Asia/Kolkata';
 }
 </script>
+<script src="/meal-order.js"></script>
 </body>
 </html>
