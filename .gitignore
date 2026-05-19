@@ -12,4 +12,5 @@ target/
 
 # Node
 node_modules/
-
+# not .zip files are added to .gitignore, but if you want to ignore all .zip files, you can uncomment the following line
+*.zip
