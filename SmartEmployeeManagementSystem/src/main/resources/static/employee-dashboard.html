@@ -1032,7 +1032,7 @@
             restaurants:loadRestaurants,
             subscriptions:loadSubscriptions,
             'add-subscription':()=>{},
-            'meal-order':loadMealOrderWorkspace,
+            'meal-order':(...args)=>window.loadMealOrderWorkspace?.(...args),
             profile:()=>{},
             'my-devices':loadMyAssignedDevices,
             'service-requests':loadServiceRequests,
@@ -1767,6 +1767,10 @@
             showAlert('Failed to disable 2FA: ' + e.message, 'error');
         }
     }
+
+    // Expose core helpers so external scripts (e.g. meal-order.js) can reference them
+    window.apiFetch = apiFetch;
+    window.showView = showView;
 </script>
 <script src="/meal-order.js"></script>
 </body>

@@ -23,17 +23,20 @@ public class MealOrderService {
     private final SubscriptionRepository subscriptionRepository;
     private final MenuItemRepository menuItemRepository;
     private final EmployeeRepo employeeRepo;
+    private final VendorRepo vendorRepo;
     private final NotificationService notificationService;
 
     public MealOrderService(MealOrderRepository mealOrderRepository,
                             SubscriptionRepository subscriptionRepository,
                             MenuItemRepository menuItemRepository,
                             EmployeeRepo employeeRepo,
+                            VendorRepo vendorRepo,
                             NotificationService notificationService) {
         this.mealOrderRepository = mealOrderRepository;
         this.subscriptionRepository = subscriptionRepository;
         this.menuItemRepository = menuItemRepository;
         this.employeeRepo = employeeRepo;
+        this.vendorRepo = vendorRepo;
         this.notificationService = notificationService;
     }
 
@@ -52,12 +55,11 @@ public class MealOrderService {
                 .orElseThrow(() -> new RuntimeException(
                         "Subscription not found: " + request.getSubscriptionId()));
 
-        // Employee can only order on their own subscription
+        // employeeId is a primitive long, so != is correct for value comparison
         if (subscription.getEmployee().getEmployeeId() != employee.getEmployeeId()) {
             throw new AccessDeniedException("This subscription does not belong to you");
         }
 
-        // Subscription must be active
         if (subscription.getStatus() != SubscriptionStatus.ACTIVE) {
             throw new IllegalStateException(
                     "Cannot place order on a " + subscription.getStatus() + " subscription");
@@ -74,13 +76,11 @@ public class MealOrderService {
                     .orElseThrow(() -> new RuntimeException(
                             "Menu item not found: " + itemReq.getMenuItemId()));
 
-            // Menu item must belong to the same restaurant as the subscription
             if (!menuItem.getRestaurant().getId().equals(subscription.getRestaurant().getId())) {
                 throw new IllegalArgumentException(
                         "Menu item '" + menuItem.getName() + "' does not belong to this subscription's restaurant");
             }
 
-            // Menu item must match the subscription's meal slot
             if (menuItem.getMealSlot() != subscription.getSlot()) {
                 throw new IllegalArgumentException(
                         "Menu item '" + menuItem.getName() + "' is not available for " + subscription.getSlot());
@@ -124,7 +124,6 @@ public class MealOrderService {
         order.setDeliveredAt(LocalDateTime.now());
         MealOrder saved = mealOrderRepository.save(order);
 
-        // Notify the employee that their meal has arrived
         String restaurantName = order.getSubscription().getRestaurant().getName();
         String mealSlot = order.getMealSlot().name().toLowerCase();
         notificationService.notify(
@@ -157,7 +156,6 @@ public class MealOrderService {
         order.setStatus(OrderStatus.CONFIRMED);
         MealOrder saved = mealOrderRepository.save(order);
 
-        // Notify the employee that their order is confirmed
         String restaurantName = order.getSubscription().getRestaurant().getName();
         String mealSlot = order.getMealSlot().name().toLowerCase();
         notificationService.notify(
@@ -169,7 +167,16 @@ public class MealOrderService {
         return toDTO(saved);
     }
 
-    /** Employee views their own orders */
+    /**
+     * Employee views their own orders.
+     * FIX: added @Transactional(readOnly = true) so toDTO() can access LAZY
+     * relations (subscription, restaurant, items) without a
+     * LazyInitializationException when accessing LAZY relations (subscription,
+     * restaurant, items) after the repository call closes the Hibernate session.
+     * This was the direct cause of the 500 error that left the UI stuck on
+     * "Loading meal orders...".
+     */
+    @Transactional(readOnly = true)
     public List<MealOrderDTO> getMyOrders(Authentication authentication) {
         String email = AuthUtil.extractEmail(authentication);
         Employee employee = employeeRepo.findByEmail(email)
@@ -182,25 +189,39 @@ public class MealOrderService {
                 .collect(Collectors.toList());
     }
 
-    /** Vendor views all orders for their restaurants */
+    /**
+     * Vendor views all orders for their restaurants.
+     * FIX: was using findAll() + in-memory filter, which (a) loads every order
+     * in the database and (b) triggers LazyInitializationException on LAZY
+     * relations outside a transaction. Now uses the dedicated repository method
+     * with @Transactional(readOnly = true).
+     */
+    @Transactional(readOnly = true)
     public List<MealOrderDTO> getVendorOrders(Authentication authentication) {
         String email = AuthUtil.extractEmail(authentication);
-        // Get vendor by email via their restaurants — find vendor entity
-        // Using the restaurant's vendor email match
-        return mealOrderRepository.findAll()
+        Vendor vendor = vendorRepo.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Vendor not found: " + email));
+
+        return mealOrderRepository.findBySubscriptionRestaurantVendorId(vendor.getId())
                 .stream()
-                .filter(o -> o.getSubscription().getRestaurant().getVendor().getEmail().equals(email))
                 .map(this::toDTO)
                 .collect(Collectors.toList());
     }
 
-    /** Vendor views only PLACED (pending) orders needing action */
+    /**
+     * Vendor views only PLACED (pending) orders needing action.
+     * FIX: same as getVendorOrders — replaced findAll() + stream filter with
+     * the proper repository query.
+     */
+    @Transactional(readOnly = true)
     public List<MealOrderDTO> getVendorPendingOrders(Authentication authentication) {
         String email = AuthUtil.extractEmail(authentication);
-        return mealOrderRepository.findAll()
+        Vendor vendor = vendorRepo.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Vendor not found: " + email));
+
+        return mealOrderRepository
+                .findBySubscriptionRestaurantVendorIdAndStatus(vendor.getId(), OrderStatus.PLACED)
                 .stream()
-                .filter(o -> o.getSubscription().getRestaurant().getVendor().getEmail().equals(email)
-                        && o.getStatus() == OrderStatus.PLACED)
                 .map(this::toDTO)
                 .collect(Collectors.toList());
     }

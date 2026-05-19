@@ -1301,7 +1301,7 @@ const TYPE_LABEL = { SICK:'🤒 Sick', CASUAL:'🏖️ Casual', MATERNITY:'👶 
     'promote-users': loadUsers,
     'my-subscriptions': loadMySubscriptions,
     'add-subscription': () => {},
-    'meal-order': loadMealOrderWorkspace,
+    'meal-order': (...args) => window.loadMealOrderWorkspace?.(...args),
     restaurants: loadRestaurants,
     'my-devices': loadMyAssignedDevices,
     'service-requests': loadServiceRequests,
@@ -2391,6 +2391,10 @@ async function applyMaternityLeave() {
             showAlert('Failed to disable 2FA: ' + e.message, 'error');
         }
     }
+
+    // Expose core helpers so external scripts (e.g. meal-order.js) can reference them
+    window.apiFetch = apiFetch;
+    window.showView = showView;
 </script>
 <script src="/meal-order.js"></script>
 </body>

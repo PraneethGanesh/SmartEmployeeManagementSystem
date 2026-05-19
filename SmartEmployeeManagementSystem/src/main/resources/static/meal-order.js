@@ -178,7 +178,13 @@
     async function loadMealSubscriptions() {
         const select = document.getElementById('meal-order-subscription');
         select.innerHTML = '<option value="">Loading subscriptions...</option>';
-        state.subscriptions = await apiFetch('/subscription/user') || [];
+        try {
+            state.subscriptions = await apiFetch('/subscription/user') || [];
+        } catch (error) {
+            select.innerHTML = '<option value="">Could not load subscriptions</option>';
+            showAlert('Could not load subscriptions: ' + error.message, 'error');
+            return;
+        }
         const active = activeSubscriptions();
         if (!active.length) {
             select.innerHTML = '<option value="">No active subscriptions</option>';
@@ -272,6 +278,9 @@
     }
 
     function updateMealSummary() {
+        const countEl = document.getElementById('meal-order-count');
+        const totalEl = document.getElementById('meal-order-total');
+        if (!countEl || !totalEl) return;
         const selected = Object.entries(state.quantities)
             .filter(([, quantity]) => Number(quantity) > 0);
         const count = selected.reduce((total, [, quantity]) => total + Number(quantity), 0);
@@ -279,8 +288,8 @@
             const item = state.menuItems.find(i => Number(i.id) === Number(id));
             return sum + Number(item?.price || 0) * Number(quantity);
         }, 0);
-        document.getElementById('meal-order-count').textContent = count;
-        document.getElementById('meal-order-total').textContent = money(total);
+        countEl.textContent = count;
+        totalEl.textContent = money(total);
     }
 
     function clearMealQuantities() {
@@ -318,12 +327,16 @@
         }
     }
 
+    // FIX: wrapped the entire function body in try/catch so that any error
+    // (including a synchronous throw from apiFetch, e.g. expired token) is caught
+    // and shown to the user instead of leaving the table stuck on "Loading meal orders...".
     async function loadMealOrders() {
         const tbody = document.getElementById('meal-orders-list');
-        tbody.innerHTML = '<tr><td colspan="7" class="empty-state">Loading orders...</td></tr>';
+        if (!tbody) return;
+        tbody.innerHTML = '<tr><td colspan="7" class="empty-state">Loading meal orders...</td></tr>';
         try {
-            const orders = await apiFetch('/orders/my') || [];
-            if (!orders.length) {
+            const orders = await apiFetch('/orders/my');
+            if (!Array.isArray(orders) || !orders.length) {
                 tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No meal orders yet</td></tr>';
                 return;
             }
@@ -344,6 +357,10 @@
             }).join('');
         } catch (error) {
             tbody.innerHTML = '<tr><td colspan="7" class="empty-state">Could not load meal orders</td></tr>';
+            // Show the actual error so it's visible during debugging
+            if (typeof showAlert === 'function') {
+                showAlert('Could not load meal orders: ' + error.message, 'error');
+            }
         }
     }
 
@@ -352,8 +369,13 @@
         await loadMealOrders();
     }
 
-    function init() {
-        if (!window.apiFetch || !window.showView) return;
+    function init(attempt = 0) {
+        if (!window.apiFetch || !window.showView) {
+            if (attempt < 20) {
+                setTimeout(() => init(attempt + 1), 50);
+            }
+            return;
+        }
         injectStyles();
         addView();
         addNavItem();
