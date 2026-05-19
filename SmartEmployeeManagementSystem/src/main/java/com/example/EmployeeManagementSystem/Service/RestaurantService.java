@@ -95,6 +95,22 @@ public class RestaurantService {
     }
 
     /**
+     * Re-activate a previously deactivated restaurant.
+     * Only the owning vendor may do this.
+     */
+    public void activateRestaurant(Long restaurantId, Authentication authentication) {
+        Restaurant restaurant = findOrThrow(restaurantId);
+        String email = AuthUtil.extractEmail(authentication);
+        vendorRepo.findByEmail(email).orElseThrow(
+                () -> new VendorNotFoundException("Vendor Not found")
+        );
+        assertOwnership(restaurantId, email);
+        restaurant.setActive(true);
+        restaurantRepository.save(restaurant);
+        log.info("Restaurant activated: id={}", restaurantId);
+    }
+
+    /**
      * Get all restaurants owned by a vendor.
      * VENDOR-only endpoint.
      */

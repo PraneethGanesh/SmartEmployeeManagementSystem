@@ -128,81 +128,81 @@
         .notif-time { font-size: 11px; color: var(--text3); margin-top: 4px; }
 
         /* ===== CALENDAR STYLES ===== */
-.leave-balance-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 14px; padding: 20px;
-    border-bottom: 1px solid var(--border);
-}
-.leave-bal-card {
-    background: var(--bg3); border: 1px solid var(--border);
-    border-radius: 10px; padding: 16px 18px;
-    display: flex; flex-direction: column; gap: 6px;
-    position: relative; overflow: hidden; transition: border-color 0.2s;
-}
-.leave-bal-card:hover { border-color: var(--border2); }
-.leave-bal-card::before {
-    content: ''; position: absolute;
-    left: 0; top: 0; bottom: 0; width: 3px;
-    border-radius: 3px 0 0 3px;
-}
-.leave-bal-card.sick::before   { background: var(--red); }
-.leave-bal-card.casual::before { background: var(--amber); }
-.leave-bal-card.mat::before    { background: var(--accent); }
-.leave-bal-card.total::before  { background: var(--green); }
-.lbc-icon  { font-size: 18px; }
-.lbc-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
-.lbc-count { font-size: 24px; font-weight: 700; color: var(--text); font-family: var(--mono); line-height: 1; }
-.lbc-sub   { font-size: 11px; color: var(--text3); }
-.cal-legend {
-    display: flex; align-items: center; gap: 20px;
-    padding: 12px 20px; border-bottom: 1px solid var(--border); flex-wrap: wrap;
-}
-.legend-label { font-size: 11px; color: var(--text3); font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; margin-right: 4px; }
-.legend-item  { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text2); }
-.legend-dot   { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-.cal-section  { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 20px; overflow: hidden; }
-.cal-section-head { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
-.cal-section-title { font-size: 16px; font-weight: 600; color: var(--text); }
-.cal-section-sub   { font-size: 12px; color: var(--text2); margin-top: 2px; }
-#employee-calendar { padding: 16px 20px 20px; }
-#employee-calendar .fc .fc-toolbar-title { font-family: var(--font); font-size: 15px; font-weight: 600; color: var(--text); }
-#employee-calendar .fc .fc-button {
-    background: var(--panel2); border: 1px solid var(--border2);
-    color: var(--text2); font-family: var(--font); font-size: 12px;
-    font-weight: 600; border-radius: 6px; padding: 5px 12px;
-    transition: all 0.2s; box-shadow: none; text-transform: capitalize;
-}
-#employee-calendar .fc .fc-button:hover,
-#employee-calendar .fc .fc-button-active,
-#employee-calendar .fc .fc-button:not(:disabled):active {
-    background: var(--accent-dim); border-color: var(--accent); color: var(--accent); box-shadow: none;
-}
-#employee-calendar .fc .fc-button:focus { box-shadow: none; outline: none; }
-#employee-calendar .fc-theme-standard td,
-#employee-calendar .fc-theme-standard th,
-#employee-calendar .fc-theme-standard .fc-scrollgrid { border-color: var(--border); }
-#employee-calendar .fc .fc-col-header-cell-cushion {
-    font-family: var(--font); font-size: 11px; font-weight: 600;
-    color: var(--text3); text-transform: uppercase; letter-spacing: 0.8px; padding: 8px 4px;
-}
-#employee-calendar .fc .fc-daygrid-day-number { font-family: var(--mono); font-size: 12px; color: var(--text3); padding: 6px 8px; }
-#employee-calendar .fc .fc-daygrid-day.fc-day-today { background: var(--accent-dim) !important; }
-#employee-calendar .fc .fc-daygrid-day.fc-day-today .fc-daygrid-day-number { color: var(--accent); font-weight: 700; }
-#employee-calendar .fc-daygrid-day-frame { background: var(--bg3); }
-#employee-calendar .fc .fc-day-other .fc-daygrid-day-frame { background: var(--bg2); }
-#employee-calendar .fc-event {
-    border: none !important; border-radius: 4px;
-    font-family: var(--font); font-size: 11px; font-weight: 600; padding: 2px 6px; cursor: pointer;
-}
-.cal-tooltip {
-    position: fixed; background: var(--panel2); border: 1px solid var(--border2);
-    border-radius: 8px; padding: 10px 14px; font-size: 12px; color: var(--text);
-    z-index: 9999; pointer-events: none; max-width: 200px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-}
-.cal-tooltip .tt-title { font-weight: 600; margin-bottom: 4px; font-size: 13px; }
-.cal-tooltip .tt-row   { color: var(--text2); margin-top: 2px; }
+        .leave-balance-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 14px; padding: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+        .leave-bal-card {
+            background: var(--bg3); border: 1px solid var(--border);
+            border-radius: 10px; padding: 16px 18px;
+            display: flex; flex-direction: column; gap: 6px;
+            position: relative; overflow: hidden; transition: border-color 0.2s;
+        }
+        .leave-bal-card:hover { border-color: var(--border2); }
+        .leave-bal-card::before {
+            content: ''; position: absolute;
+            left: 0; top: 0; bottom: 0; width: 3px;
+            border-radius: 3px 0 0 3px;
+        }
+        .leave-bal-card.sick::before   { background: var(--red); }
+        .leave-bal-card.casual::before { background: var(--amber); }
+        .leave-bal-card.mat::before    { background: var(--accent); }
+        .leave-bal-card.total::before  { background: var(--green); }
+        .lbc-icon  { font-size: 18px; }
+        .lbc-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+        .lbc-count { font-size: 24px; font-weight: 700; color: var(--text); font-family: var(--mono); line-height: 1; }
+        .lbc-sub   { font-size: 11px; color: var(--text3); }
+        .cal-legend {
+            display: flex; align-items: center; gap: 20px;
+            padding: 12px 20px; border-bottom: 1px solid var(--border); flex-wrap: wrap;
+        }
+        .legend-label { font-size: 11px; color: var(--text3); font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; margin-right: 4px; }
+        .legend-item  { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text2); }
+        .legend-dot   { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+        .cal-section  { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 20px; overflow: hidden; }
+        .cal-section-head { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .cal-section-title { font-size: 16px; font-weight: 600; color: var(--text); }
+        .cal-section-sub   { font-size: 12px; color: var(--text2); margin-top: 2px; }
+        #employee-calendar { padding: 16px 20px 20px; }
+        #employee-calendar .fc .fc-toolbar-title { font-family: var(--font); font-size: 15px; font-weight: 600; color: var(--text); }
+        #employee-calendar .fc .fc-button {
+            background: var(--panel2); border: 1px solid var(--border2);
+            color: var(--text2); font-family: var(--font); font-size: 12px;
+            font-weight: 600; border-radius: 6px; padding: 5px 12px;
+            transition: all 0.2s; box-shadow: none; text-transform: capitalize;
+        }
+        #employee-calendar .fc .fc-button:hover,
+        #employee-calendar .fc .fc-button-active,
+        #employee-calendar .fc .fc-button:not(:disabled):active {
+            background: var(--accent-dim); border-color: var(--accent); color: var(--accent); box-shadow: none;
+        }
+        #employee-calendar .fc .fc-button:focus { box-shadow: none; outline: none; }
+        #employee-calendar .fc-theme-standard td,
+        #employee-calendar .fc-theme-standard th,
+        #employee-calendar .fc-theme-standard .fc-scrollgrid { border-color: var(--border); }
+        #employee-calendar .fc .fc-col-header-cell-cushion {
+            font-family: var(--font); font-size: 11px; font-weight: 600;
+            color: var(--text3); text-transform: uppercase; letter-spacing: 0.8px; padding: 8px 4px;
+        }
+        #employee-calendar .fc .fc-daygrid-day-number { font-family: var(--mono); font-size: 12px; color: var(--text3); padding: 6px 8px; }
+        #employee-calendar .fc .fc-daygrid-day.fc-day-today { background: var(--accent-dim) !important; }
+        #employee-calendar .fc .fc-daygrid-day.fc-day-today .fc-daygrid-day-number { color: var(--accent); font-weight: 700; }
+        #employee-calendar .fc-daygrid-day-frame { background: var(--bg3); }
+        #employee-calendar .fc .fc-day-other .fc-daygrid-day-frame { background: var(--bg2); }
+        #employee-calendar .fc-event {
+            border: none !important; border-radius: 4px;
+            font-family: var(--font); font-size: 11px; font-weight: 600; padding: 2px 6px; cursor: pointer;
+        }
+        .cal-tooltip {
+            position: fixed; background: var(--panel2); border: 1px solid var(--border2);
+            border-radius: 8px; padding: 10px 14px; font-size: 12px; color: var(--text);
+            z-index: 9999; pointer-events: none; max-width: 200px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+        }
+        .cal-tooltip .tt-title { font-weight: 600; margin-bottom: 4px; font-size: 13px; }
+        .cal-tooltip .tt-row   { color: var(--text2); margin-top: 2px; }
     </style>
 </head>
 <body>
@@ -1224,31 +1224,31 @@
         document.getElementById('pageTitle').textContent = viewName.split('-').map(w =>
             w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
         const loaders = {
-    'dashboard': loadDashboard,
-    'employees': loadEmployees,
-    'add-employee': loadManagersDropdown,
-    'holidays': loadHolidays,
-    'add-manager': () => {},
-    'add-vendor': () => {},
-    'my-leaves': loadMyLeaves,
-    'pending-leaves': loadPendingLeaves,
-    'restaurants': loadRestaurants,
-    'subscriptions': loadSubscriptions,
-    'add-subscription': loadRestaurantDropdown,
-    'meal-order': loadMealOrderWorkspace,
-    'deliveries': loadDeliveries,
-    'vendors': loadVendors,
-    'vendor-negotiations': loadVendorNegotiations,
-    'devices': loadUnassignedDevices,
-    'my-devices': loadMyAssignedDevices,
-    'service-requests': loadServiceRequests,
-    'admin-service-requests': loadAdminServiceRequests,
-    'my-profile': loadAdminProfile,
+            'dashboard': loadDashboard,
+            'employees': loadEmployees,
+            'add-employee': loadManagersDropdown,
+            'holidays': loadHolidays,
+            'add-manager': () => {},
+            'add-vendor': () => {},
+            'my-leaves': loadMyLeaves,
+            'pending-leaves': loadPendingLeaves,
+            'restaurants': loadRestaurants,
+            'subscriptions': loadSubscriptions,
+            'add-subscription': loadRestaurantDropdown,
+            'meal-order': (...args) => window.loadMealOrderWorkspace?.(...args),
+            'deliveries': loadDeliveries,
+            'vendors': loadVendors,
+            'vendor-negotiations': loadVendorNegotiations,
+            'devices': loadUnassignedDevices,
+            'my-devices': loadMyAssignedDevices,
+            'service-requests': loadServiceRequests,
+            'admin-service-requests': loadAdminServiceRequests,
+            'my-profile': loadAdminProfile,
             'two-factor': loadTotpStatus,
-      'my-calendar': loadMyCalendar,
-      'create-admin': () => {},
-      'promote-employee': loadPromotableEmployees
-};
+            'my-calendar': loadMyCalendar,
+            'create-admin': () => {},
+            'promote-employee': loadPromotableEmployees
+        };
         if (loaders[viewName]) loaders[viewName]();
     }
 
@@ -1301,51 +1301,51 @@
         } catch (e) { console.error(e); }
     }
 
-   async function loadManagersDropdown() {
-    try {
-        const managers = await apiFetch('/admin/managers');
-        const select = document.getElementById('employee-manager-select');
-        select.innerHTML = '<option value="">-- Select Manager --</option>';
-        (managers || []).forEach(m => {
-            const opt = document.createElement('option');
-            opt.value = m.managerId;  // ✅ matches ManagerDTO field
-            opt.textContent = `${m.name} — ${m.dept || 'N/A'} (${m.email})`;
-            select.appendChild(opt);
-        });
-    } catch (e) {
-        showAlert('Failed to load managers', 'error');
+    async function loadManagersDropdown() {
+        try {
+            const managers = await apiFetch('/admin/managers');
+            const select = document.getElementById('employee-manager-select');
+            select.innerHTML = '<option value="">-- Select Manager --</option>';
+            (managers || []).forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = m.managerId;  // ✅ matches ManagerDTO field
+                opt.textContent = `${m.name} — ${m.dept || 'N/A'} (${m.email})`;
+                select.appendChild(opt);
+            });
+        } catch (e) {
+            showAlert('Failed to load managers', 'error');
+        }
     }
-}
 
 
 
     async function createEmployee() {
-    const managerId = document.getElementById('employee-manager-select').value;
-    const body = {
-        name: document.getElementById('employee-name').value.trim(),
-        email: document.getElementById('employee-email').value.trim(),
-        password: document.getElementById('employee-password').value,
-        gender: document.getElementById('employee-gender').value,
-        timezone: document.getElementById('employee-timezone').value || 'UTC',
-        managerId: parseInt(managerId)
-    };
-    if (!body.name || !body.email || !body.password) {
-        showAlert('Please fill all employee fields', 'error');
-        return;
+        const managerId = document.getElementById('employee-manager-select').value;
+        const body = {
+            name: document.getElementById('employee-name').value.trim(),
+            email: document.getElementById('employee-email').value.trim(),
+            password: document.getElementById('employee-password').value,
+            gender: document.getElementById('employee-gender').value,
+            timezone: document.getElementById('employee-timezone').value || 'UTC',
+            managerId: parseInt(managerId)
+        };
+        if (!body.name || !body.email || !body.password) {
+            showAlert('Please fill all employee fields', 'error');
+            return;
+        }
+        if (!managerId) {
+            showAlert('Please select a manager', 'error');
+            return;
+        }
+        try {
+            await apiFetch('/admin/employees', { method: 'POST', body: JSON.stringify(body) });
+            showAlert('Employee created successfully!', 'success');
+            clearEmployeeForm('employee');
+            loadEmployees();
+        } catch (e) {
+            showAlert('Failed to create employee: ' + e.message, 'error');
+        }
     }
-    if (!managerId) {
-        showAlert('Please select a manager', 'error');
-        return;
-    }
-    try {
-        await apiFetch('/admin/employees', { method: 'POST', body: JSON.stringify(body) });
-        showAlert('Employee created successfully!', 'success');
-        clearEmployeeForm('employee');
-        loadEmployees();
-    } catch (e) {
-        showAlert('Failed to create employee: ' + e.message, 'error');
-    }
-}
 
     async function createManager() {
         const body = {
@@ -1368,15 +1368,15 @@
         } catch (e) { showAlert('Failed to create manager: ' + e.message, 'error'); }
     }
 
-   function clearEmployeeForm(type) {
-    const fields = type === 'manager'
-        ? ['manager-name-create', 'manager-email-create', 'manager-password-create', 'manager-dept-create', 'manager-timezone-create']
-        : ['employee-name', 'employee-email', 'employee-password', 'employee-timezone'];
-    fields.forEach(id => document.getElementById(id).value = '');
-    if (type === 'employee') {
-        document.getElementById('employee-manager-select').value = '';
+    function clearEmployeeForm(type) {
+        const fields = type === 'manager'
+            ? ['manager-name-create', 'manager-email-create', 'manager-password-create', 'manager-dept-create', 'manager-timezone-create']
+            : ['employee-name', 'employee-email', 'employee-password', 'employee-timezone'];
+        fields.forEach(id => document.getElementById(id).value = '');
+        if (type === 'employee') {
+            document.getElementById('employee-manager-select').value = '';
+        }
     }
-}
 
     async function deleteEmployee(employeeId) {
         if (!confirm(`Delete employee #${employeeId}?`)) return;
@@ -2159,16 +2159,16 @@
     document.getElementById('leave-end').valueAsDate = new Date();
 
     // ============ HOLIDAYS ============
-async function loadHolidays() {
-    try {
-        const year = new Date().getFullYear();
-        const holidays = await apiFetch(`/holidays?year=${year}`);
-        const tbody = document.getElementById('holidays-list');
-        if (!holidays || !holidays.length) {
-            tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No holidays added yet</td></tr>';
-            return;
-        }
-        tbody.innerHTML = holidays.map(h => `<tr>
+    async function loadHolidays() {
+        try {
+            const year = new Date().getFullYear();
+            const holidays = await apiFetch(`/holidays?year=${year}`);
+            const tbody = document.getElementById('holidays-list');
+            if (!holidays || !holidays.length) {
+                tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No holidays added yet</td></tr>';
+                return;
+            }
+            tbody.innerHTML = holidays.map(h => `<tr>
             <td>#${h.id}</td>
             <td><strong>${h.name}</strong></td>
             <td>${h.date}</td>
@@ -2177,269 +2177,269 @@ async function loadHolidays() {
                 <button class="btn btn-danger btn-sm" onclick="deleteHoliday(${h.id})">Delete</button>
             </td>
         </tr>`).join('');
-    } catch(e) { console.error(e); }
-}
+        } catch(e) { console.error(e); }
+    }
 
-async function addHoliday() {
-    const name = document.getElementById('h-name').value.trim();
-    const date = document.getElementById('h-date').value;
-    const description = document.getElementById('h-desc').value.trim();
-    if (!name || !date) { showAlert('Please enter name and date', 'error'); return; }
-    try {
-        await apiFetch('/holidays', {
-            method: 'POST',
-            body: JSON.stringify({ name, date, description })
-        });
-        showAlert('Holiday added!', 'success');
-        clearHolidayForm();
-        loadHolidays();
-    } catch(e) { showAlert('Failed: ' + e.message, 'error'); }
-}
+    async function addHoliday() {
+        const name = document.getElementById('h-name').value.trim();
+        const date = document.getElementById('h-date').value;
+        const description = document.getElementById('h-desc').value.trim();
+        if (!name || !date) { showAlert('Please enter name and date', 'error'); return; }
+        try {
+            await apiFetch('/holidays', {
+                method: 'POST',
+                body: JSON.stringify({ name, date, description })
+            });
+            showAlert('Holiday added!', 'success');
+            clearHolidayForm();
+            loadHolidays();
+        } catch(e) { showAlert('Failed: ' + e.message, 'error'); }
+    }
 
-async function deleteHoliday(id) {
-    if (!confirm('Delete this holiday?')) return;
-    try {
-        await apiFetch(`/holidays/${id}`, { method: 'DELETE' });
-        showAlert('Holiday deleted', 'success');
-        loadHolidays();
-    } catch(e) { showAlert('Failed: ' + e.message, 'error'); }
-}
+    async function deleteHoliday(id) {
+        if (!confirm('Delete this holiday?')) return;
+        try {
+            await apiFetch(`/holidays/${id}`, { method: 'DELETE' });
+            showAlert('Holiday deleted', 'success');
+            loadHolidays();
+        } catch(e) { showAlert('Failed: ' + e.message, 'error'); }
+    }
 
-function clearHolidayForm() {
-    document.getElementById('h-name').value = '';
-    document.getElementById('h-date').value = '';
-    document.getElementById('h-desc').value = '';
-}
+    function clearHolidayForm() {
+        document.getElementById('h-name').value = '';
+        document.getElementById('h-date').value = '';
+        document.getElementById('h-desc').value = '';
+    }
 
     // ============ MY PROFILE ============
-async function loadAdminProfile() {
-    try {
-        const me = await apiFetch('/employee/me');
-        if(me) {
-            document.getElementById('p-name').value   = me.name     || '—';
-            document.getElementById('p-email').value  = me.email    || '—';
-            document.getElementById('p-dept').value   = me.dept     || '—';
-            document.getElementById('p-role').value   = me.role     || 'ADMIN';
-            document.getElementById('p-status').value = me.status   || '—';
-            document.getElementById('p-tz').value     = me.timezone || '—';
+    async function loadAdminProfile() {
+        try {
+            const me = await apiFetch('/employee/me');
+            if(me) {
+                document.getElementById('p-name').value   = me.name     || '—';
+                document.getElementById('p-email').value  = me.email    || '—';
+                document.getElementById('p-dept').value   = me.dept     || '—';
+                document.getElementById('p-role').value   = me.role     || 'ADMIN';
+                document.getElementById('p-status').value = me.status   || '—';
+                document.getElementById('p-tz').value     = me.timezone || '—';
 
-            // Show maternity section only for female admins
-            document.getElementById('maternity-apply-btn').style.display =
-                me.gender === 'F' ? 'block' : 'none';
+                // Show maternity section only for female admins
+                document.getElementById('maternity-apply-btn').style.display =
+                    me.gender === 'F' ? 'block' : 'none';
+            }
+        } catch(e) {
+            showAlert('Could not load profile', 'error');
         }
-    } catch(e) {
-        showAlert('Could not load profile', 'error');
-    }
-}
-
-// Auto calculate maternity end date
-document.getElementById('mat-start-date').addEventListener('change', function(){
-    if(this.value) {
-        const end = new Date(this.value);
-        end.setDate(end.getDate() + 179);
-        document.getElementById('mat-end-date').value =
-            end.toISOString().split('T')[0];
-    } else {
-        document.getElementById('mat-end-date').value = '';
-    }
-});
-
-// Submit maternity leave
-async function applyMaternityLeave() {
-    const startDate = document.getElementById('mat-start-date').value;
-    const reason    = document.getElementById('mat-reason').value.trim();
-
-    if(!startDate) {
-        showAlert('Please select a start date', 'error');
-        return;
     }
 
-    try {
-        await apiFetch('/leave_requests/maternity/apply', {
-            method: 'POST',
-            body: JSON.stringify({ startDate, reason })
-        });
-        showAlert('Maternity leave submitted successfully!', 'success');
-        document.getElementById('mat-start-date').value = '';
-        document.getElementById('mat-end-date').value   = '';
-        document.getElementById('mat-reason').value     = '';
-        loadMyLeaves();
-    } catch(e) {
-        showAlert('Failed: ' + e.message, 'error');
-    }
-}
-
-      // ============ CALENDAR ============
-let employeeCalendar = null;
-let calendarInitialized = false;
-
-const STATUS_COLORS = {
-    APPROVED: { bg:'rgba(54,211,153,0.25)',  border:'#36d399', text:'#36d399' },
-    PENDING:  { bg:'rgba(249,199,79,0.25)',  border:'#f9c74f', text:'#f9c74f' },
-    REJECTED: { bg:'rgba(248,113,113,0.25)', border:'#f87171', text:'#f87171' },
-    HOLIDAY:  { bg:'rgba(167,139,250,0.25)', border:'#a78bfa', text:'#a78bfa' },
-};
-const TYPE_LABEL = {
-    SICK:'🤒 Sick', CASUAL:'🏖️ Casual',
-    MATERNITY:'👶 Maternity', UNPAID:'🚫 Unpaid'
-};
-
-async function loadMyCalendar() {
-    await loadCalendarBalanceCards();
-    if(!calendarInitialized) {
-        initFullCalendar();
-    } else {
-        await refreshCalendarEvents();
-    }
-}
-
-async function loadCalendarBalanceCards() {
-    try {
-        const dashboard = await apiFetch('/api/employees/me/leave-dashboard');
-
-        /* ── SICK ── */
-        const sickBadge = document.getElementById('cal-sick-month-badge');
-        const sick      = dashboard?.sick;
-        const sickAvail = Number(sick?.available ?? 0);
-
-        if (sickAvail === 0) {
-            document.getElementById('cal-sick-remaining').textContent = '0';
-            sickBadge.textContent      = 'No sick balance';
-            sickBadge.style.background = 'var(--amber-dim)';
-            sickBadge.style.color      = 'var(--amber)';
-            sickBadge.style.border     = '1px solid rgba(251,191,36,0.25)';
+    // Auto calculate maternity end date
+    document.getElementById('mat-start-date').addEventListener('change', function(){
+        if(this.value) {
+            const end = new Date(this.value);
+            end.setDate(end.getDate() + 179);
+            document.getElementById('mat-end-date').value =
+                end.toISOString().split('T')[0];
         } else {
-            document.getElementById('cal-sick-remaining').textContent = sickAvail;
-            sickBadge.textContent      = 'Available this year';
-            sickBadge.style.background = 'var(--green-dim)';
-            sickBadge.style.color      = 'var(--green)';
-            sickBadge.style.border     = '1px solid rgba(52,211,153,0.25)';
-        }
-
-        /* ── CASUAL ── */
-        const cas      = dashboard?.casual;
-        const casAvail = Number(cas?.available ?? 0);
-        const casTotal = Number(cas?.opening   ?? 0) + Number(cas?.accrued ?? 0);
-        const casUsed  = Number(cas?.used      ?? 0);
-
-        document.getElementById('cal-casual-remaining').textContent = casAvail;
-        document.getElementById('cal-casual-sub').textContent =
-            `${casUsed} used · ${casTotal} total this year`;
-
-    } catch(e) {
-        console.error('Could not load leave balances:', e);
-        document.getElementById('cal-sick-remaining').textContent   = '--';
-        document.getElementById('cal-casual-remaining').textContent = '--';
-    }
-}
-
-async function buildCalendarEvents() {
-    const events = [];
-    try {
-        const data   = await apiFetch('/leave_requests/employee');
-        const leaves = data?.requests || data || [];
-        leaves.forEach(l => {
-            const s = (l.status || 'PENDING').toUpperCase();
-            const c = STATUS_COLORS[s] || STATUS_COLORS.PENDING;
-            let endDate = l.endDate;
-            if(endDate) {
-                const d = new Date(endDate);
-                d.setDate(d.getDate() + 1);
-                endDate = d.toISOString().split('T')[0];
-            }
-            events.push({
-                id: `leave-${l.leaveRequestId}`,
-                title: `${TYPE_LABEL[l.leaveType] || l.leaveType} (${s.charAt(0)+s.slice(1).toLowerCase()})`,
-                start: l.startDate, end: endDate, allDay: true,
-                backgroundColor: c.bg, borderColor: c.border, textColor: c.text,
-                extendedProps: { type:'leave', status:s, reason:l.reason||'—', leaveType:l.leaveType }
-            });
-        });
-    } catch(e) { console.warn('Could not load leaves for calendar'); }
-
-    try {
-        const holidays = await apiFetch('/holidays');
-        (holidays || []).forEach(h => {
-            const c = STATUS_COLORS.HOLIDAY;
-            events.push({
-                id: `holiday-${h.id||Math.random()}`,
-                title: `🎉 ${h.name || 'Holiday'}`,
-                start: h.date || h.holidayDate, allDay: true,
-                backgroundColor: c.bg, borderColor: c.border, textColor: c.text,
-                extendedProps: { type:'holiday', description: h.description||'' }
-            });
-        });
-    } catch(e) { console.warn('Could not load holidays for calendar'); }
-
-    return events;
-}
-
-function initFullCalendar() {
-    employeeCalendar = new FullCalendar.Calendar(
-        document.getElementById('employee-calendar'), {
-        initialView: 'dayGridMonth',
-        height: 'auto',
-        headerToolbar: {
-            left:'prev,next today', center:'title', right:'dayGridMonth,dayGridWeek,listMonth'
-        },
-        buttonText: { today:'Today', month:'Month', week:'Week', listMonth:'List' },
-        dayMaxEvents: 3,
-        navLinks: true,
-        events: [],
-        eventMouseEnter: function(info) {
-            const ep = info.event.extendedProps;
-            const tt = document.getElementById('cal-tooltip');
-            let html = `<div class="tt-title">${info.event.title}</div>`;
-            if(ep.type === 'leave') {
-                html += `<div class="tt-row">📅 ${info.event.startStr}</div>`;
-                if(ep.reason && ep.reason !== '—')
-                    html += `<div class="tt-row">💬 ${ep.reason.substring(0,60)}</div>`;
-                html += `<div class="tt-row">Status: <strong style="color:${STATUS_COLORS[ep.status]?.text||'#fff'}">${ep.status}</strong></div>`;
-            } else if(ep.description) {
-                html += `<div class="tt-row">${ep.description}</div>`;
-            }
-            tt.innerHTML = html;
-            tt.style.display = 'block';
-        },
-        eventMouseLeave: function() {
-            document.getElementById('cal-tooltip').style.display = 'none';
-        },
-        eventClick: function(info) {
-            if(info.event.extendedProps.type === 'leave') {
-                showView('my-leaves', null);
-            }
+            document.getElementById('mat-end-date').value = '';
         }
     });
-    employeeCalendar.render();
-    calendarInitialized = true;
-    refreshCalendarEvents();
-}
 
-async function refreshCalendarEvents() {
-    if(!employeeCalendar) return;
-    const events = await buildCalendarEvents();
-    employeeCalendar.removeAllEvents();
-    events.forEach(e => employeeCalendar.addEvent(e));
-}
+    // Submit maternity leave
+    async function applyMaternityLeave() {
+        const startDate = document.getElementById('mat-start-date').value;
+        const reason    = document.getElementById('mat-reason').value.trim();
 
-async function refreshCalendar() {
-    await loadCalendarBalanceCards();
-    await refreshCalendarEvents();
-    showAlert('Calendar refreshed!', 'success');
-}
+        if(!startDate) {
+            showAlert('Please select a start date', 'error');
+            return;
+        }
 
-document.addEventListener('mousemove', function(e) {
-    const tt = document.getElementById('cal-tooltip');
-    if(tt && tt.style.display === 'block') {
-        tt.style.left = (e.clientX + 14) + 'px';
-        tt.style.top  = (e.clientY + 14) + 'px';
-        const rect = tt.getBoundingClientRect();
-        if(rect.right > window.innerWidth)
-            tt.style.left = (e.clientX - rect.width - 10) + 'px';
-        if(rect.bottom > window.innerHeight)
-            tt.style.top  = (e.clientY - rect.height - 10) + 'px';
+        try {
+            await apiFetch('/leave_requests/maternity/apply', {
+                method: 'POST',
+                body: JSON.stringify({ startDate, reason })
+            });
+            showAlert('Maternity leave submitted successfully!', 'success');
+            document.getElementById('mat-start-date').value = '';
+            document.getElementById('mat-end-date').value   = '';
+            document.getElementById('mat-reason').value     = '';
+            loadMyLeaves();
+        } catch(e) {
+            showAlert('Failed: ' + e.message, 'error');
+        }
     }
-});
+
+    // ============ CALENDAR ============
+    let employeeCalendar = null;
+    let calendarInitialized = false;
+
+    const STATUS_COLORS = {
+        APPROVED: { bg:'rgba(54,211,153,0.25)',  border:'#36d399', text:'#36d399' },
+        PENDING:  { bg:'rgba(249,199,79,0.25)',  border:'#f9c74f', text:'#f9c74f' },
+        REJECTED: { bg:'rgba(248,113,113,0.25)', border:'#f87171', text:'#f87171' },
+        HOLIDAY:  { bg:'rgba(167,139,250,0.25)', border:'#a78bfa', text:'#a78bfa' },
+    };
+    const TYPE_LABEL = {
+        SICK:'🤒 Sick', CASUAL:'🏖️ Casual',
+        MATERNITY:'👶 Maternity', UNPAID:'🚫 Unpaid'
+    };
+
+    async function loadMyCalendar() {
+        await loadCalendarBalanceCards();
+        if(!calendarInitialized) {
+            initFullCalendar();
+        } else {
+            await refreshCalendarEvents();
+        }
+    }
+
+    async function loadCalendarBalanceCards() {
+        try {
+            const dashboard = await apiFetch('/api/employees/me/leave-dashboard');
+
+            /* ── SICK ── */
+            const sickBadge = document.getElementById('cal-sick-month-badge');
+            const sick      = dashboard?.sick;
+            const sickAvail = Number(sick?.available ?? 0);
+
+            if (sickAvail === 0) {
+                document.getElementById('cal-sick-remaining').textContent = '0';
+                sickBadge.textContent      = 'No sick balance';
+                sickBadge.style.background = 'var(--amber-dim)';
+                sickBadge.style.color      = 'var(--amber)';
+                sickBadge.style.border     = '1px solid rgba(251,191,36,0.25)';
+            } else {
+                document.getElementById('cal-sick-remaining').textContent = sickAvail;
+                sickBadge.textContent      = 'Available this year';
+                sickBadge.style.background = 'var(--green-dim)';
+                sickBadge.style.color      = 'var(--green)';
+                sickBadge.style.border     = '1px solid rgba(52,211,153,0.25)';
+            }
+
+            /* ── CASUAL ── */
+            const cas      = dashboard?.casual;
+            const casAvail = Number(cas?.available ?? 0);
+            const casTotal = Number(cas?.opening   ?? 0) + Number(cas?.accrued ?? 0);
+            const casUsed  = Number(cas?.used      ?? 0);
+
+            document.getElementById('cal-casual-remaining').textContent = casAvail;
+            document.getElementById('cal-casual-sub').textContent =
+                `${casUsed} used · ${casTotal} total this year`;
+
+        } catch(e) {
+            console.error('Could not load leave balances:', e);
+            document.getElementById('cal-sick-remaining').textContent   = '--';
+            document.getElementById('cal-casual-remaining').textContent = '--';
+        }
+    }
+
+    async function buildCalendarEvents() {
+        const events = [];
+        try {
+            const data   = await apiFetch('/leave_requests/employee');
+            const leaves = data?.requests || data || [];
+            leaves.forEach(l => {
+                const s = (l.status || 'PENDING').toUpperCase();
+                const c = STATUS_COLORS[s] || STATUS_COLORS.PENDING;
+                let endDate = l.endDate;
+                if(endDate) {
+                    const d = new Date(endDate);
+                    d.setDate(d.getDate() + 1);
+                    endDate = d.toISOString().split('T')[0];
+                }
+                events.push({
+                    id: `leave-${l.leaveRequestId}`,
+                    title: `${TYPE_LABEL[l.leaveType] || l.leaveType} (${s.charAt(0)+s.slice(1).toLowerCase()})`,
+                    start: l.startDate, end: endDate, allDay: true,
+                    backgroundColor: c.bg, borderColor: c.border, textColor: c.text,
+                    extendedProps: { type:'leave', status:s, reason:l.reason||'—', leaveType:l.leaveType }
+                });
+            });
+        } catch(e) { console.warn('Could not load leaves for calendar'); }
+
+        try {
+            const holidays = await apiFetch('/holidays');
+            (holidays || []).forEach(h => {
+                const c = STATUS_COLORS.HOLIDAY;
+                events.push({
+                    id: `holiday-${h.id||Math.random()}`,
+                    title: `🎉 ${h.name || 'Holiday'}`,
+                    start: h.date || h.holidayDate, allDay: true,
+                    backgroundColor: c.bg, borderColor: c.border, textColor: c.text,
+                    extendedProps: { type:'holiday', description: h.description||'' }
+                });
+            });
+        } catch(e) { console.warn('Could not load holidays for calendar'); }
+
+        return events;
+    }
+
+    function initFullCalendar() {
+        employeeCalendar = new FullCalendar.Calendar(
+            document.getElementById('employee-calendar'), {
+                initialView: 'dayGridMonth',
+                height: 'auto',
+                headerToolbar: {
+                    left:'prev,next today', center:'title', right:'dayGridMonth,dayGridWeek,listMonth'
+                },
+                buttonText: { today:'Today', month:'Month', week:'Week', listMonth:'List' },
+                dayMaxEvents: 3,
+                navLinks: true,
+                events: [],
+                eventMouseEnter: function(info) {
+                    const ep = info.event.extendedProps;
+                    const tt = document.getElementById('cal-tooltip');
+                    let html = `<div class="tt-title">${info.event.title}</div>`;
+                    if(ep.type === 'leave') {
+                        html += `<div class="tt-row">📅 ${info.event.startStr}</div>`;
+                        if(ep.reason && ep.reason !== '—')
+                            html += `<div class="tt-row">💬 ${ep.reason.substring(0,60)}</div>`;
+                        html += `<div class="tt-row">Status: <strong style="color:${STATUS_COLORS[ep.status]?.text||'#fff'}">${ep.status}</strong></div>`;
+                    } else if(ep.description) {
+                        html += `<div class="tt-row">${ep.description}</div>`;
+                    }
+                    tt.innerHTML = html;
+                    tt.style.display = 'block';
+                },
+                eventMouseLeave: function() {
+                    document.getElementById('cal-tooltip').style.display = 'none';
+                },
+                eventClick: function(info) {
+                    if(info.event.extendedProps.type === 'leave') {
+                        showView('my-leaves', null);
+                    }
+                }
+            });
+        employeeCalendar.render();
+        calendarInitialized = true;
+        refreshCalendarEvents();
+    }
+
+    async function refreshCalendarEvents() {
+        if(!employeeCalendar) return;
+        const events = await buildCalendarEvents();
+        employeeCalendar.removeAllEvents();
+        events.forEach(e => employeeCalendar.addEvent(e));
+    }
+
+    async function refreshCalendar() {
+        await loadCalendarBalanceCards();
+        await refreshCalendarEvents();
+        showAlert('Calendar refreshed!', 'success');
+    }
+
+    document.addEventListener('mousemove', function(e) {
+        const tt = document.getElementById('cal-tooltip');
+        if(tt && tt.style.display === 'block') {
+            tt.style.left = (e.clientX + 14) + 'px';
+            tt.style.top  = (e.clientY + 14) + 'px';
+            const rect = tt.getBoundingClientRect();
+            if(rect.right > window.innerWidth)
+                tt.style.left = (e.clientX - rect.width - 10) + 'px';
+            if(rect.bottom > window.innerHeight)
+                tt.style.top  = (e.clientY - rect.height - 10) + 'px';
+        }
+    });
     // ============ TWO-FACTOR AUTH ============
     async function loadTotpStatus() {
         const chip = document.getElementById('totp-status-chip');
@@ -2524,35 +2524,35 @@ document.addEventListener('mousemove', function(e) {
     }
 
     async function createAdmin() {
-    const body = {
-        name:     document.getElementById('admin-name').value.trim(),
-        email:    document.getElementById('admin-email').value.trim(),
-        password: document.getElementById('admin-password').value,
-        gender:   document.getElementById('admin-gender').value,
-        timezone: document.getElementById('admin-timezone').value || 'UTC'
-    };
-    if (!body.name || !body.email || !body.password) {
-        showAlert('Please fill all required fields', 'error');
-        return;
-    }
-    try {
-        await apiFetch('/manager/createAdmin', { method: 'POST', body: JSON.stringify(body) });
-        showAlert('Admin created successfully!', 'success');
-        clearAdminForm();
-    } catch(e) {
-        showAlert('Failed to create admin: ' + e.message, 'error');
-    }
-}
-
-   async function loadPromotableEmployees() {
-    try {
-        const employees = await apiFetch('/admin/getEmployees');
-        const tbody = document.getElementById('promotable-employees-list');
-        if (!employees || !employees.length) {
-            tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No employees found</td></tr>';
+        const body = {
+            name:     document.getElementById('admin-name').value.trim(),
+            email:    document.getElementById('admin-email').value.trim(),
+            password: document.getElementById('admin-password').value,
+            gender:   document.getElementById('admin-gender').value,
+            timezone: document.getElementById('admin-timezone').value || 'UTC'
+        };
+        if (!body.name || !body.email || !body.password) {
+            showAlert('Please fill all required fields', 'error');
             return;
         }
-        tbody.innerHTML = employees.map(e => `<tr>
+        try {
+            await apiFetch('/manager/createAdmin', { method: 'POST', body: JSON.stringify(body) });
+            showAlert('Admin created successfully!', 'success');
+            clearAdminForm();
+        } catch(e) {
+            showAlert('Failed to create admin: ' + e.message, 'error');
+        }
+    }
+
+    async function loadPromotableEmployees() {
+        try {
+            const employees = await apiFetch('/admin/getEmployees');
+            const tbody = document.getElementById('promotable-employees-list');
+            if (!employees || !employees.length) {
+                tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No employees found</td></tr>';
+                return;
+            }
+            tbody.innerHTML = employees.map(e => `<tr>
             <td><strong>${e.name || '—'}</strong></td>
             <td>${e.email || '—'}</td>
             <td>${e.dept || '—'}</td>
@@ -2564,50 +2564,50 @@ document.addEventListener('mousemove', function(e) {
                 </button>
             </td>
         </tr>`).join('');
-    } catch(e) { console.error(e); }
-}
+        } catch(e) { console.error(e); }
+    }
 
-async function promoteEmployee(name, employeeId) {
-    if (!confirm(`Promote ${name} to Manager?`)) return;
-    try {
-        console.log(employeeId);
-        const msg = await apiFetch(`/admin/employees/promote/${employeeId}`, { method: 'PUT' });
-        console.log(msg);
-        showAlert(msg || 'Employee promoted to Manager!', 'success');
-        loadPromotableEmployees();
-        loadEmployees(); // refresh the employees list too
-    } catch(e) { showAlert('Failed: ' + e.message, 'error'); }
-}
+    async function promoteEmployee(name, employeeId) {
+        if (!confirm(`Promote ${name} to Manager?`)) return;
+        try {
+            console.log(employeeId);
+            const msg = await apiFetch(`/admin/employees/promote/${employeeId}`, { method: 'PUT' });
+            console.log(msg);
+            showAlert(msg || 'Employee promoted to Manager!', 'success');
+            loadPromotableEmployees();
+            loadEmployees(); // refresh the employees list too
+        } catch(e) { showAlert('Failed: ' + e.message, 'error'); }
+    }
 
-function clearAdminForm() {
-    ['admin-name', 'admin-email', 'admin-password'].forEach(id =>
-        document.getElementById(id).value = '');
-    document.getElementById('admin-gender').selectedIndex = 0;
-    document.getElementById('admin-timezone').value = 'Asia/Kolkata';
-}
+    function clearAdminForm() {
+        ['admin-name', 'admin-email', 'admin-password'].forEach(id =>
+            document.getElementById(id).value = '');
+        document.getElementById('admin-gender').selectedIndex = 0;
+        document.getElementById('admin-timezone').value = 'Asia/Kolkata';
+    }
 
     // ============ UNASSIGNED EMPLOYEES ============
-let managersCache = [];
+    let managersCache = [];
 
-async function loadUnassignedEmployees() {
-    try {
-        // Fetch both in parallel
-        const [employees, managers] = await Promise.all([
-            apiFetch('/admin/employees/managers'),
-            apiFetch('/admin/managers')
-        ]);
-        managersCache = managers || [];
+    async function loadUnassignedEmployees() {
+        try {
+            // Fetch both in parallel
+            const [employees, managers] = await Promise.all([
+                apiFetch('/admin/employees/managers'),
+                apiFetch('/admin/managers')
+            ]);
+            managersCache = managers || [];
 
-        const tbody = document.getElementById('unassigned-employees-list');
+            const tbody = document.getElementById('unassigned-employees-list');
 
-        if (!employees || !employees.length) {
-            tbody.innerHTML = `<tr><td colspan="7" class="empty-state">
+            if (!employees || !employees.length) {
+                tbody.innerHTML = `<tr><td colspan="7" class="empty-state">
                 ✅ All employees have a manager assigned.
             </td></tr>`;
-            return;
-        }
+                return;
+            }
 
-        tbody.innerHTML = employees.map(e => `
+            tbody.innerHTML = employees.map(e => `
             <tr id="unemp-row-${e.employeeId}">
                 <td>#${e.employeeId}</td>
                 <td><strong>${e.name || '—'}</strong></td>
@@ -2636,39 +2636,43 @@ async function loadUnassignedEmployees() {
                 </td>
             </tr>
         `).join('');
-    } catch (e) {
-        console.error(e);
-        showAlert('Failed to load unassigned employees', 'error');
+        } catch (e) {
+            console.error(e);
+            showAlert('Failed to load unassigned employees', 'error');
+        }
     }
-}
 
-async function assignManagerToEmployee(employeeId) {
-    const select = document.getElementById(`mgr-select-${employeeId}`);
-    const managerId = select?.value;
-    if (!managerId) {
-        showAlert('Please select a manager first', 'error');
-        return;
-    }
-    try {
-        const msg = await apiFetch(
-            `/admin/employees/${managerId}/${employeeId}`,
-            { method: 'PUT' }
-        );
-        showAlert(msg || 'Manager assigned successfully!', 'success');
-        // Remove the row immediately for snappy UX
-        const row = document.getElementById(`unemp-row-${employeeId}`);
-        if (row) row.remove();
-        // If table is now empty, show the all-clear message
-        const tbody = document.getElementById('unassigned-employees-list');
-        if (!tbody.querySelector('tr[id]')) {
-            tbody.innerHTML = `<tr><td colspan="7" class="empty-state">
+    async function assignManagerToEmployee(employeeId) {
+        const select = document.getElementById(`mgr-select-${employeeId}`);
+        const managerId = select?.value;
+        if (!managerId) {
+            showAlert('Please select a manager first', 'error');
+            return;
+        }
+        try {
+            const msg = await apiFetch(
+                `/admin/employees/${managerId}/${employeeId}`,
+                { method: 'PUT' }
+            );
+            showAlert(msg || 'Manager assigned successfully!', 'success');
+            // Remove the row immediately for snappy UX
+            const row = document.getElementById(`unemp-row-${employeeId}`);
+            if (row) row.remove();
+            // If table is now empty, show the all-clear message
+            const tbody = document.getElementById('unassigned-employees-list');
+            if (!tbody.querySelector('tr[id]')) {
+                tbody.innerHTML = `<tr><td colspan="7" class="empty-state">
                 ✅ All employees have a manager assigned.
             </td></tr>`;
+            }
+        } catch (e) {
+            showAlert('Failed to assign manager: ' + e.message, 'error');
         }
-    } catch (e) {
-        showAlert('Failed to assign manager: ' + e.message, 'error');
     }
-}
+
+    // Expose core helpers so external scripts (e.g. meal-order.js) can reference them
+    window.apiFetch = apiFetch;
+    window.showView = showView;
 </script>
 <script src="/meal-order.js"></script>
 </body>

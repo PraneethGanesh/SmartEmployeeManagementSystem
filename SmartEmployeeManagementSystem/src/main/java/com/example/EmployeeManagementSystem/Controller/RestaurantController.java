@@ -115,9 +115,21 @@ public class RestaurantController {
      * Employees call this when building their subscription to see valid options for each slot.
      */
     @GetMapping("/by-slot")
-    @PreAuthorize("hasAnyRole('ADMIN','VENDOR','EMPLOYEE','MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN','FOOD_VENDOR','EMPLOYEE','MANAGER')")
     public ResponseEntity<List<RestaurantDTO>> getRestaurantsByMealSlot(@RequestParam MealSlot slot) {
         return ResponseEntity.ok(restaurantService.getRestaurantsByMealSlot(slot));
+    }
+
+    /**
+     * Re-activate a previously deactivated restaurant.
+     * Only the owning vendor may do this.
+     */
+    @PutMapping("/{id}/activate")
+    @PreAuthorize("hasRole('FOOD_VENDOR')")
+    public ResponseEntity<String> activateRestaurant(@PathVariable Long id,
+                                                     Authentication authentication) {
+        restaurantService.activateRestaurant(id, authentication);
+        return ResponseEntity.ok("Restaurant " + id + " has been activated.");
     }
 
 }
