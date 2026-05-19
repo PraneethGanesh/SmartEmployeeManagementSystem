@@ -1578,10 +1578,14 @@
             window.location.href='/google.html';
         });
     }
+    let notifPollFailures = 0;
+    let notifPollTimer = null;
+
     async function loadNotifCount() {
         try {
             const data = await apiFetch('/notifications/unread-count');
             const badge = document.getElementById('notif-badge');
+            notifPollFailures = 0;
             if (data && data.count > 0) {
                 badge.textContent = data.count;
                 badge.style.display = 'flex';
@@ -1589,7 +1593,15 @@
                 badge.style.display = 'none';
             }
         } catch(e) {
+            notifPollFailures++;
             console.warn('Could not load notification count:', e);
+            if (notifPollFailures >= 3 && notifPollTimer) {
+                clearInterval(notifPollTimer);
+                notifPollTimer = null;
+                const badge = document.getElementById('notif-badge');
+                if (badge) badge.style.display = 'none';
+                console.warn('Notification polling paused after repeated failures.');
+            }
         }
     }
 
@@ -1633,7 +1645,7 @@
     // Load badge count on page load
     loadNotifCount();
     // Refresh count every 30 seconds
-    setInterval(loadNotifCount, 30000);
+    notifPollTimer = setInterval(loadNotifCount, 30000);
 
     document.getElementById('mat-start-date').addEventListener('change', function(){
     if(this.value) {
@@ -1771,7 +1783,8 @@
     // Expose core helpers so external scripts (e.g. meal-order.js) can reference them
     window.apiFetch = apiFetch;
     window.showView = showView;
+    window.showAlert = showAlert;
 </script>
-<script src="/meal-order.js"></script>
+<script src="/meal-order.js?v=2"></script>
 </body>
 </html>

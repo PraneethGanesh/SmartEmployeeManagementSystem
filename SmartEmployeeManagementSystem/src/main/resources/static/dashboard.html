@@ -561,12 +561,7 @@
                 <div class="table-wrap"><table><thead><tr><th>ID</th><th>Employee</th><th>Type</th><th>Start</th><th>End</th><th>Reason</th><th>Actions</th></tr></thead><tbody id="pending-leaves-list"></tbody></table></div>
             </div>
 
-            <div id="meal-order-view" class="view">
-                <div class="form-card" style="max-width:none">
-                    <div class="section-title">Meal Orders</div>
-                    <div class="empty-state">Loading meal orders...</div>
-                </div>
-            </div>
+            <div id="meal-order-view" class="view"></div>
 
             <!-- RESTAURANTS VIEW -->
             <div id="restaurants-view" class="view">
@@ -1203,7 +1198,7 @@
             if (!text) return null;
             try { return JSON.parse(text); } catch { return text; }
         } catch (e) {
-            if (!e.message.includes('Unauthorized')) showAlert(e.message, 'error');
+            if (!opts.silent && !e.message.includes('Unauthorized')) showAlert(e.message, 'error');
             throw e;
         }
     }
@@ -1235,7 +1230,19 @@
             'restaurants': loadRestaurants,
             'subscriptions': loadSubscriptions,
             'add-subscription': loadRestaurantDropdown,
-            'meal-order': (...args) => window.loadMealOrderWorkspace?.(...args),
+            'meal-order': () => {
+                if (window.loadMealOrderWorkspace) {
+                    window.loadMealOrderWorkspace();
+                } else {
+                    // meal-order.js not yet ready — poll until it is
+                    const _mow = setInterval(() => {
+                        if (window.loadMealOrderWorkspace) {
+                            clearInterval(_mow);
+                            window.loadMealOrderWorkspace();
+                        }
+                    }, 50);
+                }
+            },
             'deliveries': loadDeliveries,
             'vendors': loadVendors,
             'vendor-negotiations': loadVendorNegotiations,
@@ -2098,10 +2105,14 @@
                 window.location.href = '/google.html';
             });
     }
+    let notifPollFailures = 0;
+    let notifPollTimer = null;
+
     async function loadNotifCount() {
         try {
-            const data = await apiFetch('/notifications/unread-count');
+            const data = await apiFetch('/notifications/unread-count', { silent: true });
             const badge = document.getElementById('notif-badge');
+            notifPollFailures = 0;
 
             // Handles: plain number, { count: N }, or { unreadCount: N }
             const count = typeof data === 'number'
@@ -2114,7 +2125,17 @@
             } else {
                 badge.style.display = 'none';
             }
-        } catch(e) { console.warn('Notif count error', e); }
+        } catch(e) {
+            notifPollFailures++;
+            console.warn('Notif count error', e);
+            if (notifPollFailures >= 3 && notifPollTimer) {
+                clearInterval(notifPollTimer);
+                notifPollTimer = null;
+                const badge = document.getElementById('notif-badge');
+                if (badge) badge.style.display = 'none';
+                console.warn('Notification polling paused after repeated failures.');
+            }
+        }
     }
 
     async function toggleNotifPanel() {
@@ -2122,7 +2143,7 @@
         if (panel.style.display === 'none') {
             panel.style.display = 'block';
             await loadNotifications();
-            try { await apiFetch('/notifications/mark-read', { method: 'POST' }); } catch(e) {}
+            try { await apiFetch('/notifications/mark-read', { method: 'POST', silent: true }); } catch(e) {}
             document.getElementById('notif-badge').style.display = 'none';
         } else {
             panel.style.display = 'none';
@@ -2131,7 +2152,7 @@
 
     async function loadNotifications() {
         try {
-            const data = await apiFetch('/notifications');
+            const data = await apiFetch('/notifications', { silent: true });
             const list = document.getElementById('notif-list');
             list.innerHTML = (data && data.length)
                 ? data.map(n => `
@@ -2144,7 +2165,7 @@
     }
 
     loadNotifCount();
-    setInterval(loadNotifCount, 30000);
+    notifPollTimer = setInterval(loadNotifCount, 30000);
 
     document.addEventListener('click', e => {
         const panel = document.getElementById('notif-panel');
@@ -2674,6 +2695,6 @@
     window.apiFetch = apiFetch;
     window.showView = showView;
 </script>
-<script src="/meal-order.js"></script>
+<script src="/meal-order.js?v=2"></script>
 </body>
 </html>

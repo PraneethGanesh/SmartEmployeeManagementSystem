@@ -2,7 +2,8 @@
     const state = {
         subscriptions: [],
         menuItems: [],
-        quantities: {}
+        quantities: {},
+        selectedSubscriptionId: null
     };
 
     function roleKind() {
@@ -42,9 +43,18 @@
         const style = document.createElement('style');
         style.id = 'meal-order-styles';
         style.textContent = `
-            .meal-order-layout{display:grid;grid-template-columns:minmax(260px,360px) minmax(0,1fr);gap:18px;align-items:start}
+            .meal-order-layout{display:grid;grid-template-columns:minmax(300px,420px) minmax(0,1fr);gap:18px;align-items:start}
             .meal-order-panel{background:var(--panel);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:20px}
             .meal-order-body{padding:18px}
+            .meal-restaurant-list{display:grid;gap:12px}
+            .meal-restaurant-card{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px;display:flex;flex-direction:column;gap:10px;transition:border-color .2s,background .2s}
+            .meal-restaurant-card.active{border-color:var(--accent);background:var(--accent-dim)}
+            .meal-restaurant-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+            .meal-restaurant-name{font-weight:700;color:var(--text);font-size:14px}
+            .meal-restaurant-address{color:var(--text3);font-size:12px;line-height:1.4;margin-top:3px}
+            .meal-slot-row{display:flex;flex-wrap:wrap;gap:8px}
+            .meal-slot-btn{padding:6px 10px;border-radius:999px;border:1px solid var(--border2);background:var(--panel2);color:var(--text2);font-family:var(--font);font-size:11px;font-weight:700;cursor:pointer}
+            .meal-slot-btn.active,.meal-slot-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-dim)}
             .meal-order-card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
             .meal-item-card{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px;display:flex;flex-direction:column;gap:10px;min-height:150px}
             .meal-item-card:hover{border-color:var(--border2)}
@@ -108,16 +118,14 @@
                 <div class="meal-order-panel">
                     <div class="section-head">
                         <div>
-                            <div class="section-title">Meal Order</div>
-                            <div class="section-sub">Choose an active subscription and order menu items.</div>
+                            <div class="section-title">Restaurants</div>
+                            <div class="section-sub">Pick one of your active restaurant subscriptions.</div>
                         </div>
+                        <button class="btn btn-secondary btn-sm" onclick="loadMealOrderWorkspace()">Refresh</button>
                     </div>
                     <div class="meal-order-body">
-                        <div class="form-group full">
-                            <label>Active Subscription</label>
-                            <select id="meal-order-subscription" onchange="loadMealMenuForSelectedSubscription()">
-                                <option value="">Loading subscriptions...</option>
-                            </select>
+                        <div id="meal-restaurant-list" class="meal-restaurant-list">
+                            <div class="empty-state">Loading restaurants...</div>
                         </div>
                         <div id="meal-order-subscription-meta" class="meal-muted" style="margin-top:10px">Select a subscription to view menu items.</div>
                         <div class="meal-summary">
@@ -176,30 +184,33 @@
     }
 
     async function loadMealSubscriptions() {
-        const select = document.getElementById('meal-order-subscription');
-        select.innerHTML = '<option value="">Loading subscriptions...</option>';
+        addView();
+        const list = document.getElementById('meal-restaurant-list');
+        if (!list) return;
+        list.innerHTML = '<div class="empty-state">Loading restaurants...</div>';
         try {
             state.subscriptions = await apiFetch('/subscription/user') || [];
         } catch (error) {
-            select.innerHTML = '<option value="">Could not load subscriptions</option>';
+            list.innerHTML = '<div class="empty-state">Could not load meal subscriptions</div>';
+            document.getElementById('meal-menu-list').innerHTML =
+                '<div class="empty-state">Meal subscriptions could not be loaded.</div>';
             showAlert('Could not load subscriptions: ' + error.message, 'error');
             return;
         }
         const active = activeSubscriptions();
         if (!active.length) {
-            select.innerHTML = '<option value="">No active subscriptions</option>';
+            state.selectedSubscriptionId = null;
+            list.innerHTML = '<div class="empty-state">No active restaurant subscriptions found.</div>';
             document.getElementById('meal-menu-list').innerHTML =
                 '<div class="empty-state">Create an active meal subscription before ordering.</div>';
             updateSelectedSubscriptionMeta();
             return;
         }
-        select.innerHTML = '<option value="">Select a subscription</option>' + active.map(s => {
-            const id = getSubscriptionId(s);
-            const label = `${s.restaurantName || 'Restaurant'} - ${s.mealSlot || 'Slot'} (${s.scheduleType || 'Schedule'})`;
-            return `<option value="${id}">${safeText(label)}</option>`;
-        }).join('');
-        if (active.length === 1) {
-            select.value = String(getSubscriptionId(active[0]));
+        if (!active.some(s => Number(getSubscriptionId(s)) === Number(state.selectedSubscriptionId))) {
+            state.selectedSubscriptionId = getSubscriptionId(active[0]);
+        }
+        renderRestaurantCards(active);
+        if (state.selectedSubscriptionId) {
             await loadMealMenuForSelectedSubscription();
         } else {
             updateSelectedSubscriptionMeta();
@@ -207,34 +218,83 @@
     }
 
     function selectedSubscription() {
-        const id = Number(document.getElementById('meal-order-subscription')?.value || 0);
+        const id = Number(state.selectedSubscriptionId || 0);
         return state.subscriptions.find(s => Number(getSubscriptionId(s)) === id);
+    }
+
+    function groupActiveSubscriptions(active) {
+        return active.reduce((groups, sub) => {
+            const key = sub.restaurantId || sub.restaurantName || 'restaurant';
+            if (!groups[key]) {
+                groups[key] = {
+                    restaurantName: sub.restaurantName || 'Restaurant',
+                    restaurantAddress: sub.restaurantAddress || '',
+                    subscriptions: []
+                };
+            }
+            groups[key].subscriptions.push(sub);
+            return groups;
+        }, {});
+    }
+
+    function renderRestaurantCards(active) {
+        const list = document.getElementById('meal-restaurant-list');
+        if (!list) return;
+        const groups = Object.values(groupActiveSubscriptions(active));
+        list.innerHTML = groups.map(group => `
+            <div class="meal-restaurant-card ${group.subscriptions.some(s => Number(getSubscriptionId(s)) === Number(state.selectedSubscriptionId)) ? 'active' : ''}">
+                <div class="meal-restaurant-head">
+                    <div>
+                        <div class="meal-restaurant-name">${safeText(group.restaurantName)}</div>
+                        <div class="meal-restaurant-address">${safeText(group.restaurantAddress || 'Subscribed restaurant')}</div>
+                    </div>
+                    <span class="chip active">${group.subscriptions.length} slot${group.subscriptions.length === 1 ? '' : 's'}</span>
+                </div>
+                <div class="meal-slot-row">
+                    ${group.subscriptions.map(sub => {
+                        const id = getSubscriptionId(sub);
+                        const isActive = Number(id) === Number(state.selectedSubscriptionId);
+                        const label = `${sub.mealSlot || 'Meal'}${sub.scheduleType ? ' - ' + sub.scheduleType : ''}`;
+                        return `<button class="meal-slot-btn ${isActive ? 'active' : ''}" onclick="selectMealSubscription(${id})">${safeText(label)}</button>`;
+                    }).join('')}
+                </div>
+            </div>
+        `).join('');
     }
 
     function updateSelectedSubscriptionMeta() {
         const meta = document.getElementById('meal-order-subscription-meta');
+        if (!meta) return;
         const sub = selectedSubscription();
         if (!sub) {
-            meta.textContent = 'Select a subscription to view menu items.';
+            meta.textContent = 'Select a restaurant slot to view menu items.';
             return;
         }
         meta.textContent = `${sub.restaurantName || 'Restaurant'} - ${sub.mealSlot || 'Meal'} - ${sub.scheduleType || 'Schedule'}${sub.nextDeliveryTime ? ' - next delivery ' + new Date(sub.nextDeliveryTime).toLocaleString() : ''}`;
     }
 
+    async function selectMealSubscription(subscriptionId) {
+        state.selectedSubscriptionId = subscriptionId;
+        renderRestaurantCards(activeSubscriptions());
+        await loadMealMenuForSelectedSubscription();
+    }
+
     async function loadMealMenuForSelectedSubscription() {
+        addView();
         const list = document.getElementById('meal-menu-list');
         const sub = selectedSubscription();
         state.quantities = {};
         updateMealSummary();
         updateSelectedSubscriptionMeta();
         if (!sub) {
-            list.innerHTML = '<div class="empty-state">Select a subscription to load menu items</div>';
+            if (list) list.innerHTML = '<div class="empty-state">Select a restaurant slot to load menu items</div>';
             return;
         }
         if (!sub.restaurantId || !sub.mealSlot) {
-            list.innerHTML = '<div class="empty-state">This subscription is missing restaurant or meal slot data.</div>';
+            if (list) list.innerHTML = '<div class="empty-state">This subscription is missing restaurant or meal slot data.</div>';
             return;
         }
+        if (!list) return;
         list.innerHTML = '<div class="empty-state">Loading menu items...</div>';
         try {
             state.menuItems = await apiFetch(`/menu-items/restaurant/${sub.restaurantId}?slot=${encodeURIComponent(sub.mealSlot)}`) || [];
@@ -365,8 +425,12 @@
     }
 
     async function loadMealOrderWorkspace() {
-        await loadMealSubscriptions();
-        await loadMealOrders();
+        // Remove the mealOrderReady guard so clicking the nav always refreshes the shell
+        const view = document.getElementById('meal-order-view');
+        if (view) view.dataset.mealOrderReady = '';   // ← reset to allow re-render
+        init();
+        addView();
+        await Promise.all([loadMealSubscriptions(), loadMealOrders()]);
     }
 
     function init(attempt = 0) {
@@ -383,6 +447,7 @@
 
     window.loadMealOrderWorkspace = loadMealOrderWorkspace;
     window.loadMealMenuForSelectedSubscription = loadMealMenuForSelectedSubscription;
+    window.selectMealSubscription = selectMealSubscription;
     window.setMealQuantity = setMealQuantity;
     window.clearMealQuantities = clearMealQuantities;
     window.placeMealOrder = placeMealOrder;

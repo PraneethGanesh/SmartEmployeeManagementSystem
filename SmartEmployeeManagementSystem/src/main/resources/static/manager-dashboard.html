@@ -2188,17 +2188,31 @@ async function searchEmployee() {
             window.location.href = '/google.html';
         });
     }
+    let notifPollFailures = 0;
+    let notifPollTimer = null;
+
     async function loadNotifCount() {
         try {
             const data = await apiFetch('/notifications/unread-count');
             const badge = document.getElementById('notif-badge');
+            notifPollFailures = 0;
             if (data.count > 0) {
                 badge.textContent = data.count;
                 badge.style.display = 'flex';
             } else {
                 badge.style.display = 'none';
             }
-        } catch(e) { console.warn('Could not load notif count', e); }
+        } catch(e) {
+            notifPollFailures++;
+            console.warn('Could not load notif count', e);
+            if (notifPollFailures >= 3 && notifPollTimer) {
+                clearInterval(notifPollTimer);
+                notifPollTimer = null;
+                const badge = document.getElementById('notif-badge');
+                if (badge) badge.style.display = 'none';
+                console.warn('Notification polling paused after repeated failures.');
+            }
+        }
     }
 
     async function toggleNotifPanel() {
@@ -2228,7 +2242,7 @@ async function searchEmployee() {
     }
 
     loadNotifCount();
-    setInterval(loadNotifCount, 30000);
+    notifPollTimer = setInterval(loadNotifCount, 30000);
 
     document.addEventListener('click', e => {
         const panel = document.getElementById('notif-panel');
@@ -2396,6 +2410,6 @@ async function applyMaternityLeave() {
     window.apiFetch = apiFetch;
     window.showView = showView;
 </script>
-<script src="/meal-order.js"></script>
+<script src="/meal-order.js?v=2"></script>
 </body>
 </html>

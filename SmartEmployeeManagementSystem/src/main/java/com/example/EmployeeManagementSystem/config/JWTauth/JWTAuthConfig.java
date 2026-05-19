@@ -158,6 +158,9 @@ public class JWTAuthConfig {
                                 "/device_management.html",
                                 "/reset-password.html").permitAll()
 
+                        // Static JS/CSS assets — must be public so scripts load before JWT is available
+                        .requestMatchers("/*.js", "/*.css", "/*.ico", "/*.png", "/*.jpg").permitAll()
+
                         // Vendor pages
                         .requestMatchers("/vendor-login.html").permitAll()
                         .requestMatchers("/vendor-dashboard.html").permitAll()
