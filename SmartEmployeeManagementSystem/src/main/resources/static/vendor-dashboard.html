@@ -172,6 +172,8 @@
             <div class="nav-section">// restaurants</div>
             <div class="nav-item" onclick="showView('my-restaurants',this)"><span>◈</span> My Restaurants</div>
             <div class="nav-item" onclick="showView('add-restaurant',this)"><span>＋</span> Add Restaurant</div>
+            <div class="nav-section">// menu</div>
+            <div class="nav-item" onclick="showView('menu-items',this)"><span>☰</span> Menu Items</div>
             <div class="nav-section">// operations</div>
             <div class="nav-item" onclick="showView('subscriptions',this)"><span>◷</span> Subscriptions</div>
             <div class="nav-item" onclick="showView('deliveries',this)"><span>⊕</span> Deliveries</div>
@@ -232,14 +234,14 @@
                     <div class="section">
                         <div class="section-head">
                             <div><div class="section-title">// my_restaurants</div></div>
-                            <button class="btn btn-secondary btn-sm" onclick="showView('my-restaurants',document.querySelectorAll('.nav-item')[1])">view →</button>
+                            <button class="btn btn-secondary btn-sm" onclick="showView('my-restaurants',document.querySelector('.nav-item[onclick*=my-restaurants]'))">view →</button>
                         </div>
                         <div id="dash-restaurants" style="padding:4px 0"></div>
                     </div>
                     <div class="section">
                         <div class="section-head">
                             <div><div class="section-title">// recent_deliveries</div></div>
-                            <button class="btn btn-secondary btn-sm" onclick="showView('deliveries',document.querySelectorAll('.nav-item')[4])">view →</button>
+                            <button class="btn btn-secondary btn-sm" onclick="showView('deliveries',document.querySelector('.nav-item[onclick*=deliveries]'))">view →</button>
                         </div>
                         <div class="tablewrap">
                             <table>
@@ -301,6 +303,68 @@
                             <button class="btn btn-primary" onclick="addRestaurant()">CREATE RESTAURANT</button>
                             <button class="btn btn-secondary" onclick="clearRestForm()">CLEAR</button>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MENU ITEMS -->
+            <div id="menu-items-view" class="view">
+                <div class="section" style="margin-bottom:18px">
+                    <div class="section-head">
+                        <div><div class="section-title">// add_menu_item</div><div class="section-sub">Add a product to one of your restaurants</div></div>
+                    </div>
+                    <div class="form-card">
+                        <div class="form-grid">
+                            <div class="form-group full">
+                                <label>Restaurant</label>
+                                <select id="menu-restaurant-select">
+                                    <option value="">Select your restaurant…</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Item Name</label>
+                                <input id="menu-name" placeholder="e.g. Chicken Biryani">
+                            </div>
+                            <div class="form-group">
+                                <label>Price (₹)</label>
+                                <input id="menu-price" type="number" min="0.01" step="0.01" placeholder="0.00">
+                            </div>
+                            <div class="form-group">
+                                <label>Meal Slot</label>
+                                <select id="menu-slot">
+                                    <option value="">Select slot…</option>
+                                    <option value="BREAKFAST">Breakfast</option>
+                                    <option value="LUNCH">Lunch</option>
+                                    <option value="DINNER">Dinner</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Description (optional)</label>
+                                <input id="menu-desc" placeholder="Short description…">
+                            </div>
+                        </div>
+                        <div class="form-actions">
+                            <button class="btn btn-primary" onclick="addMenuItem()">ADD ITEM</button>
+                            <button class="btn btn-secondary" onclick="clearMenuForm()">CLEAR</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-head">
+                        <div><div class="section-title">// menu_items</div><div class="section-sub">All items for selected restaurant</div></div>
+                        <div style="display:flex;gap:8px;align-items:center">
+                            <select id="menu-filter-restaurant" onchange="loadMenuItems()" style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--text);font-family:var(--mono);font-size:11px">
+                                <option value="">Select restaurant…</option>
+                            </select>
+                            <button class="btn btn-secondary btn-sm" onclick="loadMenuItems()">↺ refresh</button>
+                        </div>
+                    </div>
+                    <div class="tablewrap">
+                        <table>
+                            <thead><tr><th>Name</th><th>Slot</th><th>Price</th><th>Description</th><th>Status</th><th>Actions</th></tr></thead>
+                            <tbody id="menu-items-list"><tr><td colspan="6" class="empty-state">Select a restaurant to view its menu</td></tr></tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -518,6 +582,7 @@
         'dashboard': loadDashboard,
         'my-restaurants': loadMyRestaurants,
         'add-restaurant': () => {},
+        'menu-items': loadMenuItemsView,
         'subscriptions': loadSubscriptions,
         'deliveries': loadDeliveries,
         'profile': () => {},
@@ -645,7 +710,7 @@
             });
             showAlert('RESTAURANT CREATED!', 'success');
             clearRestForm();
-            showView('my-restaurants', document.querySelectorAll('.nav-item')[1]);
+            showView('my-restaurants', document.querySelector('.nav-item[onclick*=my-restaurants]'));
         } catch(e) {
             showAlert('FAILED: ' + e.message, 'error');
         }
@@ -706,6 +771,114 @@
         } catch(e) {
             showAlert('FAILED', 'error');
         }
+    }
+
+    // ─── MENU ITEM FUNCTIONS ─────────────────────────────────────────────────
+
+    /** Called when the menu-items view is activated — populate restaurant dropdowns */
+    async function loadMenuItemsView() {
+        try {
+            const rests = await apiFetch('/restaurants/vendor');
+            const arr = (rests || []).filter(r => r.active !== false);
+            const opts = arr.length
+                ? arr.map(r => `<option value="${r.id || r.restaurantId}">${escHtml(r.name)}</option>`).join('')
+                : '<option value="">No active restaurants</option>';
+
+            document.getElementById('menu-restaurant-select').innerHTML =
+                '<option value="">Select your restaurant…</option>' + opts;
+            document.getElementById('menu-filter-restaurant').innerHTML =
+                '<option value="">Select restaurant…</option>' + opts;
+        } catch(e) {
+            console.error('Could not load restaurants for menu', e);
+        }
+    }
+
+    /** Load menu items for the selected restaurant in the filter dropdown */
+    async function loadMenuItems() {
+        const restaurantId = document.getElementById('menu-filter-restaurant').value;
+        const tbody = document.getElementById('menu-items-list');
+        if (!restaurantId) {
+            tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Select a restaurant to view its menu</td></tr>';
+            return;
+        }
+        tbody.innerHTML = '<tr><td colspan="6" class="empty-state">loading...</td></tr>';
+        try {
+            const items = await apiFetch(`/menu-items/restaurant/${restaurantId}/all`);
+            tbody.innerHTML = (items || []).length
+                ? items.map(item => `
+                    <tr>
+                        <td style="font-weight:600;color:var(--text)">${escHtml(item.name)}</td>
+                        <td><span class="chip ${(item.mealSlot || '').toLowerCase()}">${escHtml(item.mealSlot || '—')}</span></td>
+                        <td style="font-family:var(--mono);color:var(--accent)">₹${item.price != null ? Number(item.price).toFixed(2) : '—'}</td>
+                        <td style="font-size:12px;color:var(--text2)">${escHtml(item.description || '—')}</td>
+                        <td><span class="chip ${item.available ? 'active' : 'inactive'}">${item.available ? 'AVAILABLE' : 'HIDDEN'}</span></td>
+                        <td>
+                            <div class="action-row">
+                                <button class="btn btn-warning btn-sm" onclick="toggleMenuItem(${item.id})">${item.available ? 'HIDE' : 'SHOW'}</button>
+                                <button class="btn btn-danger btn-sm" onclick="deleteMenuItem(${item.id})">DEL</button>
+                            </div>
+                        </td>
+                    </tr>`).join('')
+                : '<tr><td colspan="6" class="empty-state">no menu items yet for this restaurant</td></tr>';
+        } catch(e) {
+            tbody.innerHTML = `<tr><td colspan="6" class="empty-state">could not load menu items: ${escHtml(e.message)}</td></tr>`;
+        }
+    }
+
+    async function addMenuItem() {
+        const restaurantId = document.getElementById('menu-restaurant-select').value;
+        const name = document.getElementById('menu-name').value.trim();
+        const price = parseFloat(document.getElementById('menu-price').value);
+        const mealSlot = document.getElementById('menu-slot').value;
+        const description = document.getElementById('menu-desc').value.trim();
+
+        if (!restaurantId) { showAlert('SELECT A RESTAURANT', 'error'); return; }
+        if (!name) { showAlert('ITEM NAME IS REQUIRED', 'error'); return; }
+        if (!mealSlot) { showAlert('SELECT A MEAL SLOT', 'error'); return; }
+        if (!price || price <= 0) { showAlert('ENTER A VALID PRICE', 'error'); return; }
+
+        try {
+            await apiFetch('/menu-items', {
+                method: 'POST',
+                body: JSON.stringify({ name, description, price, mealSlot, restaurantId: Number(restaurantId) })
+            });
+            showAlert('MENU ITEM ADDED!', 'success');
+            clearMenuForm();
+            // Sync filter dropdown to the same restaurant and reload list
+            document.getElementById('menu-filter-restaurant').value = restaurantId;
+            loadMenuItems();
+        } catch(e) {
+            showAlert('FAILED: ' + e.message, 'error');
+        }
+    }
+
+    async function toggleMenuItem(id) {
+        try {
+            await apiFetch(`/menu-items/${id}/toggle-availability`, { method: 'PUT' });
+            showAlert('ITEM UPDATED', 'success');
+            loadMenuItems();
+        } catch(e) {
+            showAlert('FAILED: ' + e.message, 'error');
+        }
+    }
+
+    async function deleteMenuItem(id) {
+        if (!confirm('Delete this menu item? This cannot be undone.')) return;
+        try {
+            await apiFetch(`/menu-items/${id}`, { method: 'DELETE' });
+            showAlert('ITEM DELETED', 'success');
+            loadMenuItems();
+        } catch(e) {
+            showAlert('FAILED: ' + e.message, 'error');
+        }
+    }
+
+    function clearMenuForm() {
+        document.getElementById('menu-restaurant-select').value = '';
+        document.getElementById('menu-name').value = '';
+        document.getElementById('menu-price').value = '';
+        document.getElementById('menu-slot').value = '';
+        document.getElementById('menu-desc').value = '';
     }
 
     function logout() {

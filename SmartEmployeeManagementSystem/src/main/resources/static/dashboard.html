@@ -227,6 +227,7 @@
             <div class="nav-item" onclick="showView('restaurants', event)">&#9632; Restaurants</div>
             <div class="nav-item" onclick="showView('subscriptions', event)">&#9632; Subscriptions</div>
             <div class="nav-item" onclick="showView('add-subscription', event)">&#9632; Add Subscription</div>
+            <div class="nav-item" onclick="showView('meal-order', event)">&#9632; Meal Orders</div>
             <div class="nav-item" onclick="showView('vendors', event)">&#9632; Vendors</div>
             <div class="nav-item" onclick="showView('vendor-negotiations', event)">&#9632; Vendor Negotiations</div>
             <div class="nav-item" onclick="window.location.href='/device_management.html'">&#9632; Device Management</div>
@@ -559,6 +560,8 @@
                 <div class="section-head"><div class="section-title">Pending Leave Approvals</div><button class="btn btn-primary btn-sm" onclick="loadPendingLeaves()">Refresh</button></div>
                 <div class="table-wrap"><table><thead><tr><th>ID</th><th>Employee</th><th>Type</th><th>Start</th><th>End</th><th>Reason</th><th>Actions</th></tr></thead><tbody id="pending-leaves-list"></tbody></table></div>
             </div>
+
+            <div id="meal-order-view" class="view"></div>
 
             <!-- RESTAURANTS VIEW -->
             <div id="restaurants-view" class="view">
@@ -1195,7 +1198,7 @@
             if (!text) return null;
             try { return JSON.parse(text); } catch { return text; }
         } catch (e) {
-            if (!e.message.includes('Unauthorized')) showAlert(e.message, 'error');
+            if (!opts.silent && !e.message.includes('Unauthorized')) showAlert(e.message, 'error');
             throw e;
         }
     }
@@ -1216,30 +1219,43 @@
         document.getElementById('pageTitle').textContent = viewName.split('-').map(w =>
             w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
         const loaders = {
-    'dashboard': loadDashboard,
-    'employees': loadEmployees,
-    'add-employee': loadManagersDropdown,
-    'holidays': loadHolidays,
-    'add-manager': () => {},
-    'add-vendor': () => {},
-    'my-leaves': loadMyLeaves,
-    'pending-leaves': loadPendingLeaves,
-    'restaurants': loadRestaurants,
-    'subscriptions': loadSubscriptions,
-    'add-subscription': loadRestaurantDropdown,
-    'deliveries': loadDeliveries,
-    'vendors': loadVendors,
-    'vendor-negotiations': loadVendorNegotiations,
-    'devices': loadUnassignedDevices,
-    'my-devices': loadMyAssignedDevices,
-    'service-requests': loadServiceRequests,
-    'admin-service-requests': loadAdminServiceRequests,
-    'my-profile': loadAdminProfile,
+            'dashboard': loadDashboard,
+            'employees': loadEmployees,
+            'add-employee': loadManagersDropdown,
+            'holidays': loadHolidays,
+            'add-manager': () => {},
+            'add-vendor': () => {},
+            'my-leaves': loadMyLeaves,
+            'pending-leaves': loadPendingLeaves,
+            'restaurants': loadRestaurants,
+            'subscriptions': loadSubscriptions,
+            'add-subscription': loadRestaurantDropdown,
+            'meal-order': () => {
+                if (window.loadMealOrderWorkspace) {
+                    window.loadMealOrderWorkspace();
+                } else {
+                    // meal-order.js not yet ready — poll until it is
+                    const _mow = setInterval(() => {
+                        if (window.loadMealOrderWorkspace) {
+                            clearInterval(_mow);
+                            window.loadMealOrderWorkspace();
+                        }
+                    }, 50);
+                }
+            },
+            'deliveries': loadDeliveries,
+            'vendors': loadVendors,
+            'vendor-negotiations': loadVendorNegotiations,
+            'devices': loadUnassignedDevices,
+            'my-devices': loadMyAssignedDevices,
+            'service-requests': loadServiceRequests,
+            'admin-service-requests': loadAdminServiceRequests,
+            'my-profile': loadAdminProfile,
             'two-factor': loadTotpStatus,
-      'my-calendar': loadMyCalendar,
-      'create-admin': () => {},
-      'promote-employee': loadPromotableEmployees
-};
+            'my-calendar': loadMyCalendar,
+            'create-admin': () => {},
+            'promote-employee': loadPromotableEmployees
+        };
         if (loaders[viewName]) loaders[viewName]();
     }
 
@@ -2089,6 +2105,64 @@
                 window.location.href = '/google.html';
             });
     }
+    let notifPollFailures = 0;
+    let notifPollTimer = null;
+
+    async function loadNotifCount() {
+        try {
+            const data = await apiFetch('/notifications/unread-count', { silent: true });
+            const badge = document.getElementById('notif-badge');
+            notifPollFailures = 0;
+
+            // Handles: plain number, { count: N }, or { unreadCount: N }
+            const count = typeof data === 'number'
+                ? data
+                : (data?.count ?? data?.unreadCount ?? 0);
+
+            if (count > 0) {
+                badge.textContent = count;
+                badge.style.display = 'flex';
+            } else {
+                badge.style.display = 'none';
+            }
+        } catch(e) {
+            notifPollFailures++;
+            console.warn('Notif count error', e);
+            if (notifPollFailures >= 3 && notifPollTimer) {
+                clearInterval(notifPollTimer);
+                notifPollTimer = null;
+                const badge = document.getElementById('notif-badge');
+                if (badge) badge.style.display = 'none';
+                console.warn('Notification polling paused after repeated failures.');
+            }
+        }
+    }
+
+    async function toggleNotifPanel() {
+        const panel = document.getElementById('notif-panel');
+        if (panel.style.display === 'none') {
+            panel.style.display = 'block';
+            await loadNotifications();
+            try { await apiFetch('/notifications/mark-read', { method: 'POST', silent: true }); } catch(e) {}
+            document.getElementById('notif-badge').style.display = 'none';
+        } else {
+            panel.style.display = 'none';
+        }
+    }
+
+    async function loadNotifications() {
+        try {
+            const data = await apiFetch('/notifications', { silent: true });
+            const list = document.getElementById('notif-list');
+            list.innerHTML = (data && data.length)
+                ? data.map(n => `
+                <div class="notif-item ${n.read ? '' : 'unread'}">
+                    <div>${n.message}</div>
+                    <div class="notif-time">${new Date(n.createdAt).toLocaleString()}</div>
+                </div>`).join('')
+                : '<div class="notif-item">No notifications yet.</div>';
+        } catch(e) { console.warn('Notif load error', e); }
+    }
     async function loadNotifCount() {
         try {
             const data = await apiFetch('/notifications/unread-count');
@@ -2136,6 +2210,17 @@
 
     loadNotifCount();
     setInterval(loadNotifCount, 30000);
+
+    document.addEventListener('click', e => {
+        const panel = document.getElementById('notif-panel');
+        const wrapper = document.querySelector('.notif-wrapper');
+        if (panel && wrapper && !panel.contains(e.target) && !wrapper.contains(e.target)) {
+            panel.style.display = 'none';
+        }
+    });
+
+    loadNotifCount();
+    notifPollTimer = setInterval(loadNotifCount, 30000);
 
     document.addEventListener('click', e => {
         const panel = document.getElementById('notif-panel');
@@ -2661,5 +2746,6 @@ async function assignManagerToEmployee(employeeId) {
     }
 }
 </script>
+<script src="/meal-order.js?v=2"></script>
 </body>
 </html>

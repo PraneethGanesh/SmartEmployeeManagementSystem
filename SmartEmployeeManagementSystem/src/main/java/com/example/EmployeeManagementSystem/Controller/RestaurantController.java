@@ -115,7 +115,7 @@ public class RestaurantController {
      * Employees call this when building their subscription to see valid options for each slot.
      */
     @GetMapping("/by-slot")
-    @PreAuthorize("hasAnyRole('ADMIN','VENDOR','EMPLOYEE','MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN','FOOD_VENDOR','EMPLOYEE','MANAGER')")
     public ResponseEntity<List<RestaurantDTO>> getRestaurantsByMealSlot(@RequestParam MealSlot slot) {
         return ResponseEntity.ok(restaurantService.getRestaurantsByMealSlot(slot));
     }

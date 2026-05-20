@@ -361,6 +361,7 @@
             <div class="nav-item" onclick="showView('restaurants',this)"><span class="icon">⊕</span> Restaurants</div>
             <div class="nav-item" onclick="showView('subscriptions',this)"><span class="icon">◈</span> My Subscriptions</div>
             <div class="nav-item" onclick="showView('add-subscription',this)"><span class="icon">＋</span> Add Subscription</div>
+            <div class="nav-item" onclick="showView('meal-order',this)"><span class="icon">▣</span> Meal Orders</div>
             <div class="nav-section">Account</div>
             <div class="nav-item" onclick="showView('profile',this)"><span class="icon">◉</span> My Profile</div>
             <div class="nav-item" onclick="showView('my-devices',this)"><span class="icon">⊞</span> My Devices</div>
@@ -579,6 +580,13 @@
                 </div>
             </div>
             <!-- END CALENDAR VIEW -->
+
+            <div id="meal-order-view" class="view">
+                <div class="section">
+                    <div class="section-head"><div class="section-title">Meal Orders</div></div>
+                    <div class="empty-state">Loading meal orders...</div>
+                </div>
+            </div>
 
             <!-- RESTAURANTS -->
             <div id="restaurants-view" class="view">
@@ -1024,6 +1032,7 @@
             restaurants:loadRestaurants,
             subscriptions:loadSubscriptions,
             'add-subscription':()=>{},
+            'meal-order':(...args)=>window.loadMealOrderWorkspace?.(...args),
             profile:()=>{},
             'my-devices':loadMyAssignedDevices,
             'service-requests':loadServiceRequests,
@@ -1583,6 +1592,121 @@
             console.warn('Could not load notification count:', e);
         }
     }
+    let notifPollFailures = 0;
+    let notifPollTimer = null;
+
+    async function loadNotifCount() {
+        try {
+            const data = await apiFetch('/notifications/unread-count');
+            const badge = document.getElementById('notif-badge');
+            notifPollFailures = 0;
+            if (data && data.count > 0) {
+                badge.textContent = data.count;
+                badge.style.display = 'flex';
+            } else {
+                badge.style.display = 'none';
+            }
+        } catch(e) {
+            notifPollFailures++;
+            console.warn('Could not load notification count:', e);
+            if (notifPollFailures >= 3 && notifPollTimer) {
+                clearInterval(notifPollTimer);
+                notifPollTimer = null;
+                const badge = document.getElementById('notif-badge');
+                if (badge) badge.style.display = 'none';
+                console.warn('Notification polling paused after repeated failures.');
+            }
+        }
+    }
+
+    async function toggleNotifPanel() {
+        const panel = document.getElementById('notif-panel');
+        if (panel.style.display === 'none') {
+            panel.style.display = 'block';
+            try {
+                await loadNotifications();
+                await apiFetch('/notifications/mark-read', { method: 'POST' });
+                document.getElementById('notif-badge').style.display = 'none';
+            } catch(e) {
+                console.warn('Notification panel error:', e);
+            }
+        } else {
+            panel.style.display = 'none';
+        }
+    }
+
+    async function loadNotifications() {
+        try {
+            const data = await apiFetch('/notifications');
+            const list = document.getElementById('notif-list');
+            if (!data || data.length === 0) {
+                list.innerHTML = '<div class="notif-item">No notifications yet.</div>';
+                return;
+            }
+            list.innerHTML = data.map(n => `
+            <div class="notif-item ${n.read ? '' : 'unread'}">
+                <div>${n.message}</div>
+                <div class="notif-time">${new Date(n.createdAt).toLocaleString()}</div>
+            </div>
+        `).join('');
+        } catch(e) {
+            document.getElementById('notif-list').innerHTML =
+                '<div class="notif-item">Could not load notifications.</div>';
+            console.warn('loadNotifications failed:', e);
+        }
+    }
+
+    // Load badge count on page load
+    loadNotifCount();
+    // Refresh count every 30 seconds
+    notifPollTimer = setInterval(loadNotifCount, 30000);
+
+    document.getElementById('mat-start-date').addEventListener('change', function(){
+    if(this.value) {
+        const start = new Date(this.value);
+        const end = new Date(start);
+        end.setDate(end.getDate() + 179); // 180 days inclusive
+        document.getElementById('mat-end-date').value =
+            end.toISOString().split('T')[0];
+    } else {
+        document.getElementById('mat-end-date').value = '';
+    }
+});
+
+   async function applyMaternityLeave() {
+    const startDate = document.getElementById('mat-start-date').value;
+    const reason    = document.getElementById('mat-reason').value.trim();
+
+    if(!startDate) {
+        showAlert('Please select a start date', 'error');
+        return;
+    }
+
+    try {
+        await apiFetch('/leave_requests/maternity/apply', {
+            method: 'POST',
+            body: JSON.stringify({ startDate, reason })
+        });
+        showAlert('Maternity leave request submitted successfully!', 'success');
+        // Clear form
+        document.getElementById('mat-start-date').value = '';
+        document.getElementById('mat-end-date').value = '';
+        document.getElementById('mat-reason').value = '';
+        // Refresh dashboard
+        loadDashboard();
+    } catch(e) {
+        showAlert('Failed to submit: ' + e.message, 'error');
+    }
+}
+
+    // Close panel when clicking outside
+    document.addEventListener('click', e => {
+        const panel = document.getElementById('notif-panel');
+        const wrapper = document.querySelector('.notif-wrapper');
+        if (!panel.contains(e.target) && !wrapper.contains(e.target)) {
+            panel.style.display = 'none';
+        }
+    });
 
     async function toggleNotifPanel() {
         const panel = document.getElementById('notif-panel');
@@ -1758,6 +1882,64 @@
             showAlert('Failed to disable 2FA: ' + e.message, 'error');
         }
     }
+
+    async function generateTotpQr() {
+        const btn = document.getElementById('generate-qr-btn');
+        btn.textContent = 'Generating...';
+        btn.disabled = true;
+        try {
+            const data = await apiFetch('/totp/setup', { method: 'POST' });
+            document.getElementById('totp-secret-display').textContent = data.secret || '';
+            const qrUri = encodeURIComponent(data.qrCodeUri || '');
+            document.getElementById('qr-img').src =
+                `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${qrUri}`;
+            document.getElementById('qr-area').style.display = 'block';
+        } catch(e) {
+            showAlert('Failed to generate QR: ' + e.message, 'error');
+        } finally {
+            btn.textContent = 'Regenerate QR Code';
+            btn.disabled = false;
+        }
+    }
+
+    async function verifyAndActivateTotp() {
+        const code = document.getElementById('totp-verify-input').value.trim();
+        const errEl = document.getElementById('totp-verify-error');
+        errEl.style.display = 'none';
+        if (code.length !== 6) {
+            errEl.textContent = 'Please enter a 6-digit code.';
+            errEl.style.display = 'block';
+            return;
+        }
+        try {
+            await apiFetch('/totp/verify-setup', {
+                method: 'POST',
+                body: JSON.stringify({ code })
+            });
+            showAlert('✅ 2FA activated! You will need your authenticator on next login.', 'success');
+            loadTotpStatus();
+        } catch(e) {
+            errEl.textContent = 'Invalid code. Try again.';
+            errEl.style.display = 'block';
+        }
+    }
+
+    async function disableTotp() {
+        if (!confirm('Are you sure you want to disable two-factor authentication?')) return;
+        try {
+            await apiFetch('/totp/disable', { method: 'DELETE' });
+            showAlert('2FA has been disabled.', 'success');
+            loadTotpStatus();
+        } catch(e) {
+            showAlert('Failed to disable 2FA: ' + e.message, 'error');
+        }
+    }
+
+    // Expose core helpers so external scripts (e.g. meal-order.js) can reference them
+    window.apiFetch = apiFetch;
+    window.showView = showView;
+    window.showAlert = showAlert;
 </script>
+<script src="/meal-order.js?v=2"></script>
 </body>
 </html>
