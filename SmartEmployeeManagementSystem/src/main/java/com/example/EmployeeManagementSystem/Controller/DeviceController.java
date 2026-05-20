@@ -117,7 +117,7 @@ public class DeviceController {
     @GetMapping("/{deviceId}/repair-logs")
     public List<RepairLogResponseDTO> getRepairLog(@PathVariable Long deviceId,
                                                    Authentication authentication,
-                                                   RepairLogPeriod period) {
+                                                   @RequestParam(required = false, defaultValue = "ALL") RepairLogPeriod period) {
         return deviceService.getRepairLogsForLoggedInVendorAndGivenRange(authentication,deviceId,period);
     }
 
