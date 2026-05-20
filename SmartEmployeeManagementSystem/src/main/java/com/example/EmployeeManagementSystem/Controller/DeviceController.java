@@ -8,6 +8,7 @@ import com.example.EmployeeManagementSystem.DTO.DeviceResponseDTO;
 import com.example.EmployeeManagementSystem.DTO.RepairLogResponseDTO;
 import com.example.EmployeeManagementSystem.Entity.Device;
 import com.example.EmployeeManagementSystem.Entity.DeviceAssignment;
+import com.example.EmployeeManagementSystem.Enum.RepairLogPeriod;
 import com.example.EmployeeManagementSystem.Service.DeviceService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -112,6 +113,14 @@ public class DeviceController {
     public List<RepairLogResponseDTO> getVendorRepairLogs(@PathVariable Long deviceId, Authentication authentication) {
         return deviceService.getRepairLogsForLoggedInVendorDevice(deviceId, authentication);
     }
+
+    @GetMapping("/{deviceId}/repair-logs")
+    public List<RepairLogResponseDTO> getRepairLog(@PathVariable Long deviceId,
+                                                   Authentication authentication,
+                                                   @RequestParam(required = false, defaultValue = "ALL") RepairLogPeriod period) {
+        return deviceService.getRepairLogsForLoggedInVendorAndGivenRange(authentication,deviceId,period);
+    }
+
 
     @PutMapping("/condemned/remove/{deviceId}")
     @PreAuthorize("hasRole('ADMIN')")

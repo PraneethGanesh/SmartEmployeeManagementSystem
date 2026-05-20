@@ -857,10 +857,23 @@
             <!-- REPAIR HISTORY SECTION -->
             <div style="margin-top:16px">
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-                    <div style="font-size:10px;font-weight:700;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:1.5px">
+                    <div style="font-size:10px;font-weight:700;color:var(--text3);font-family:var(--mono);
+                                text-transform:uppercase;letter-spacing:1.5px">
                         ⚙ Repair History
                     </div>
-                    <button class="btn btn-ghost btn-xs" id="modal-refresh-logs-btn" onclick="refreshModalRepairLogs()">↺ Refresh</button>
+                    <div style="display:flex;align-items:center;gap:8px">
+                        <select class="form-input" id="repair-log-period"
+                                style="padding:4px 10px;font-size:11px;width:auto"
+                                onchange="refreshModalRepairLogs()">
+                            <option value="ALL">All Time</option>
+                            <option value="LAST_30_DAYS">Last 30 Days</option>
+                            <option value="LAST_90_DAYS">Last 90 Days</option>
+                            <option value="PREVIOUS_MONTH">Previous Month</option>
+                            <option value="PREVIOUS_WEEK">Previous Week</option>
+                        </select>
+                        <button class="btn btn-ghost btn-xs" id="modal-refresh-logs-btn"
+                                onclick="refreshModalRepairLogs()">↺ Refresh</button>
+                    </div>
                 </div>
                 <div id="modal-repair-history">
                     <div class="empty" style="padding:20px">
@@ -1528,20 +1541,22 @@ async function markReceivedByVendor(serviceRequestId, deviceName) {
 
       await loadModalRepairLogs(id);
     }
-
+     const periodSelect = document.getElementById('repair-log-period');
+if (periodSelect) periodSelect.value = 'ALL';
     // Fetches and renders repair logs for the currently open modal device
-    async function loadModalRepairLogs(deviceId){
-      const container = document.getElementById('modal-repair-history');
-      try{
-        const logs = await apiFetch(`/devices/vendor/${deviceId}/repair-logs`);
+    async function loadModalRepairLogs(deviceId) {
+    const container = document.getElementById('modal-repair-history');
+    const period = document.getElementById('repair-log-period')?.value || 'ALL';
+    try {
+        const logs = await apiFetch(`/devices/${deviceId}/repair-logs?period=${period}`);
         renderModalRepairLogs(logs);
-      }catch(e){
+    } catch(e) {
         container.innerHTML = `
-          <div style="padding:12px 0;font-size:11px;font-family:var(--mono);color:var(--red)">
-            Failed to load repair logs: ${e.message}
-          </div>`;
-      }
+            <div style="padding:12px 0;font-size:11px;font-family:var(--mono);color:var(--red)">
+                Failed to load repair logs: ${e.message}
+            </div>`;
     }
+}
 
     // Re-fetches logs for currently open modal (used by refresh button)
     async function refreshModalRepairLogs(){
