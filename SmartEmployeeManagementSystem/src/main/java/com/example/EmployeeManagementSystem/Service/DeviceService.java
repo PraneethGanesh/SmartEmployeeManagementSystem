@@ -11,10 +11,7 @@ import com.example.EmployeeManagementSystem.Entity.DeviceAssignment;
 import com.example.EmployeeManagementSystem.Entity.Employee;
 import com.example.EmployeeManagementSystem.Entity.RepairLog;
 import com.example.EmployeeManagementSystem.Entity.Vendor;
-import com.example.EmployeeManagementSystem.Enum.AssignmentStatus;
-import com.example.EmployeeManagementSystem.Enum.DeviceStatus;
-import com.example.EmployeeManagementSystem.Enum.Role;
-import com.example.EmployeeManagementSystem.Enum.Status;
+import com.example.EmployeeManagementSystem.Enum.*;
 import com.example.EmployeeManagementSystem.Exception.VendorNotFoundException;
 import com.example.EmployeeManagementSystem.Repository.*;
 import com.example.EmployeeManagementSystem.Util.AuthUtil;
@@ -24,9 +21,11 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -381,6 +380,51 @@ public class DeviceService {
         return repairLogRepository.findByDeviceIdAndDeviceTechVendorIdOrderByRepairDateDescIdDesc(deviceId, vendor.getId()).stream()
                 .map(this::toRepairLogResponseDTO)
                 .toList();
+    }
+
+    public List<RepairLogResponseDTO> getRepairLogsForLoggedInVendorAndGivenRange(Authentication authentication,
+                                                                                  Long deviceId,
+                                                                                  RepairLogPeriod period){
+        String email = AuthUtil.extractEmail(authentication);
+        Vendor vendor = vendorRepo.findByEmail(email).orElseThrow(
+                () -> new VendorNotFoundException("Vendor:" + email + " not found")
+        );
+
+        Device device = deviceRepository.findById(deviceId)
+                .orElseThrow(() -> new RuntimeException("Device not found"));
+
+        if (device.getTechVendor() == null || !device.getTechVendor().getId().equals(vendor.getId())) {
+            throw new RuntimeException("Unauthorized access     to device repair logs");
+        }
+        LocalDate start=null;
+        LocalDate end=null;
+        if(period!=null){
+            LocalDate[] range=resolveDateRange(period);
+            start=range[0];
+            end=range[1];
+        }
+        return repairLogRepository.findByDeviceIdAndRepairDateBetweenOrderByRepairDateDesc(
+                deviceId,
+                start,
+                end
+        ).stream().map(repairLog -> toRepairLogResponseDTO(repairLog)).toList();
+    }
+
+    private LocalDate[] resolveDateRange(RepairLogPeriod period) {
+        LocalDate today = LocalDate.now();
+        return switch (period) {
+            case PREVIOUS_WEEK -> new LocalDate[]{
+                    today.with(DayOfWeek.MONDAY).minusWeeks(1),
+                    today.with(DayOfWeek.SUNDAY).minusWeeks(1)
+            };
+            case PREVIOUS_MONTH -> new LocalDate[]{
+                    today.minusMonths(1).withDayOfMonth(1),
+                    today.minusMonths(1).with(TemporalAdjusters.lastDayOfMonth())
+            };
+            case LAST_30_DAYS  -> new LocalDate[]{ today.minusDays(30), today };
+            case LAST_90_DAYS  -> new LocalDate[]{ today.minusDays(90), today };
+            case ALL           -> new LocalDate[]{ LocalDate.of(2000, 1, 1), today };
+        };
     }
 
     private RepairLogResponseDTO toRepairLogResponseDTO(RepairLog repairLog) {
