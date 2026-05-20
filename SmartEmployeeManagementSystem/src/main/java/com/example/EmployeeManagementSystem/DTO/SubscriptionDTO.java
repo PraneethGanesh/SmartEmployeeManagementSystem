@@ -10,6 +10,9 @@ import java.time.ZonedDateTime;
 public class SubscriptionDTO {
     private long subscriptionId;
     private long userId;
+    private String employeeName;
+    private String employeeEmail;
+    private String employeeDept;
     private MealSlot mealSlot;
     private ScheduleType scheduleType;
     private DayOfWeek dayOfWeek;
@@ -58,6 +61,30 @@ public class SubscriptionDTO {
 
     public void setUserId(long userId) {
         this.userId = userId;
+    }
+
+    public String getEmployeeName() {
+        return employeeName;
+    }
+
+    public void setEmployeeName(String employeeName) {
+        this.employeeName = employeeName;
+    }
+
+    public String getEmployeeEmail() {
+        return employeeEmail;
+    }
+
+    public void setEmployeeEmail(String employeeEmail) {
+        this.employeeEmail = employeeEmail;
+    }
+
+    public String getEmployeeDept() {
+        return employeeDept;
+    }
+
+    public void setEmployeeDept(String employeeDept) {
+        this.employeeDept = employeeDept;
     }
 
     public MealSlot getMealSlot() {

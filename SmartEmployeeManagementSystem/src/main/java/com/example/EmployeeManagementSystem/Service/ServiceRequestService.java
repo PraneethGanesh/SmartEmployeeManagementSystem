@@ -28,8 +28,9 @@ public class ServiceRequestService {
     private final RepairBillRepository repairBillRepository;
     private final DeviceAssignmentRepo deviceAssignmentRepo;
     private final NotificationService notificationService;
+    private final OperationLogService operationLogService;
 
-    public ServiceRequestService(ServiceRequestRepository serviceRequestRepository, EmployeeRepo employeeRepo, DeviceRepository deviceRepository, RepairLogRepository repairLogRepository, VendorRepo vendorRepo, RepairBillRepository repairBillRepository, DeviceAssignmentRepo deviceAssignmentRepo, NotificationService notificationService) {
+    public ServiceRequestService(ServiceRequestRepository serviceRequestRepository, EmployeeRepo employeeRepo, DeviceRepository deviceRepository, RepairLogRepository repairLogRepository, VendorRepo vendorRepo, RepairBillRepository repairBillRepository, DeviceAssignmentRepo deviceAssignmentRepo, NotificationService notificationService, OperationLogService operationLogService) {
         this.serviceRequestRepository = serviceRequestRepository;
         this.employeeRepo = employeeRepo;
         this.deviceRepository = deviceRepository;
@@ -38,6 +39,7 @@ public class ServiceRequestService {
         this.repairBillRepository = repairBillRepository;
         this.deviceAssignmentRepo = deviceAssignmentRepo;
         this.notificationService = notificationService;
+        this.operationLogService = operationLogService;
     }
 
     public ServiceRequest createServiceRequest(ServiceRequestDTO dto, Authentication authentication) {
@@ -68,7 +70,11 @@ public class ServiceRequestService {
         request.setIssueDescription(dto.getIssueDescription());
         request.setUrgent(dto.isUrgent());
         request.setStatus(ServiceRequestStatus.OPEN);
-        return serviceRequestRepository.save(request);
+        ServiceRequest saved = serviceRequestRepository.save(request);
+        operationLogService.record(authentication, "SERVICE_REQUEST", "ServiceRequest", saved.getId(),
+                "CREATE_REQUEST", null, saved.getStatus(),
+                "Request type " + saved.getRequestType() + " raised for device " + device.getDeviceName());
+        return saved;
     }
 
 
@@ -129,6 +135,7 @@ public class ServiceRequestService {
         ServiceRequest serviceRequest=serviceRequestRepository.findById(actionDTO.getServiceRequestId()).orElseThrow(
                 ()->new RuntimeException("Service Request Not Found")
         );
+        ServiceRequestStatus previousStatus = serviceRequest.getStatus();
         String email=AuthUtil.extractEmail(authentication);
         Employee admin=employeeRepo.findByEmail(email).orElseThrow(
                 ()->new EmployeeNotFound("Admin not found:"+email)
@@ -148,6 +155,9 @@ public class ServiceRequestService {
         serviceRequest.setAdminRemarks(actionDTO.getAdminRemarks());
         serviceRequest.setStatus(actionDTO.getStatus());
         ServiceRequest saved=serviceRequestRepository.save(serviceRequest);
+        operationLogService.record(authentication, "SERVICE_REQUEST", "ServiceRequest", saved.getId(),
+                "ADMIN_REPAIR_DECISION", previousStatus, saved.getStatus(),
+                "Admin reviewed repair request for device " + device.getDeviceName());
         return toServiceRequestResponseDTO(saved);
     }
 
@@ -155,6 +165,7 @@ public class ServiceRequestService {
         ServiceRequest serviceRequest=serviceRequestRepository.findById(actionDTO.getServiceRequestId()).orElseThrow(
                 ()->new RuntimeException("Service Request Not Found")
         );
+        ServiceRequestStatus previousStatus = serviceRequest.getStatus();
         String email=AuthUtil.extractEmail(authentication);
         Employee admin=employeeRepo.findByEmail(email).orElseThrow(
                 ()->new EmployeeNotFound("Admin not found:"+email)
@@ -173,6 +184,9 @@ public class ServiceRequestService {
         serviceRequest.setAdminRemarks(actionDTO.getAdminRemarks());
         serviceRequest.setStatus(ServiceRequestStatus.CLOSED);
         ServiceRequest saved=serviceRequestRepository.save(serviceRequest);
+        operationLogService.record(authentication, "SERVICE_REQUEST", "ServiceRequest", saved.getId(),
+                serviceRequest.getRequestType() + "_" + actionDTO.getStatus(), previousStatus, saved.getStatus(),
+                "Admin handled " + serviceRequest.getRequestType() + " request for device " + device.getDeviceName());
         return toServiceRequestResponseDTO(saved);
     }
 
@@ -233,10 +247,14 @@ public class ServiceRequestService {
                 ()->new RuntimeException("Service Request Not Found")
         );
         Device device=serviceRequest.getDevice();
+        ServiceRequestStatus previousStatus = serviceRequest.getStatus();
         serviceRequest.setStatus(ServiceRequestStatus.RECEIVED_BY_VENDOR);
         device.setDeviceStatus(DeviceStatus.UNDER_REPAIR);
         serviceRequestRepository.save(serviceRequest);
         deviceRepository.save(device);
+        operationLogService.record(authentication, "SERVICE_REQUEST", "ServiceRequest", serviceRequest.getId(),
+                "RECEIVED_BY_VENDOR", previousStatus, serviceRequest.getStatus(),
+                "Vendor received device " + device.getDeviceName() + " and started repair");
         notificationService.notify(serviceRequest.getReviewedBy(),"Device:"+device.getDeviceName()+" is being repaired","DEVICE UNDER REPAIR");
         return ResponseEntity.ok(
                 "Recieved the device and started the repair"
@@ -254,6 +272,7 @@ public class ServiceRequestService {
         // 2. Get request
         ServiceRequest request = serviceRequestRepository.findById(repairDTO.getRequestId())
                 .orElseThrow(() -> new RuntimeException("Request not found"));
+        ServiceRequestStatus previousStatus = request.getStatus();
 
         // 3. Validate request belongs to vendor
         if (!request.getDevice().getTechVendor().getId().equals(vendor.getId())) {
@@ -310,6 +329,9 @@ public class ServiceRequestService {
         deviceRepository.save(device);
         request.setStatus(ServiceRequestStatus.CLOSED);
         ServiceRequest serviceRequest=serviceRequestRepository.save(request);
+        operationLogService.record(authentication, "SERVICE_REQUEST", "ServiceRequest", serviceRequest.getId(),
+                "VENDOR_FINAL_UPDATE", previousStatus, serviceRequest.getStatus(),
+                "Repair result: " + repairDTO.getStatus() + ", device " + device.getDeviceName());
         return toServiceRequestResponseDTO(serviceRequest);
     }
 

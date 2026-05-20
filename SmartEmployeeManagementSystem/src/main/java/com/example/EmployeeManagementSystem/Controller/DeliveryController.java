@@ -1,9 +1,10 @@
 package com.example.EmployeeManagementSystem.Controller;
 
-import com.example.EmployeeManagementSystem.Entity.Delivery;
+import com.example.EmployeeManagementSystem.DTO.DeliveryDTO;
 import com.example.EmployeeManagementSystem.Enum.DeliveryStatus;
 import com.example.EmployeeManagementSystem.Service.DeliveryService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,24 +19,25 @@ public class DeliveryController {
     }
 
     @PutMapping("/{id}/status")
-    public ResponseEntity<Delivery> updateDeliveryStatus(
+    public ResponseEntity<DeliveryDTO> updateDeliveryStatus(
             @PathVariable Long id,
-            @RequestParam DeliveryStatus status) {
-        return ResponseEntity.ok(deliveryService.updateDeliveryStatus(id, status));
+            @RequestParam DeliveryStatus status,
+            Authentication authentication) {
+        return ResponseEntity.ok(deliveryService.updateDeliveryStatus(id, status, authentication));
     }
 
     @GetMapping("/subscription/{subscriptionId}")
-    public ResponseEntity<List<Delivery>> getDeliveriesBySubscription(
+    public ResponseEntity<List<DeliveryDTO>> getDeliveriesBySubscription(
             @PathVariable Long subscriptionId) {
         return ResponseEntity.ok(deliveryService.getDeliveriesBySubscription(subscriptionId));
     }
 
     @PutMapping("/{id}/delivered")
-    public ResponseEntity<Delivery> markDelivered(@PathVariable Long id) {
-        return ResponseEntity.ok(deliveryService.updateDeliveryStatus(id, DeliveryStatus.DELIVERED));
+    public ResponseEntity<DeliveryDTO> markDelivered(@PathVariable Long id, Authentication authentication) {
+        return ResponseEntity.ok(deliveryService.updateDeliveryStatus(id, DeliveryStatus.DELIVERED, authentication));
     }
     @GetMapping
-    public ResponseEntity<List<Delivery>> getAllDeliveries() {
+    public ResponseEntity<List<DeliveryDTO>> getAllDeliveries() {
         return ResponseEntity.ok(deliveryService.getAllDeliveries());
     }
 }
