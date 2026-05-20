@@ -873,6 +873,9 @@
                         </select>
                         <button class="btn btn-ghost btn-xs" id="modal-refresh-logs-btn"
                                 onclick="refreshModalRepairLogs()">↺ Refresh</button>
+                        <button class="btn btn-ghost btn-xs" onclick="downloadRepairLogs(currentModalDeviceId, 'pdf')">
+                            ↓ PDF
+                        </button>
                     </div>
                 </div>
                 <div id="modal-repair-history">
@@ -1897,6 +1900,23 @@ async function acknowledgeInvoice(invoiceId) {
         btn.disabled = false;
         btn.textContent = '✓ Acknowledge';
     }
+}
+   function downloadRepairLogs(deviceId, format) {
+    const period = document.getElementById('repair-log-period')?.value || 'ALL';
+    const token = localStorage.getItem('jwt_token');
+    // Can't set headers on window.open, so use fetch + blob instead
+    fetch(`${API}/devices/${deviceId}/repair-logs/export/${format}?period=${period}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+    })
+    .then(res => res.blob())
+    .then(blob => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `repair-logs-device-${deviceId}-${period}.${format === 'pdf' ? 'pdf' : 'xlsx'}`;
+        a.click();
+        URL.revokeObjectURL(url);
+    });
 }
 
     async function removeDevice(deviceId, deviceName) {

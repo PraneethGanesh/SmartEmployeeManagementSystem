@@ -15,6 +15,11 @@ import com.example.EmployeeManagementSystem.Enum.*;
 import com.example.EmployeeManagementSystem.Exception.VendorNotFoundException;
 import com.example.EmployeeManagementSystem.Repository.*;
 import com.example.EmployeeManagementSystem.Util.AuthUtil;
+import com.itextpdf.io.source.ByteArrayOutputStream;
+import com.itextpdf.text.*;
+import com.itextpdf.text.pdf.PdfPCell;
+import com.itextpdf.text.pdf.PdfPTable;
+import com.itextpdf.text.pdf.PdfWriter;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
@@ -514,5 +519,48 @@ public class DeviceService {
         );
         List<Device> devices=deviceRepository.findByTechVendorAndDeviceStatus(vendor,DeviceStatus.UNDER_REPAIR);
         return devices.stream().map(device -> toDeviceResponse(device)).toList();
+    }
+
+    public byte[] exportRepairLogsPdf(Authentication authentication, Long deviceId, RepairLogPeriod period) {
+        List<RepairLogResponseDTO> logs = getRepairLogsForLoggedInVendorAndGivenRange(
+                authentication, deviceId, period);
+
+        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            Document doc = new Document();
+            PdfWriter.getInstance(doc, out);
+            doc.open();
+
+            // Title
+            doc.add(new Paragraph("Repair Logs — Device #" + deviceId));
+            doc.add(new Paragraph("Period: " + period.name()));
+            doc.add(new Paragraph("Generated: " + LocalDate.now()));
+            doc.add(Chunk.NEWLINE);
+
+            // Table
+            PdfPTable table = new PdfPTable(5); // number of columns
+            table.setWidthPercentage(100);
+
+            // Headers
+            for (String h : List.of("Date", "Repaired By", "Cost", "Remarks")) {
+                PdfPCell cell = new PdfPCell(new Phrase(h));
+                cell.setBackgroundColor(BaseColor.LIGHT_GRAY);
+                table.addCell(cell);
+            }
+
+            // Rows
+            for (RepairLogResponseDTO r : logs) {
+                table.addCell(r.getRepairDate() != null ? r.getRepairDate().toString() : "—");
+                table.addCell(r.getRepairedBy() != null ? r.getRepairedBy() : "—");
+                table.addCell(r.getRepairCost() != null ? "₹" + r.getRepairCost() : "—");
+                table.addCell(r.getRemarks() != null ? r.getRemarks() : "—");
+            }
+
+            doc.add(table);
+            doc.close();
+            return out.toByteArray();
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to generate PDF", e);
+        }
     }
 }

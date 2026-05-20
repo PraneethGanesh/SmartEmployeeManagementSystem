@@ -10,7 +10,9 @@ import com.example.EmployeeManagementSystem.Entity.Device;
 import com.example.EmployeeManagementSystem.Entity.DeviceAssignment;
 import com.example.EmployeeManagementSystem.Enum.RepairLogPeriod;
 import com.example.EmployeeManagementSystem.Service.DeviceService;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -119,6 +121,18 @@ public class DeviceController {
                                                    Authentication authentication,
                                                    @RequestParam(required = false, defaultValue = "ALL") RepairLogPeriod period) {
         return deviceService.getRepairLogsForLoggedInVendorAndGivenRange(authentication,deviceId,period);
+    }
+    @GetMapping("/{deviceId}/repair-logs/export/pdf")
+    public ResponseEntity<byte[]> exportRepairLogsPdf(
+            @PathVariable Long deviceId,
+            @RequestParam(required = false, defaultValue = "ALL") RepairLogPeriod period,
+            Authentication authentication) {
+        byte[] pdf = deviceService.exportRepairLogsPdf(authentication, deviceId, period);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=repair-logs-device-" + deviceId + ".pdf")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdf);
     }
 
 
