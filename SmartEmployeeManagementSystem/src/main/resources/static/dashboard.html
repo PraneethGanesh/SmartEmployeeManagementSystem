@@ -77,6 +77,8 @@
         .btn-sm { padding: 4px 10px; font-size: 11px; margin: 2px; }
         .section-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
         .section-title { font-size: 16px; font-weight: 600; }
+        .section-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .filter-row { display: grid; grid-template-columns: repeat(4, minmax(140px, 1fr)); gap: 12px; margin-bottom: 16px; }
         .empty-state { text-align: center; padding: 40px; color: var(--text3); }
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center; }
         .modal-overlay.open { display: flex; }
@@ -230,6 +232,7 @@
             <div class="nav-item" onclick="showView('meal-order', event)">&#9632; Meal Orders</div>
             <div class="nav-item" onclick="showView('vendors', event)">&#9632; Vendors</div>
             <div class="nav-item" onclick="showView('vendor-negotiations', event)">&#9632; Vendor Negotiations</div>
+            <div class="nav-item" onclick="showView('operation-logs', event)">&#9632; Operation Logs</div>
             <div class="nav-item" onclick="window.location.href='/device_management.html'">&#9632; Device Management</div>
             <div class="nav-item" onclick="showView('my-calendar', event)">&#9632; My Calendar</div>
             <div class="nav-item" onclick="showView('my-profile', event)">&#9632; My Profile</div>
@@ -1053,6 +1056,53 @@
                 </div>
             </div>
 
+            <!-- OPERATION LOGS VIEW -->
+            <div id="operation-logs-view" class="view">
+                <div class="section-head">
+                    <div class="section-title">Operation Logs</div>
+                    <div class="section-actions">
+                        <button class="btn btn-secondary btn-sm" onclick="downloadOperationLogs()">Download Logs</button>
+                        <button class="btn btn-primary btn-sm" onclick="downloadOperationLogsPdf()">Download PDF</button>
+                        <button class="btn btn-secondary btn-sm" onclick="loadOperationLogs()">Refresh</button>
+                    </div>
+                </div>
+                <div class="filter-row">
+                    <div class="form-group">
+                        <label>Operation Type</label>
+                        <input id="oplog-operation-type" placeholder="SERVICE_REQUEST">
+                    </div>
+                    <div class="form-group">
+                        <label>Entity Type</label>
+                        <input id="oplog-entity-type" placeholder="Device">
+                    </div>
+                    <div class="form-group">
+                        <label>Entity ID</label>
+                        <input id="oplog-entity-id" type="number" min="1" placeholder="123">
+                    </div>
+                    <div class="form-group" style="justify-content:flex-end">
+                        <button class="btn btn-primary" onclick="loadOperationLogs()">Apply Filters</button>
+                    </div>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Operation</th>
+                            <th>Entity</th>
+                            <th>Action</th>
+                            <th>Status</th>
+                            <th>Performer</th>
+                            <th>Details</th>
+                        </tr>
+                        </thead>
+                        <tbody id="operation-logs-list">
+                        <tr><td colspan="7" class="empty-state">No logs loaded yet</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
         </div>
     </div>
 </div>
@@ -1250,6 +1300,7 @@
             'my-devices': loadMyAssignedDevices,
             'service-requests': loadServiceRequests,
             'admin-service-requests': loadAdminServiceRequests,
+            'operation-logs': loadOperationLogs,
             'my-profile': loadAdminProfile,
             'two-factor': loadTotpStatus,
             'my-calendar': loadMyCalendar,
@@ -1257,6 +1308,120 @@
             'promote-employee': loadPromotableEmployees
         };
         if (loaders[viewName]) loaders[viewName]();
+    }
+
+    // ============ OPERATION LOGS ============
+    function operationLogQueryString() {
+        const params = new URLSearchParams();
+        const operationType = document.getElementById('oplog-operation-type')?.value.trim();
+        const entityType = document.getElementById('oplog-entity-type')?.value.trim();
+        const entityId = document.getElementById('oplog-entity-id')?.value.trim();
+
+        if (operationType) params.set('operationType', operationType);
+        if (entityType) params.set('entityType', entityType);
+        if (entityId) params.set('entityId', entityId);
+
+        const query = params.toString();
+        return query ? `?${query}` : '';
+    }
+
+    async function loadOperationLogs() {
+        const tbody = document.getElementById('operation-logs-list');
+        tbody.innerHTML = '<tr><td colspan="7" class="empty-state">Loading logs...</td></tr>';
+        try {
+            const logs = await apiFetch(`/operation-logs${operationLogQueryString()}`);
+            if (!logs || !logs.length) {
+                tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No operation logs found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = logs.map(log => `
+                <tr>
+                    <td>${formatDateTime(log.occurredAt)}</td>
+                    <td><span class="chip">${escapeHtml(log.operationType || 'N/A')}</span></td>
+                    <td>${escapeHtml(log.entityType || 'N/A')} #${log.entityId ?? 'N/A'}</td>
+                    <td>${escapeHtml(log.action || 'N/A')}</td>
+                    <td>${escapeHtml(statusText(log))}</td>
+                    <td>
+                        <strong>${escapeHtml(log.performedByName || 'N/A')}</strong><br>
+                        <span style="color:var(--text3);font-size:11px">${escapeHtml(log.performedByRole || '')}</span>
+                    </td>
+                    <td>${escapeHtml(log.details || '')}</td>
+                </tr>
+            `).join('');
+        } catch (e) {
+            tbody.innerHTML = '<tr><td colspan="7" class="empty-state">Could not load operation logs</td></tr>';
+        }
+    }
+
+    async function downloadOperationLogs() {
+        try {
+            const logs = await apiFetch(`/operation-logs${operationLogQueryString()}`);
+            const payload = JSON.stringify(logs || [], null, 2);
+            downloadBlob(payload, 'operation-logs.json', 'application/json');
+            showAlert('Operation logs downloaded', 'success');
+        } catch (e) {
+            showAlert('Failed to download logs: ' + e.message, 'error');
+        }
+    }
+
+    async function downloadOperationLogsPdf() {
+        try {
+            const response = await fetch(`${API}/operation-logs/pdf${operationLogQueryString()}`, {
+                headers: getAuthHeader(),
+                credentials: 'include'
+            });
+
+            if (response.status === 401) {
+                localStorage.removeItem('jwt_token');
+                localStorage.removeItem('auth_type');
+                showAlert('Session expired. Please login again.', 'error');
+                setTimeout(() => window.location.href = '/google.html', 1500);
+                return;
+            }
+            if (!response.ok) {
+                throw new Error(await response.text() || 'PDF download failed');
+            }
+
+            const blob = await response.blob();
+            downloadBlob(blob, 'operation-logs.pdf', 'application/pdf');
+            showAlert('Operation PDF downloaded', 'success');
+        } catch (e) {
+            showAlert('Failed to download PDF: ' + e.message, 'error');
+        }
+    }
+
+    function downloadBlob(data, filename, type) {
+        const blob = data instanceof Blob ? data : new Blob([data], { type });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+    }
+
+    function statusText(log) {
+        if (!log.previousStatus && !log.newStatus) return '';
+        return `${log.previousStatus || ''} -> ${log.newStatus || ''}`;
+    }
+
+    function formatDateTime(value) {
+        if (!value) return '';
+        const date = new Date(value);
+        return Number.isNaN(date.getTime()) ? value : date.toLocaleString();
+    }
+
+    function escapeHtml(value) {
+        return String(value ?? '').replace(/[&<>"']/g, char => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;'
+        }[char]));
     }
 
     // ============ DASHBOARD ============
