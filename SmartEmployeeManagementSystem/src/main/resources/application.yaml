@@ -68,8 +68,8 @@ logging:
   level:
     org.springframework.security: DEBUG
     com.example.EmployeeManagementSystem: DEBUG
-  file:
-    name: auditLogs
+#  file:
+#    name: auditLogs
 jwt:
   secret: ${JWT_SECRET}
 # Add this to your application.yaml
