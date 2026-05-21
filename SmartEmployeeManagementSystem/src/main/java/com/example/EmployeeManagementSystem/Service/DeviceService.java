@@ -536,23 +536,28 @@ public class DeviceService {
             doc.add(new Paragraph("Generated: " + LocalDate.now()));
             doc.add(Chunk.NEWLINE);
 
-            // Table
-            PdfPTable table = new PdfPTable(5); // number of columns
+            // Table — 4 columns to match 4 headers
+            PdfPTable table = new PdfPTable(4);
             table.setWidthPercentage(100);
+            table.setSpacingBefore(10f);
+
+            // Set relative column widths (Date, Repaired By, Cost, Remarks)
+            table.setWidths(new float[]{2f, 2f, 1.5f, 3f});
 
             // Headers
-            for (String h : List.of("Date", "Repaired By", "Cost", "Remarks")) {
+            for (String h : List.of("Date", "Repaired By", "Action", "Remarks")) {
                 PdfPCell cell = new PdfPCell(new Phrase(h));
                 cell.setBackgroundColor(BaseColor.LIGHT_GRAY);
+                cell.setPadding(6f);
                 table.addCell(cell);
             }
 
             // Rows
             for (RepairLogResponseDTO r : logs) {
-                table.addCell(r.getRepairDate() != null ? r.getRepairDate().toString() : "—");
-                table.addCell(r.getRepairedBy() != null ? r.getRepairedBy() : "—");
-                table.addCell(r.getRepairCost() != null ? "₹" + r.getRepairCost() : "—");
-                table.addCell(r.getRemarks() != null ? r.getRemarks() : "—");
+                table.addCell(r.getRepairDate() != null ? r.getRepairDate().toString() : "-");
+                table.addCell(r.getRepairedBy() != null ? r.getRepairedBy() : "-");
+                table.addCell(r.getRepairAction() != null ? r.getRepairAction() : "-");
+                table.addCell(r.getRemarks() != null ? r.getRemarks() : "-");
             }
 
             doc.add(table);

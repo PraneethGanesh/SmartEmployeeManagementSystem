@@ -1069,11 +1069,23 @@
                 <div class="filter-row">
                     <div class="form-group">
                         <label>Operation Type</label>
-                        <input id="oplog-operation-type" placeholder="SERVICE_REQUEST">
+                        <select id="oplog-operation-type">
+                            <option value="">All Types</option>
+                            <option value="DELIVERY">DELIVERY</option>
+                            <option value="MEAL_ORDER">MEAL_ORDER</option>
+                            <option value="SUBSCRIPTION">SUBSCRIPTION</option>
+                            <option value="SERVICE_REQUEST">SERVICE_REQUEST</option>
+                        </select>
                     </div>
                     <div class="form-group">
                         <label>Entity Type</label>
-                        <input id="oplog-entity-type" placeholder="Device">
+                        <select id="oplog-entity-type">
+                            <option value="">All Entities</option>
+                            <option value="Delivery">Delivery</option>
+                            <option value="MealOrder">MealOrder</option>
+                            <option value="ServiceRequest">ServiceRequest</option>
+                            <option value="Subscription">Subscription</option>
+                        </select>
                     </div>
                     <div class="form-group">
                         <label>Entity ID</label>
