@@ -25,19 +25,22 @@ public class MealOrderService {
     private final EmployeeRepo employeeRepo;
     private final VendorRepo vendorRepo;
     private final NotificationService notificationService;
+    private final OperationLogService operationLogService;
 
     public MealOrderService(MealOrderRepository mealOrderRepository,
                             SubscriptionRepository subscriptionRepository,
                             MenuItemRepository menuItemRepository,
                             EmployeeRepo employeeRepo,
                             VendorRepo vendorRepo,
-                            NotificationService notificationService) {
+                            NotificationService notificationService,
+                            OperationLogService operationLogService) {
         this.mealOrderRepository = mealOrderRepository;
         this.subscriptionRepository = subscriptionRepository;
         this.menuItemRepository = menuItemRepository;
         this.employeeRepo = employeeRepo;
         this.vendorRepo = vendorRepo;
         this.notificationService = notificationService;
+        this.operationLogService = operationLogService;
     }
 
     /**
@@ -99,6 +102,9 @@ public class MealOrderService {
         }
 
         MealOrder saved = mealOrderRepository.save(order);
+        operationLogService.record(authentication, "MEAL_ORDER", "MealOrder", saved.getId(),
+                "PLACE_ORDER", null, saved.getStatus(),
+                "Meal order placed for " + saved.getMealSlot() + " at " + saved.getSubscription().getRestaurant().getName());
         return toDTO(saved);
     }
 
@@ -123,6 +129,9 @@ public class MealOrderService {
         order.setStatus(OrderStatus.ARRIVED);
         order.setDeliveredAt(LocalDateTime.now());
         MealOrder saved = mealOrderRepository.save(order);
+        operationLogService.record(authentication, "MEAL_ORDER", "MealOrder", saved.getId(),
+                "MARK_ARRIVED", OrderStatus.CONFIRMED, saved.getStatus(),
+                "Meal order arrived for employee " + saved.getEmployee().getName());
 
         String restaurantName = order.getSubscription().getRestaurant().getName();
         String mealSlot = order.getMealSlot().name().toLowerCase();
@@ -155,6 +164,9 @@ public class MealOrderService {
 
         order.setStatus(OrderStatus.CONFIRMED);
         MealOrder saved = mealOrderRepository.save(order);
+        operationLogService.record(authentication, "MEAL_ORDER", "MealOrder", saved.getId(),
+                "CONFIRM_ORDER", OrderStatus.PLACED, saved.getStatus(),
+                "Vendor confirmed order from " + saved.getSubscription().getRestaurant().getName());
 
         String restaurantName = order.getSubscription().getRestaurant().getName();
         String mealSlot = order.getMealSlot().name().toLowerCase();

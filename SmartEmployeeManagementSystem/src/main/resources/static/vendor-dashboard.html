@@ -378,8 +378,8 @@
                     </div>
                     <div class="tablewrap">
                         <table>
-                            <thead><tr><th>Employee</th><th>Restaurant</th><th>Meal Slot</th><th>From</th><th>To</th><th>Status</th></tr></thead>
-                            <tbody id="subscriptions-list"><tr><td colspan="6" class="empty-state">loading...</td></tr></tbody>
+                            <thead><tr><th>Employee</th><th>Restaurant</th><th>Meal Slot</th><th>Next Delivery</th><th>Status</th></tr></thead>
+                            <tbody id="subscriptions-list"><tr><td colspan="5" class="empty-state">loading...</td></tr></tbody>
                         </table>
                     </div>
                 </div>
@@ -394,8 +394,8 @@
                     </div>
                     <div class="tablewrap">
                         <table>
-                            <thead><tr><th>ID</th><th>Restaurant</th><th>Meal Slot</th><th>Date</th><th>Status</th><th>Action</th></tr></thead>
-                            <tbody id="deliveries-list"><tr><td colspan="6" class="empty-state">loading...</td></tr></tbody>
+                            <thead><tr><th>ID</th><th>Employee</th><th>Restaurant</th><th>Meal Slot</th><th>Scheduled</th><th>Status</th><th>Action</th></tr></thead>
+                            <tbody id="deliveries-list"><tr><td colspan="7" class="empty-state">loading...</td></tr></tbody>
                         </table>
                     </div>
                 </div>
@@ -727,16 +727,19 @@
             document.getElementById('subscriptions-list').innerHTML = (data || []).length
                 ? data.map(s => `
                     <tr>
-                        <td style="font-family:var(--mono);font-size:12px">${escHtml(s.employeeEmail || s.employeeId || '—')}</td>
+                        <td>
+                            <div style="font-weight:600;color:var(--text)">${escHtml(s.employeeName || '—')}</div>
+                            <div style="font-family:var(--mono);font-size:10px;color:var(--text3)">${escHtml(s.employeeEmail || `#${s.userId || '—'}`)}</div>
+                            ${s.employeeDept ? `<div style="font-size:10px;color:var(--text3)">${escHtml(s.employeeDept)}</div>` : ''}
+                        </td>
                         <td>${escHtml(s.restaurantName || s.restaurantId || '—')}</td>
                         <td><span class="chip ${(s.mealSlot || '').toLowerCase()}">${escHtml(s.mealSlot || '—')}</span></td>
-                        <td>${escHtml(s.startDate || '—')}</td>
-                        <td>${escHtml(s.endDate || '—')}</td>
+                        <td>${formatDateTime(s.nextDeliveryTime)}</td>
                         <td><span class="chip active">${escHtml(s.status || 'ACTIVE')}</span></td>
                     </tr>`).join('')
-                : '<tr><td colspan="6" class="empty-state">no subscriptions found</td></tr>';
+                : '<tr><td colspan="5" class="empty-state">no subscriptions found</td></tr>';
         } catch(e) {
-            document.getElementById('subscriptions-list').innerHTML = '<tr><td colspan="6" class="empty-state">could not load subscriptions</td></tr>';
+            document.getElementById('subscriptions-list').innerHTML = '<tr><td colspan="5" class="empty-state">could not load subscriptions</td></tr>';
         }
     }
 
@@ -749,16 +752,21 @@
                     return `
                     <tr>
                         <td style="font-family:var(--mono);font-size:11px">#${did || '—'}</td>
+                        <td>
+                            <div style="font-weight:600;color:var(--text)">${escHtml(d.employeeName || '—')}</div>
+                            <div style="font-family:var(--mono);font-size:10px;color:var(--text3)">${escHtml(d.employeeEmail || `#${d.employeeId || '—'}`)}</div>
+                            ${d.employeeDept ? `<div style="font-size:10px;color:var(--text3)">${escHtml(d.employeeDept)}</div>` : ''}
+                        </td>
                         <td>${escHtml(d.restaurantName || d.restaurantId || '—')}</td>
                         <td><span class="chip ${(d.mealSlot || '').toLowerCase()}">${escHtml(d.mealSlot || '—')}</span></td>
-                        <td>${escHtml(d.deliveryDate || '—')}</td>
+                        <td>${formatDateTime(d.scheduledDeliveryTime || d.deliveryDate)}</td>
                         <td><span class="chip ${(d.status || 'pending').toLowerCase()}">${escHtml(d.status || '—')}</span></td>
-                        <td>${d.status === 'PENDING' ? `<button class="btn btn-primary btn-sm" onclick="markDelivered('${did}')">MARK DELIVERED</button>` : '—'}</td>
+                        <td>${['SCHEDULED','IN_PROGRESS'].includes(d.status) ? `<button class="btn btn-primary btn-sm" onclick="markDelivered('${did}')">MARK DELIVERED</button>` : '—'}</td>
                     </tr>`;
                 }).join('')
-                : '<tr><td colspan="6" class="empty-state">no deliveries found</td></tr>';
+                : '<tr><td colspan="7" class="empty-state">no deliveries found</td></tr>';
         } catch(e) {
-            document.getElementById('deliveries-list').innerHTML = '<tr><td colspan="6" class="empty-state">could not load deliveries</td></tr>';
+            document.getElementById('deliveries-list').innerHTML = '<tr><td colspan="7" class="empty-state">could not load deliveries</td></tr>';
         }
     }
 
@@ -995,6 +1003,19 @@
         const div = document.createElement('div');
         div.textContent = str;
         return div.innerHTML;
+    }
+
+    function formatDateTime(value) {
+        if (!value) return '—';
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return escHtml(value);
+        return escHtml(date.toLocaleString([], {
+            year: 'numeric',
+            month: 'short',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit'
+        }));
     }
 </script>
 </body>

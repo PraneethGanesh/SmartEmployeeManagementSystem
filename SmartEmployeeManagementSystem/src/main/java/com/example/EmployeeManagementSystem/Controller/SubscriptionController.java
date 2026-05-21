@@ -41,26 +41,27 @@ public class SubscriptionController {
     @PreAuthorize("hasAnyRole('EMPLOYEE','MANAGER')")
     public ResponseEntity<Subscription> updateSubscription(
             @PathVariable Long id,
-            @RequestBody SubscriptionRequest request) {
-        return ResponseEntity.ok(subscriptionService.updateSubscription(id, request));
+            @RequestBody SubscriptionRequest request,
+            Authentication authentication) {
+        return ResponseEntity.ok(subscriptionService.updateSubscription(id, request, authentication));
     }
 
     @PutMapping("/{id}/pause")
     @PreAuthorize("hasAnyRole('EMPLOYEE','MANAGER')")
-    public ResponseEntity<Subscription> pauseSubscription(@PathVariable Long id) {
-        return ResponseEntity.ok(subscriptionService.pauseSubscription(id));
+    public ResponseEntity<Subscription> pauseSubscription(@PathVariable Long id, Authentication authentication) {
+        return ResponseEntity.ok(subscriptionService.pauseSubscription(id, authentication));
     }
 
     @PutMapping("/{id}/resume")
     @PreAuthorize("hasAnyRole('EMPLOYEE','MANAGER')")
-    public ResponseEntity<Subscription> resumeSubscription(@PathVariable Long id) {
-        return ResponseEntity.ok(subscriptionService.resumeSubscription(id));
+    public ResponseEntity<Subscription> resumeSubscription(@PathVariable Long id, Authentication authentication) {
+        return ResponseEntity.ok(subscriptionService.resumeSubscription(id, authentication));
     }
 
     @PutMapping("/{id}/expire")
     @PreAuthorize("hasAnyRole('EMPLOYEE','MANAGER')")
-    public ResponseEntity<Subscription> expireSubscription(@PathVariable Long id) {
-        return ResponseEntity.ok(subscriptionService.expireSubscription(id));
+    public ResponseEntity<Subscription> expireSubscription(@PathVariable Long id, Authentication authentication) {
+        return ResponseEntity.ok(subscriptionService.expireSubscription(id, authentication));
     }
 
     @GetMapping("/user")

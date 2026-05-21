@@ -1,8 +1,11 @@
 package com.example.EmployeeManagementSystem.Service;
 
+import com.example.EmployeeManagementSystem.DTO.DeliveryDTO;
 import com.example.EmployeeManagementSystem.DTO.VendorDTO;
 import com.example.EmployeeManagementSystem.DTO.VendorRequest;
 import com.example.EmployeeManagementSystem.Entity.Delivery;
+import com.example.EmployeeManagementSystem.Entity.Employee;
+import com.example.EmployeeManagementSystem.Entity.Restaurant;
 import com.example.EmployeeManagementSystem.Entity.Subscription;
 import com.example.EmployeeManagementSystem.Entity.Vendor;
 import com.example.EmployeeManagementSystem.Enum.DeliveryStatus;
@@ -30,14 +33,17 @@ public class DeliveryService {
     private final SubscriptionRepository subscriptionRepository;
     private final DeliveryRepository deliveryRepository;
     private final DeliveryTimeService deliveryTimeService;
+    private final OperationLogService operationLogService;
     private static final Logger logger = LoggerFactory.getLogger(DeliveryService.class);
 
     public DeliveryService(SubscriptionRepository subscriptionRepository,
                            DeliveryRepository deliveryRepository,
-                           DeliveryTimeService deliveryTimeService) {
+                           DeliveryTimeService deliveryTimeService,
+                           OperationLogService operationLogService) {
         this.subscriptionRepository = subscriptionRepository;
         this.deliveryRepository = deliveryRepository;
         this.deliveryTimeService = deliveryTimeService;
+        this.operationLogService = operationLogService;
     }
 
     // AFTER
@@ -54,7 +60,10 @@ public class DeliveryService {
                 delivery.setMealSlot(subscription.getSlot());
                 delivery.setScheduledDeliveryTime(subscription.getNextDeliveryTime());
                 delivery.setStatus(DeliveryStatus.IN_PROGRESS);
-                deliveryRepository.save(delivery);
+                Delivery savedDelivery = deliveryRepository.save(delivery);
+                operationLogService.recordSystem("DELIVERY", "Delivery", savedDelivery.getId(),
+                        "SCHEDULE_DELIVERY", null, savedDelivery.getStatus(),
+                        "Delivery created for subscription #" + subscription.getId());
 
                 Instant nextDelivery = deliveryTimeService.getNextDeliveryTime(subscription);
                 subscription.setNextDeliveryTime(nextDelivery);
@@ -71,25 +80,63 @@ public class DeliveryService {
     }
 
     @Transactional
-    public Delivery updateDeliveryStatus(Long deliveryId, DeliveryStatus status) {
+    public DeliveryDTO updateDeliveryStatus(Long deliveryId, DeliveryStatus status, Authentication authentication) {
         Delivery delivery = deliveryRepository.findById(deliveryId)
                 .orElseThrow(() -> new RuntimeException("Delivery not found"));
 
+        DeliveryStatus previousStatus = delivery.getStatus();
         delivery.setStatus(status);
         if (status == DeliveryStatus.DELIVERED) {
             delivery.setActualDeliveryTime(Instant.now());
         }
 
-        return deliveryRepository.save(delivery);
+        Delivery saved = deliveryRepository.save(delivery);
+        operationLogService.record(authentication, "DELIVERY", "Delivery", saved.getId(),
+                "UPDATE_DELIVERY_STATUS", previousStatus, saved.getStatus(),
+                "Delivery status updated for subscription #" + saved.getSubscription().getId());
+        return toDTO(saved);
     }
 
-    public List<Delivery> getDeliveriesBySubscription(Long subscriptionId) {
+    @Transactional(readOnly = true)
+    public List<DeliveryDTO> getDeliveriesBySubscription(Long subscriptionId) {
         Subscription subscription = subscriptionRepository.findById(subscriptionId)
                 .orElseThrow(() -> new RuntimeException("Subscription not found"));
-        return deliveryRepository.findRecentDeliveriesBySubscription(subscription, DeliveryStatus.SCHEDULED);
+        return deliveryRepository.findRecentDeliveriesBySubscription(subscription, DeliveryStatus.SCHEDULED)
+                .stream()
+                .map(this::toDTO)
+                .toList();
     }
-    public List<Delivery> getAllDeliveries() {
-        return deliveryRepository.findAll();
+    @Transactional(readOnly = true)
+    public List<DeliveryDTO> getAllDeliveries() {
+        return deliveryRepository.findAll().stream().map(this::toDTO).toList();
+    }
+
+    private DeliveryDTO toDTO(Delivery delivery) {
+        DeliveryDTO dto = new DeliveryDTO();
+        dto.setId(delivery.getId());
+        dto.setMealSlot(delivery.getMealSlot());
+        dto.setScheduledDeliveryTime(delivery.getScheduledDeliveryTime());
+        dto.setActualDeliveryTime(delivery.getActualDeliveryTime());
+        dto.setStatus(delivery.getStatus());
+        dto.setCreatedAt(delivery.getCreatedAt());
+
+        Subscription subscription = delivery.getSubscription();
+        if (subscription != null) {
+            dto.setSubscriptionId(subscription.getId());
+            Employee employee = subscription.getEmployee();
+            if (employee != null) {
+                dto.setEmployeeId(employee.getEmployeeId());
+                dto.setEmployeeName(employee.getName());
+                dto.setEmployeeEmail(employee.getEmail());
+                dto.setEmployeeDept(employee.getDept());
+            }
+            Restaurant restaurant = subscription.getRestaurant();
+            if (restaurant != null) {
+                dto.setRestaurantId(restaurant.getId());
+                dto.setRestaurantName(restaurant.getName());
+            }
+        }
+        return dto;
     }
 
     @Service

@@ -33,17 +33,20 @@ public class SubscriptionService {
     private final DeliveryTimeService deliveryTimeService;
     private final RestaurantRepository restaurantRepository;
     private final DeliveryRepository deliveryRepository;
+    private final OperationLogService operationLogService;
 
     public SubscriptionService(SubscriptionRepository subscriptionRepository,
                                EmployeeRepo employeeRepo,
                                DeliveryTimeService deliveryTimeService,
                                RestaurantRepository restaurantRepository,
-                               DeliveryRepository deliveryRepository) {
+                               DeliveryRepository deliveryRepository,
+                               OperationLogService operationLogService) {
         this.subscriptionRepository = subscriptionRepository;
         this.employeeRepo = employeeRepo;
         this.deliveryTimeService = deliveryTimeService;
         this.restaurantRepository = restaurantRepository;
         this.deliveryRepository = deliveryRepository;
+        this.operationLogService = operationLogService;
     }
 
     /**
@@ -116,7 +119,10 @@ public class SubscriptionService {
             subscription.setNextDeliveryTime(
                     deliveryTimeService.calculateNextDelivery(request, slot, employee));
 
-            subscriptionRepository.save(subscription);
+            Subscription saved = subscriptionRepository.save(subscription);
+            operationLogService.record(authentication, "SUBSCRIPTION", "Subscription", saved.getId(),
+                    "CREATE_SUBSCRIPTION", null, saved.getStatus(),
+                    "Subscription created for " + slot + " at " + restaurant.getName());
         }
     }
 
@@ -129,9 +135,10 @@ public class SubscriptionService {
         return dtoList;
     }
 
-    public Subscription updateSubscription(Long id, SubscriptionRequest request) {
+    public Subscription updateSubscription(Long id, SubscriptionRequest request, Authentication authentication) {
         Subscription subscription = subscriptionRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Subscription not found"));
+        SubscriptionStatus previousStatus = subscription.getStatus();
         Employee employee = subscription.getEmployee();
 
         if (request.getScheduleType() == ScheduleType.DAILY) {
@@ -169,31 +176,50 @@ public class SubscriptionService {
         subscription.setNextDeliveryTime(
                 deliveryTimeService.calculateNextDelivery(request, subscription.getSlot(), employee));
 
-        return subscriptionRepository.save(subscription);
+        Subscription saved = subscriptionRepository.save(subscription);
+        operationLogService.record(authentication, "SUBSCRIPTION", "Subscription", saved.getId(),
+                "UPDATE_SUBSCRIPTION", previousStatus, saved.getStatus(),
+                "Subscription schedule updated for employee " + employee.getName());
+        return saved;
     }
 
-    public Subscription pauseSubscription(Long id) {
+    public Subscription pauseSubscription(Long id, Authentication authentication) {
         Subscription subscription = subscriptionRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Subscription not found"));
+        SubscriptionStatus previousStatus = subscription.getStatus();
         subscription.setStatus(SubscriptionStatus.PAUSED);
         subscription.setNextDeliveryTime(null);
-        return subscriptionRepository.save(subscription);
+        Subscription saved = subscriptionRepository.save(subscription);
+        operationLogService.record(authentication, "SUBSCRIPTION", "Subscription", saved.getId(),
+                "PAUSE_SUBSCRIPTION", previousStatus, saved.getStatus(),
+                "Subscription paused for employee " + saved.getEmployee().getName());
+        return saved;
     }
 
-    public Subscription resumeSubscription(Long id) {
+    public Subscription resumeSubscription(Long id, Authentication authentication) {
         Subscription subscription = subscriptionRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Subscription not found"));
+        SubscriptionStatus previousStatus = subscription.getStatus();
         subscription.setStatus(SubscriptionStatus.ACTIVE);
         subscription.setNextDeliveryTime(deliveryTimeService.getNextDeliveryTime(subscription));
-        return subscriptionRepository.save(subscription);
+        Subscription saved = subscriptionRepository.save(subscription);
+        operationLogService.record(authentication, "SUBSCRIPTION", "Subscription", saved.getId(),
+                "RESUME_SUBSCRIPTION", previousStatus, saved.getStatus(),
+                "Subscription resumed for employee " + saved.getEmployee().getName());
+        return saved;
     }
 
-    public Subscription expireSubscription(Long id) {
+    public Subscription expireSubscription(Long id, Authentication authentication) {
         Subscription subscription = subscriptionRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Subscription not found"));
+        SubscriptionStatus previousStatus = subscription.getStatus();
         subscription.setStatus(SubscriptionStatus.EXPIRED);
         subscription.setNextDeliveryTime(null);
-        return subscriptionRepository.save(subscription);
+        Subscription saved = subscriptionRepository.save(subscription);
+        operationLogService.record(authentication, "SUBSCRIPTION", "Subscription", saved.getId(),
+                "EXPIRE_SUBSCRIPTION", previousStatus, saved.getStatus(),
+                "Subscription expired for employee " + saved.getEmployee().getName());
+        return saved;
     }
 
     public List<SubscriptionDTO> getSubscriptionOfUser(Authentication authentication) {
@@ -212,8 +238,12 @@ public class SubscriptionService {
     public void deleteSubscription(Long id) {
         Subscription subscription = subscriptionRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Subscription not found"));
+        SubscriptionStatus previousStatus = subscription.getStatus();
         deliveryRepository.deleteBySubscription(subscription);
         subscriptionRepository.delete(subscription);
+        operationLogService.recordSystem("SUBSCRIPTION", "Subscription", id,
+                "DELETE_SUBSCRIPTION", previousStatus, "DELETED",
+                "Subscription deleted for employee " + subscription.getEmployee().getName());
     }
 
     @Transactional
@@ -230,6 +260,9 @@ public class SubscriptionService {
         SubscriptionDTO dto = new SubscriptionDTO();
         dto.setSubscriptionId(s.getId());
         dto.setUserId(s.getEmployee().getEmployeeId());
+        dto.setEmployeeName(s.getEmployee().getName());
+        dto.setEmployeeEmail(s.getEmployee().getEmail());
+        dto.setEmployeeDept(s.getEmployee().getDept());
         dto.setMealSlot(s.getSlot());
         dto.setScheduleType(s.getScheduleType());
         if (s.getScheduleType() == ScheduleType.WEEKLY) {

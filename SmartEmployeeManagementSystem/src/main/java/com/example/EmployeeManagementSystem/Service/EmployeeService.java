@@ -117,10 +117,12 @@ public class EmployeeService {
         if (employeeDTO.getPassword() == null) {
             throw new RuntimeException("Password is required");
         }
+        String rawPassword=employeeDTO.getPassword();
         employee.setPassword(passwordEncoder.encode(employeeDTO.getPassword()));
         employee.setGender(employeeDTO.getGender());
         Employee savedEmployee = employeeRepo.save(employee);
         leaveAccrualService.grantInitialMonthlyAccrual(savedEmployee, savedEmployee.getJoined_at());
+        eventPublisher.publishEvent(new EmployeeCreatedEvent(savedEmployee,rawPassword));
         return savedEmployee;
     }
 
